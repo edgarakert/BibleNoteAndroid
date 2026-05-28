@@ -1,0 +1,70 @@
+# BibleNoteAndroid — Прогресс
+
+## Статус: Фаза 0 — Подготовка ✅
+
+### 2026-05-28
+- [x] Изучен iOS-проект: `/Users/edgarakert/Works/BibleNote/BibleNote/`
+- [x] Зафиксированы рабочие соглашения (5 правил)
+- [x] Создана документация: docs/plan.md, docs/progress.md, CLAUDE.md
+- [x] Исправлен источник референса (только iOS, без KMP)
+
+**Следующий шаг:** Фаза 1 — Настройка зависимостей, тема, очистка MainActivity.
+
+---
+
+## Фаза 1 — Основа проекта ✅
+
+### 2026-05-28
+- [x] Зависимости: Room 2.7.1 + KSP 2.2.10-2.0.2, Navigation Compose 2.9.0, DataStore 1.1.4, ViewModel Compose 2.10.0
+- [x] minSdk исправлен: 24 → 26
+- [x] bible.sqlite скопирован из iOS-проекта в assets/ (~25 МБ)
+- [x] Тема Sacred Manuscript: Color.kt (Parchment/Ink/Amber/...), Theme.kt (без dynamic color), Type.kt (Serif для заголовков)
+- [x] BibleNoteApplication.kt + AppContainer.kt (заглушки)
+- [x] AndroidManifest.xml: зарегистрирован android:name=".BibleNoteApplication"
+- [x] MainActivity: убран Hello World, добавлена AppNavHost-заглушка
+- [x] Сборка: `compileDebugKotlin` — BUILD SUCCESSFUL
+
+**Примечание:** `android.disallowKotlinSourceSets=false` добавлен в gradle.properties (KSP + AGP 9.x совместимость)
+
+**Следующий шаг:** Фаза 2 — Room (Note, Folder), BibleReferenceParser, BibleDatabaseService, SettingsRepository.
+
+## Фаза 2 — Данные и логика ✅
+
+### 2026-05-28
+- [x] Room: `Note.kt`, `Folder.kt` — сущности с FK и индексами
+- [x] Room: `NoteDao.kt`, `FolderDao.kt` — Flow-запросы, CRUD
+- [x] Room: `AppDatabase.kt` — `@Database(version=1)`, KSP генерация
+- [x] Bible models: `Book.kt`, `Verse.kt`, `VerseRow.kt`, `VerseHighlight.kt`, `BibleReference.kt`
+- [x] `HighlightColor.kt` — enum (amber/rose/sage/sky/lavender) со светлыми и тёмными цветами
+- [x] `BibleReferenceParser.kt` — порт iOS, regex с 300+ алиасами (RU+EN), lookbehind `(?<!\p{L})`
+- [x] `BibleDatabaseService.kt` — копирует bible.sqlite из assets (версионирование v2), read books/verses, write verse_highlights
+- [x] `SettingsRepository.kt` — DataStore (без Context в поле), 5 настроек
+- [x] `NoteRepository.kt` — обёртка над NoteDao + FolderDao
+- [x] `di/AppModule.kt` — Koin-модуль: Room, Bible, Settings, NoteRepository
+- [x] Сборка: `compileDebugKotlin` — BUILD SUCCESSFUL (без предупреждений)
+
+**Следующий шаг:** Фаза 3 — NotesListScreen, NoteRow, FolderRow, NotesViewModel.
+
+## Фаза 3 — Список заметок
+_Не начата_
+
+## Фаза 4 — Редактор заметок
+_Не начата_
+
+## Фаза 5 — Шторка стиха
+_Не начата_
+
+## Фаза 6 — Читалка Библии
+_Не начата_
+
+## Фаза 7 — Настройки и онбординг
+_Не начата_
+
+## Фаза 8 — Навигация
+_Не начата_
+
+## Фаза 9 — Папки
+_Не начата_
+
+## Фаза 10 — Полировка
+_Не начата_
