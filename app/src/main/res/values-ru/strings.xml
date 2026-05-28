@@ -38,4 +38,8 @@
         <item quantity="many">%d заметок</item>
         <item quantity="other">%d заметок</item>
     </plurals>
+
+    <!-- Verse sheet -->
+    <string name="verse_not_found">Стих не найден</string>
+    <string name="verse_open_chapter">Открыть главу</string>
 </resources>

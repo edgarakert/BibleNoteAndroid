@@ -45,8 +45,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import ru.edgarakert.biblenote.R
+import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.bible.BibleReferenceParser
 import ru.edgarakert.biblenote.ui.components.BibleEditText
+import ru.edgarakert.biblenote.ui.components.BibleVerseSheet
 import ru.edgarakert.biblenote.ui.theme.Amber
 import ru.edgarakert.biblenote.ui.theme.Ink
 import ru.edgarakert.biblenote.ui.theme.Parchment
@@ -66,6 +68,7 @@ fun NoteEditorScreen(
 
     var showMenu by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var tappedReference by remember { mutableStateOf<BibleReference?>(null) }
 
     LaunchedEffect(viewModel) {
         viewModel.navigateBack.collect { onBack() }
@@ -181,7 +184,7 @@ fun NoteEditorScreen(
             BibleEditText(
                 text = content,
                 onTextChanged = viewModel::setContent,
-                onReferenceTapped = { /* Phase 5: open BibleVerseSheet */ },
+                onReferenceTapped = { tappedReference = it },
                 parser = parser,
                 placeholder = stringResource(R.string.editor_content_placeholder),
                 modifier = Modifier
@@ -212,6 +215,14 @@ fun NoteEditorScreen(
                     Text(stringResource(R.string.folder_cancel))
                 }
             }
+        )
+    }
+
+    tappedReference?.let { ref ->
+        BibleVerseSheet(
+            reference = ref,
+            onDismiss = { tappedReference = null },
+            onOpenChapter = { tappedReference = null }
         )
     }
 }

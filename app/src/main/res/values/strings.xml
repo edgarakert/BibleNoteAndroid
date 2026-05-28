@@ -36,4 +36,8 @@
         <item quantity="one">%d note</item>
         <item quantity="other">%d notes</item>
     </plurals>
+
+    <!-- Verse sheet -->
+    <string name="verse_not_found">Verse not found</string>
+    <string name="verse_open_chapter">Open chapter</string>
 </resources>

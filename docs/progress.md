@@ -77,8 +77,19 @@
 
 **Следующий шаг:** Фаза 5 — BibleVerseSheet (ModalBottomSheet) + подсветка стихов.
 
-## Фаза 5 — Шторка стиха
-_Не начата_
+## Фаза 5 — Шторка стиха ✅
+
+### 2026-05-28
+- [x] `BibleVerseSheetViewModel.kt` — UiState (title, verses, highlights, enabledTranslations, selectedTranslation, verseScale, isLoading); `loadJob` для отмены race condition; `private val reference`
+- [x] `BibleVerse.kt` — строка стиха: номер (Amber), текст (Ink), фон highlight, масштаб verseScale
+- [x] `BibleVerseSheet.kt` — ModalBottomSheet (Parchment): serif-заголовок, translation picker (capsule, только если >1), hairline-разделитель, CircularProgressIndicator при загрузке, LazyColumn стихов + кнопка «Открыть главу», empty state
+- [x] `NoteEditorScreen.kt` — `tappedReference` state, wire up `onReferenceTapped`, показ `BibleVerseSheet`
+- [x] `AppModule.kt` — `viewModel { params -> BibleVerseSheetViewModel(...) }`
+- [x] `strings.xml` / `values-ru/strings.xml` — `verse_not_found`, `verse_open_chapter`
+- [x] Ревью субагент: 4 HIGH исправлены (race condition loadJob, reference private, loading indicator, `onOpenChapter` — Phase 8 design)
+- [x] Сборка: `compileDebugKotlin` — BUILD SUCCESSFUL
+
+**Следующий шаг:** Фаза 6 — BibleBookPickerScreen, BibleReaderScreen, BibleReaderViewModel.
 
 ## Фаза 6 — Читалка Библии
 _Не начата_
