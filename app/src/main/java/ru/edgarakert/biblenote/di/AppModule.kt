@@ -11,6 +11,7 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import ru.edgarakert.biblenote.data.NoteRepository
+import ru.edgarakert.biblenote.ui.viewmodels.NoteEditorViewModel
 import ru.edgarakert.biblenote.ui.viewmodels.NotesViewModel
 import ru.edgarakert.biblenote.data.bible.BibleDatabaseService
 import ru.edgarakert.biblenote.data.bible.BibleReferenceParser
@@ -41,4 +42,5 @@ val appModule = module {
 
     // ViewModels
     viewModel { NotesViewModel(get()) }
+    viewModel { params -> NoteEditorViewModel(params.get<Long>(), get()) }
 }

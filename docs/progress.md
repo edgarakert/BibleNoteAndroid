@@ -63,8 +63,19 @@
 
 **Следующий шаг:** Фаза 4 — NoteEditorScreen, BibleEditText, NoteEditorViewModel.
 
-## Фаза 4 — Редактор заметок
-_Не начата_
+## Фаза 4 — Редактор заметок ✅
+
+### 2026-05-28
+- [x] `BibleEditText.kt` — AndroidView + EditText: Spannable подсветка (ForegroundColorSpan amber), BibleClickSpan-маркер, setOnTouchListener (только ACTION_UP), debounce 400ms, isProgrammatic try/finally, DisposableEffect cleanup
+- [x] `NoteEditorScreen.kt` — Scaffold + TopAppBar (back, 3-dot menu), BasicTextField-заголовок (serif 22sp), amber divider, BibleEditText content, AlertDialog удаления
+- [x] `NoteEditorViewModel.kt` — onCleared: short-lived saveScope с try/finally cancel
+- [x] `AppModule.kt` — `viewModel { params -> NoteEditorViewModel(params.get<Long>(), get()) }`
+- [x] `MainActivity.kt` — NavHost: routes "notes" → "editor/{noteId}", NavController
+- [x] `strings.xml` / `values-ru/strings.xml` — editor_title_placeholder, editor_content_placeholder, editor_back, editor_menu, note_delete
+- [x] Сборка: `compileDebugKotlin` — BUILD SUCCESSFUL
+- [x] Ревью субагент: 4 HIGH исправлены (ACTION_DOWN, LaunchedEffect(viewModel), try/finally, saveScope.cancel)
+
+**Следующий шаг:** Фаза 5 — BibleVerseSheet (ModalBottomSheet) + подсветка стихов.
 
 ## Фаза 5 — Шторка стиха
 _Не начата_

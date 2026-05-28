@@ -22,6 +22,13 @@
     <string name="folder_move">Move</string>
     <string name="folder_cancel">Cancel</string>
 
+    <!-- Editor -->
+    <string name="editor_title_placeholder">Title</string>
+    <string name="editor_content_placeholder">Write something…</string>
+    <string name="editor_back">Back</string>
+    <string name="editor_menu">Options</string>
+    <string name="note_delete">Delete Note</string>
+
     <!-- Common -->
     <string name="common_save">Save</string>
 
