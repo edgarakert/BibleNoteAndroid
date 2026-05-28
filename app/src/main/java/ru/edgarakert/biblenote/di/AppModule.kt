@@ -20,6 +20,7 @@ import ru.edgarakert.biblenote.data.db.FolderDao
 import ru.edgarakert.biblenote.data.db.NoteDao
 import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.settings.SettingsRepository
+import ru.edgarakert.biblenote.ui.viewmodels.BibleReaderViewModel
 import ru.edgarakert.biblenote.ui.viewmodels.BibleVerseSheetViewModel
 
 private val Context.settingsDataStore by preferencesDataStore(name = "biblenote_settings")
@@ -53,6 +54,12 @@ val appModule = module {
     single<SettingsRepository> { SettingsRepository(dataStore = get<DataStore<Preferences>>()) }
 
     // ViewModels
+    viewModel {
+        BibleReaderViewModel(
+            bibleService = get<BibleDatabaseService>(),
+            settingsRepository = get<SettingsRepository>()
+        )
+    }
     viewModel { NotesViewModel(repository = get<NoteRepository>()) }
     viewModel { params ->
         NoteEditorViewModel(

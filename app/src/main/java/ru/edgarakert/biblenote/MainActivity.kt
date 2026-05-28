@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import ru.edgarakert.biblenote.ui.screens.bible.BibleReaderScreen
 import ru.edgarakert.biblenote.ui.screens.editor.NoteEditorScreen
 import ru.edgarakert.biblenote.ui.screens.notes.NotesListScreen
 import ru.edgarakert.biblenote.ui.theme.BibleNoteTheme
@@ -29,7 +30,10 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun AppNavHost() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "notes") {
+    NavHost(navController = navController, startDestination = "bible") {
+        composable("bible") {
+            BibleReaderScreen()
+        }
         composable("notes") {
             NotesListScreen(
                 onNavigateToNote = { noteId -> navController.navigate("editor/$noteId") }

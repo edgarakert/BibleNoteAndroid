@@ -42,4 +42,16 @@
     <!-- Verse sheet -->
     <string name="verse_not_found">Стих не найден</string>
     <string name="verse_open_chapter">Открыть главу</string>
+
+    <!-- Bible reader -->
+    <string name="bible_picker_title">Выбор книги</string>
+    <string name="bible_old_testament">Ветхий Завет</string>
+    <string name="bible_new_testament">Новый Завет</string>
+
+    <plurals name="bible_verse_count">
+        <item quantity="one">%d стих выбран</item>
+        <item quantity="few">%d стиха выбраны</item>
+        <item quantity="many">%d стихов выбрано</item>
+        <item quantity="other">%d стихов выбрано</item>
+    </plurals>
 </resources>

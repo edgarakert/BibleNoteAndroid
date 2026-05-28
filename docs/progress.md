@@ -91,8 +91,21 @@
 
 **Следующий шаг:** Фаза 6 — BibleBookPickerScreen, BibleReaderScreen, BibleReaderViewModel.
 
-## Фаза 6 — Читалка Библии
-_Не начата_
+## Фаза 6 — Читалка Библии ✅
+
+### 2026-05-28
+- [x] `SettingsRepository.kt` — добавлены `lastBookId`, `lastChapter`, `lastBibleTranslation` (DataStore, сохранение позиции между сессиями)
+- [x] `BibleReaderViewModel.kt` — `UiState` (bookId, chapter, bookName, chapterCount, translation, enabledTranslations, books, verses, highlights, selectedVerseNumbers, verseScale); `initJob` отдельно от `loadJob`; методы: `navigatePrev/Next/To`, `setTranslation`, `toggleVerseSelection`, `clearSelection`, `applyHighlight`, `removeHighlights`, `copySelectedVerses`, `fetchChapterCount`
+- [x] `BibleVerse.kt` — добавлен `isSelected: Boolean = false` (amber фон при выделении)
+- [x] `BibleBookPickerScreen.kt` — список книг (ВЗ + НЗ), внутренняя навигация к ChapterGrid (5 колонок); safe capture `book` вместо `selectedBook!!`
+- [x] `BibleReaderScreen.kt` — TopAppBar (title-кнопка → пикер, translation menu), скролл стихов с tappable-выделением, ChapterNavBar (prev/next кружки), VerseActionBar (close + copy + 5 цветов подсветки), анимированный slide/fade; `remember` для `sharedHighlight`
+- [x] `AppModule.kt` — `viewModel { BibleReaderViewModel(get(), get()) }`
+- [x] `strings.xml` / `values-ru/strings.xml` — `bible_picker_title`, `bible_old_testament`, `bible_new_testament`, plurals `bible_verse_count`
+- [x] `MainActivity.kt` — startDestination временно переключён на `"bible"` для тестирования
+- [x] Сборка: `compileDebugKotlin` — BUILD SUCCESSFUL (без предупреждений)
+- [x] Ревью субагент: 2 HIGH исправлены (highlight path → `loadChapter` после save; `selectedBook!!` → safe capture); MEDIUM: `remember(sharedHighlight)`, отдельный `initJob`
+
+**Следующий шаг:** Фаза 7 — SettingsScreen, TranslationSettingsScreen, BibleThemeSettingsScreen, AboutScreen, OnboardingScreen.
 
 ## Фаза 7 — Настройки и онбординг
 _Не начата_

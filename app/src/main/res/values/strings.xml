@@ -40,4 +40,14 @@
     <!-- Verse sheet -->
     <string name="verse_not_found">Verse not found</string>
     <string name="verse_open_chapter">Open chapter</string>
+
+    <!-- Bible reader -->
+    <string name="bible_picker_title">Choose Book</string>
+    <string name="bible_old_testament">Old Testament</string>
+    <string name="bible_new_testament">New Testament</string>
+
+    <plurals name="bible_verse_count">
+        <item quantity="one">%d verse selected</item>
+        <item quantity="other">%d verses selected</item>
+    </plurals>
 </resources>

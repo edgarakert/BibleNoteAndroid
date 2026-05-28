@@ -21,11 +21,15 @@ fun BibleVerse(
     text: String,
     highlightColor: HighlightColor?,
     verseScale: Float,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isSelected: Boolean = false,
 ) {
     val textSizeSp = (17f * verseScale).sp
     val numSizeSp = ((17f * verseScale) - 2f).coerceAtLeast(10f).sp
-    val bgColor = highlightColor?.lightColor ?: Color.Transparent
+    val bgColor = when {
+        isSelected -> Amber.copy(alpha = 0.2f)
+        else -> highlightColor?.lightColor ?: Color.Transparent
+    }
 
     Row(
         verticalAlignment = Alignment.Top,
