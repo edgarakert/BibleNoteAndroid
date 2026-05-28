@@ -42,11 +42,11 @@
 - [ ] di/AppModule.kt (Koin-модуль: все зависимости)
 
 ### Фаза 3 — UI: Список заметок
-- [ ] NotesListScreen (список заметок + папок, поиск)
-- [ ] NoteRow, FolderRow
-- [ ] SelectionActionBar (режим выделения)
-- [ ] Диалоги: новая папка, переименовать, удалить папку
-- [ ] NotesViewModel
+- [x] NotesListScreen (список заметок + папок, поиск)
+- [x] NoteRow, FolderRow
+- [x] SelectionActionBar (режим выделения)
+- [x] Диалоги: новая папка, переименовать, удалить папку
+- [x] NotesViewModel
 
 ### Фаза 4 — UI: Редактор заметок
 - [ ] NoteEditorScreen

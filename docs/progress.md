@@ -45,8 +45,23 @@
 
 **Следующий шаг:** Фаза 3 — NotesListScreen, NoteRow, FolderRow, NotesViewModel.
 
-## Фаза 3 — Список заметок
-_Не начата_
+## Фаза 3 — Список заметок ✅
+
+### 2026-05-28
+- [x] `FolderWithCount.kt` — data class с `@Embedded Folder` + `noteCount: Int` для Room JOIN-запроса
+- [x] `FolderDao.kt` — добавлен `observeRootFoldersWithCount()` (LEFT JOIN notes, GROUP BY folder)
+- [x] `NoteRepository.kt` — добавлен `observeRootFoldersWithCount()`
+- [x] `NotesViewModel.kt` — StateFlow: rootNotes, rootFolders, searchResults (debounce 200ms); selection mode; CRUD actions; SharedFlow navigateToNote
+- [x] `NoteRow.kt` — карточка заметки (CardSurface, serif 17sp, дата, selection с анимацией)
+- [x] `FolderRow.kt` — карточка папки (Amber folder icon, plurals note count)
+- [x] `SelectionActionBar.kt` — плавающая панель (Move + Delete) с navigationBarsPadding
+- [x] `NotesListScreen.kt` — TopAppBar + поиск, LazyColumn (folders + notes), SwipeToDismissBox (delete), context menu (long press), animated bottom bar, 4 AlertDialog
+- [x] `AppModule.kt` — `viewModel { NotesViewModel(get()) }`
+- [x] `MainActivity.kt` — `AppNavHost()` → `NotesListScreen()`
+- [x] `strings.xml` (EN) + `values-ru/strings.xml` (RU) — все строки + plurals
+- [x] `libs.versions.toml` + `build.gradle.kts` — `material-icons-extended`
+
+**Следующий шаг:** Фаза 4 — NoteEditorScreen, BibleEditText, NoteEditorViewModel.
 
 ## Фаза 4 — Редактор заметок
 _Не начата_

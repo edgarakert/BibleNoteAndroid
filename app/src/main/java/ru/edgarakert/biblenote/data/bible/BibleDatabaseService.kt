@@ -4,8 +4,13 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import java.io.File
 import androidx.core.content.edit
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 
-class BibleDatabaseService(private val context: Context) {
+class BibleDatabaseService(
+    private val context: Context,
+    private val ioDispatcher: CoroutineDispatcher
+) {
 
     companion object {
         private const val DB_VERSION = 2
@@ -52,11 +57,11 @@ class BibleDatabaseService(private val context: Context) {
 
     // MARK: - Books
 
-    fun fetchAllBooks(translation: String): List<Book> {
+    suspend fun fetchAllBooks(translation: String): List<Book> = withContext(ioDispatcher) {
         val cursor = db.rawQuery(
             "SELECT id, name_ru, name_en, abbreviation FROM books ORDER BY id", null
         )
-        return cursor.use {
+        cursor.use {
             buildList {
                 while (it.moveToNext()) {
                     add(Book(it.getInt(0), it.getString(1), it.getString(2), it.getString(3)))
@@ -65,23 +70,23 @@ class BibleDatabaseService(private val context: Context) {
         }
     }
 
-    fun fetchBookName(bookId: Int, translation: String): String? {
+    suspend fun fetchBookName(bookId: Int, translation: String): String? = withContext(ioDispatcher) {
         val col = if (translation == "kjv" || translation == "niv") "name_en" else "name_ru"
         val cursor = db.rawQuery("SELECT $col FROM books WHERE id = ?", arrayOf(bookId.toString()))
-        return cursor.use { if (it.moveToFirst()) it.getString(0) else null }
+        cursor.use { if (it.moveToFirst()) it.getString(0) else null }
     }
 
     // MARK: - Verses
 
-    fun fetchChapterCount(bookId: Int, translation: String): Int {
+    suspend fun fetchChapterCount(bookId: Int, translation: String): Int = withContext(ioDispatcher) {
         val cursor = db.rawQuery(
             "SELECT MAX(chapter) FROM verses WHERE book_id = ? AND translation = ?",
             arrayOf(bookId.toString(), translation)
         )
-        return cursor.use { if (it.moveToFirst()) it.getInt(0) else 1 }
+        cursor.use { if (it.moveToFirst()) it.getInt(0) else 1 }
     }
 
-    fun fetchVerses(reference: BibleReference, translation: String): List<Pair<Int, String>> {
+    suspend fun fetchVerses(reference: BibleReference, translation: String): List<Pair<Int, String>> = withContext(ioDispatcher) {
         val sb = StringBuilder(
             "SELECT verse, text FROM verses WHERE translation = ? AND book_id = ? AND chapter = ?"
         )
@@ -94,16 +99,16 @@ class BibleDatabaseService(private val context: Context) {
         }
         sb.append(" ORDER BY verse")
         val cursor = db.rawQuery(sb.toString(), args.toTypedArray())
-        return cursor.use {
+        cursor.use {
             buildList { while (it.moveToNext()) add(Pair(it.getInt(0), it.getString(1))) }
         }
     }
 
-    fun fetchVersesWithHighlights(
+    suspend fun fetchVersesWithHighlights(
         bookId: Int,
         chapter: Int,
         translation: String
-    ): List<Triple<Int, String, HighlightColor?>> {
+    ): List<Triple<Int, String, HighlightColor?>> = withContext(ioDispatcher) {
         val cursor = db.rawQuery(
             """
             SELECT v.verse, v.text, h.color_name
@@ -115,7 +120,7 @@ class BibleDatabaseService(private val context: Context) {
             """.trimIndent(),
             arrayOf(translation, bookId.toString(), chapter.toString())
         )
-        return cursor.use {
+        cursor.use {
             buildList {
                 while (it.moveToNext()) {
                     val colorName = if (it.isNull(2)) null else it.getString(2)
@@ -127,12 +132,12 @@ class BibleDatabaseService(private val context: Context) {
 
     // MARK: - Highlights
 
-    fun fetchHighlights(bookId: Int, chapter: Int): Map<Int, HighlightColor> {
+    suspend fun fetchHighlights(bookId: Int, chapter: Int): Map<Int, HighlightColor> = withContext(ioDispatcher) {
         val cursor = db.rawQuery(
             "SELECT verse_number, color_name FROM verse_highlights WHERE book_id = ? AND chapter = ?",
             arrayOf(bookId.toString(), chapter.toString())
         )
-        return cursor.use {
+        cursor.use {
             buildMap {
                 while (it.moveToNext()) {
                     val color = HighlightColor.fromName(it.getString(1)) ?: continue
@@ -142,8 +147,8 @@ class BibleDatabaseService(private val context: Context) {
         }
     }
 
-    fun saveHighlights(color: HighlightColor, bookId: Int, chapter: Int, verseNumbers: Set<Int>) {
-        if (verseNumbers.isEmpty()) return
+    suspend fun saveHighlights(color: HighlightColor, bookId: Int, chapter: Int, verseNumbers: Set<Int>) = withContext(ioDispatcher) {
+        if (verseNumbers.isEmpty()) return@withContext
         db.beginTransaction()
         try {
             val now = System.currentTimeMillis()
@@ -159,8 +164,8 @@ class BibleDatabaseService(private val context: Context) {
         }
     }
 
-    fun deleteHighlights(bookId: Int, chapter: Int, verseNumbers: Set<Int>) {
-        if (verseNumbers.isEmpty()) return
+    suspend fun deleteHighlights(bookId: Int, chapter: Int, verseNumbers: Set<Int>) = withContext(ioDispatcher) {
+        if (verseNumbers.isEmpty()) return@withContext
         val placeholders = verseNumbers.joinToString(",") { "?" }
         val args = (listOf(bookId.toString(), chapter.toString()) +
                 verseNumbers.map { it.toString() }).toTypedArray()

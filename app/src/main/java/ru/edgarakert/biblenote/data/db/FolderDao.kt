@@ -12,6 +12,16 @@ interface FolderDao {
     @Query("SELECT * FROM folders WHERE parentId IS NULL ORDER BY createdAt ASC")
     fun observeRootFolders(): Flow<List<Folder>>
 
+    @Query("""
+        SELECT f.*, COUNT(n.id) AS noteCount
+        FROM folders f
+        LEFT JOIN notes n ON n.folderId = f.id
+        WHERE f.parentId IS NULL
+        GROUP BY f.id
+        ORDER BY f.name COLLATE NOCASE ASC
+    """)
+    fun observeRootFoldersWithCount(): Flow<List<FolderWithCount>>
+
     @Query("SELECT * FROM folders WHERE parentId = :parentId ORDER BY createdAt ASC")
     fun observeSubfolders(parentId: Long): Flow<List<Folder>>
 

@@ -1,3 +1,32 @@
 <resources>
     <string name="app_name">Bible Note</string>
+
+    <!-- Notes list -->
+    <string name="notes_title">Notes</string>
+    <string name="notes_untitled">Untitled</string>
+    <string name="notes_empty_state">No notes yet.\nTap + to create your first note.</string>
+    <string name="notes_select">Select Notes</string>
+    <string name="notes_selection_delete_title">Delete Notes</string>
+    <string name="note_delete_message">This cannot be undone.</string>
+
+    <!-- Search -->
+    <string name="search_placeholder">Search</string>
+    <string name="search_no_results">No results found</string>
+
+    <!-- Folder -->
+    <string name="folder_new">New Folder</string>
+    <string name="folder_name_placeholder">Folder name</string>
+    <string name="folder_rename">Rename</string>
+    <string name="folder_delete_confirm">Delete</string>
+    <string name="folder_delete_title">Delete \"%s\"?</string>
+    <string name="folder_move">Move</string>
+    <string name="folder_cancel">Cancel</string>
+
+    <!-- Common -->
+    <string name="common_save">Save</string>
+
+    <plurals name="folder_note_count">
+        <item quantity="one">%d note</item>
+        <item quantity="other">%d notes</item>
+    </plurals>
 </resources>
