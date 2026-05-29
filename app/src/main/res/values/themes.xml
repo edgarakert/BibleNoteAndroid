@@ -4,4 +4,9 @@
     <style name="Base.Theme.BibleNote" parent="android:Theme.Material.Light.NoActionBar" />
 
     <style name="Theme.BibleNote" parent="Base.Theme.BibleNote" />
+
+    <style name="Theme.BibleNote.Transparent" parent="Theme.BibleNote">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+    </style>
 </resources>

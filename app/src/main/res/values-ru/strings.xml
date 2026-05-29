@@ -119,6 +119,13 @@
     <string name="translations_select_subtitle">Выберите переводы Библии, которые хотите использовать. Вы можете изменить это в Настройках.</string>
     <string name="translations_select_continue">Продолжить</string>
 
+    <!-- Share intent -->
+    <string name="share_title">Сохранить в BibleNote</string>
+    <string name="share_mode_new">Создать новую заметку</string>
+    <string name="share_mode_existing">Добавить в существующую</string>
+    <string name="share_cancel">Отмена</string>
+    <string name="share_error_empty">Нечего сохранять</string>
+
     <!-- Bottom navigation tabs -->
     <string name="tab_notes">Заметки</string>
     <string name="tab_bible">Библия</string>

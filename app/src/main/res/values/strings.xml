@@ -115,6 +115,13 @@
     <string name="translations_select_subtitle">Select the Bible translations you want to use. You can change this later in Settings.</string>
     <string name="translations_select_continue">Continue</string>
 
+    <!-- Share intent -->
+    <string name="share_title">Save to BibleNote</string>
+    <string name="share_mode_new">Create new note</string>
+    <string name="share_mode_existing">Add to existing note</string>
+    <string name="share_cancel">Cancel</string>
+    <string name="share_error_empty">Nothing to save</string>
+
     <!-- Bottom navigation tabs -->
     <string name="tab_notes">Notes</string>
     <string name="tab_bible">Bible</string>

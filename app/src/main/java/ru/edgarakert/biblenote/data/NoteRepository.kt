@@ -13,6 +13,8 @@ class NoteRepository(
 ) {
     fun observeRootNotes(): Flow<List<Note>> = noteDao.observeRootNotes()
 
+    fun observeAllNotes(): Flow<List<Note>> = noteDao.observeAllNotes()
+
     fun observeNotesInFolder(folderId: Long): Flow<List<Note>> = noteDao.observeNotesInFolder(folderId)
 
     fun searchNotes(query: String): Flow<List<Note>> = noteDao.search(query)
