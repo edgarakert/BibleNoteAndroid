@@ -378,19 +378,6 @@ private fun VerseActionBar(
 }
 
 @Composable
-@Preview
-fun VerseActionBarPreview() {
-    VerseActionBar(
-        selectedCount = 1,
-        sharedHighlight = null,
-        onDismiss = {},
-        onCopy = {},
-        onHighlight = {},
-        onRemoveHighlight = {}
-    )
-}
-
-@Composable
 private fun ColorPicker(
     sharedHighlight: HighlightColor?,
     onHighlight: (HighlightColor) -> Unit,
