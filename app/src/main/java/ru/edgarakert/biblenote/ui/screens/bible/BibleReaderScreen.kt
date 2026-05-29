@@ -73,6 +73,7 @@ import ru.edgarakert.biblenote.ui.theme.Ink
 import ru.edgarakert.biblenote.ui.theme.Parchment
 import ru.edgarakert.biblenote.ui.theme.WarmGray
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.tooling.preview.Preview
 import ru.edgarakert.biblenote.ui.viewmodels.BibleReaderViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -225,15 +226,6 @@ private fun VersesContent(
         contentPadding = PaddingValues(bottom = 180.dp),
         modifier = modifier
     ) {
-        item {
-            Text(
-                text = "${uiState.bookName} ${uiState.chapter}",
-                style = MaterialTheme.typography.headlineMedium,
-                fontFamily = FontFamily.Serif,
-                color = Ink,
-                modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 16.dp)
-            )
-        }
         items(uiState.verses, key = { it.first }) { (verseNum, text) ->
             BibleVerse(
                 verseNumber = verseNum,
@@ -342,11 +334,12 @@ private fun VerseActionBar(
     ) {
         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(
-                    onClick = onDismiss,
+                Box(
                     modifier = Modifier
-                        .size(32.dp)
+                        .size(28.dp)
                         .background(WarmGray.copy(alpha = 0.1f), CircleShape)
+                        .clickable(onClick = onDismiss),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
@@ -355,7 +348,7 @@ private fun VerseActionBar(
                         modifier = Modifier.size(16.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(16.dp))
                 Text(
                     text = pluralStringResource(
                         R.plurals.bible_verse_count,
@@ -382,6 +375,19 @@ private fun VerseActionBar(
             )
         }
     }
+}
+
+@Composable
+@Preview
+fun VerseActionBarPreview() {
+    VerseActionBar(
+        selectedCount = 1,
+        sharedHighlight = null,
+        onDismiss = {},
+        onCopy = {},
+        onHighlight = {},
+        onRemoveHighlight = {}
+    )
 }
 
 @Composable

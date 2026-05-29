@@ -166,7 +166,7 @@ fun NotesListScreen(
                         modifier = Modifier.fillMaxSize()
                     ) {
                         if (!isSearching) {
-                            items(rootFolders, key = { it.folder.id }) { folderWithCount ->
+                            items(rootFolders, key = { "folder_${it.folder.id}" }) { folderWithCount ->
                                 FolderListItem(
                                     folderWithCount = folderWithCount,
                                     onClick = { onNavigateToFolder(folderWithCount.folder.id) },
@@ -178,7 +178,7 @@ fun NotesListScreen(
                                 )
                             }
                         }
-                        items(displayNotes, key = { it.id }) { note ->
+                        items(displayNotes, key = { "note_${it.id}" }) { note ->
                             NoteListItem(
                                 note = note,
                                 isSelectMode = isSelectMode,
