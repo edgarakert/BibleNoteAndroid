@@ -26,6 +26,7 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -53,11 +54,6 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.edgarakert.biblenote.R
-import ru.edgarakert.biblenote.ui.theme.Amber
-import ru.edgarakert.biblenote.ui.theme.CardSurface
-import ru.edgarakert.biblenote.ui.theme.Ink
-import ru.edgarakert.biblenote.ui.theme.Parchment
-import ru.edgarakert.biblenote.ui.theme.WarmGray
 
 private fun buildDemoAnnotatedString(
     highlight: Boolean,
@@ -87,7 +83,7 @@ fun OnboardingScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Parchment)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             HorizontalPager(
@@ -145,7 +141,10 @@ private fun PageDotsView(count: Int, current: Int) {
                     .height(7.dp)
                     .width(width)
                     .clip(RoundedCornerShape(50))
-                    .background(if (isActive) Amber else Amber.copy(alpha = 0.25f))
+                    .background(
+                        if (isActive) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+                    )
             )
         }
     }
@@ -157,7 +156,7 @@ private fun OnboardingButton(text: String, onClick: () -> Unit) {
         onClick = onClick,
         shape = RoundedCornerShape(14.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = Amber,
+            containerColor = MaterialTheme.colorScheme.primary,
             contentColor = Color.White
         ),
         modifier = Modifier.fillMaxWidth()
@@ -185,19 +184,19 @@ private fun OnboardingSlide1() {
             text = stringResource(R.string.onboarding_slide1_title),
             fontFamily = FontFamily.Serif,
             fontSize = 30.sp,
-            color = Ink
+            color = MaterialTheme.colorScheme.onSurface
         )
         Text(
             text = stringResource(R.string.onboarding_slide1_subtitle),
             fontFamily = FontFamily.Serif,
             fontSize = 16.sp,
-            color = Amber,
+            color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(top = 8.dp)
         )
         Text(
             text = stringResource(R.string.onboarding_slide1_body),
             fontSize = 14.sp,
-            color = WarmGray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             lineHeight = 20.sp,
             modifier = Modifier.padding(top = 20.dp)
@@ -217,6 +216,9 @@ private fun OnboardingSlide2() {
         highlightVisible = true
     }
 
+    val amber = MaterialTheme.colorScheme.primary
+    val ink = MaterialTheme.colorScheme.onSurface
+
     SlideLayout(
         icon = Icons.Outlined.Search,
         appeared = appeared,
@@ -226,12 +228,12 @@ private fun OnboardingSlide2() {
             text = stringResource(R.string.onboarding_slide2_title),
             fontFamily = FontFamily.Serif,
             fontSize = 30.sp,
-            color = Ink
+            color = MaterialTheme.colorScheme.onSurface
         )
         Text(
             text = stringResource(R.string.onboarding_slide2_body),
             fontSize = 14.sp,
-            color = WarmGray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             lineHeight = 20.sp,
             modifier = Modifier.padding(top = 14.dp)
@@ -239,21 +241,21 @@ private fun OnboardingSlide2() {
         val prefix = stringResource(R.string.onboarding_slide2_demo_prefix)
         val ref = stringResource(R.string.onboarding_slide2_demo_ref)
         val suffix = stringResource(R.string.onboarding_slide2_demo_suffix)
-        val demoText = remember(highlightVisible, prefix, ref, suffix) {
-            buildDemoAnnotatedString(highlightVisible, prefix, ref, suffix, Amber, Ink)
+        val demoText = remember(highlightVisible, prefix, ref, suffix, amber, ink) {
+            buildDemoAnnotatedString(highlightVisible, prefix, ref, suffix, amber, ink)
         }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 28.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(CardSurface)
+                .background(MaterialTheme.colorScheme.surface)
                 .padding(14.dp)
         ) {
             Text(
                 text = stringResource(R.string.onboarding_slide2_demo_label).uppercase(),
                 fontSize = 11.sp,
-                color = WarmGray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 letterSpacing = 0.6.sp
             )
             Text(
@@ -280,13 +282,13 @@ private fun OnboardingSlide3() {
             text = stringResource(R.string.onboarding_slide3_title),
             fontFamily = FontFamily.Serif,
             fontSize = 30.sp,
-            color = Ink
+            color = MaterialTheme.colorScheme.onSurface
         )
         Text(
             text = stringResource(R.string.onboarding_slide3_body),
             fontFamily = FontFamily.Serif,
             fontSize = 14.sp,
-            color = WarmGray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             lineHeight = 20.sp,
             modifier = Modifier.padding(top = 14.dp)
@@ -319,7 +321,7 @@ private fun SlideLayout(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = Amber,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
                     .size(88.dp)
                     .padding(bottom = iconBottomPadding)

@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -45,10 +46,6 @@ import ru.edgarakert.biblenote.ui.screens.settings.AboutScreen
 import ru.edgarakert.biblenote.ui.screens.settings.BibleThemeSettingsScreen
 import ru.edgarakert.biblenote.ui.screens.settings.SettingsScreen
 import ru.edgarakert.biblenote.ui.screens.settings.TranslationSettingsScreen
-import ru.edgarakert.biblenote.ui.theme.Amber
-import ru.edgarakert.biblenote.ui.theme.Hairline
-import ru.edgarakert.biblenote.ui.theme.Parchment
-import ru.edgarakert.biblenote.ui.theme.WarmGray
 
 private enum class TopLevelRoute(
     val graphRoute: String,
@@ -85,7 +82,7 @@ fun AppNavHost() {
 
     Scaffold(
         bottomBar = {
-            NavigationBar(containerColor = Parchment) {
+            NavigationBar(containerColor = MaterialTheme.colorScheme.background) {
                 TopLevelRoute.entries.forEach { tab ->
                     val selected =
                         currentDestination?.hierarchy?.any { it.route == tab.graphRoute } == true
@@ -108,11 +105,11 @@ fun AppNavHost() {
                         },
                         label = { Text(stringResource(tab.labelRes)) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = Amber,
-                            selectedTextColor = Amber,
-                            unselectedIconColor = WarmGray,
-                            unselectedTextColor = WarmGray,
-                            indicatorColor = Hairline
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            indicatorColor = MaterialTheme.colorScheme.outline
                         )
                     )
                 }

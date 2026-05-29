@@ -24,10 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.edgarakert.biblenote.R
 import ru.edgarakert.biblenote.data.db.FolderWithCount
-import ru.edgarakert.biblenote.ui.theme.Amber
-import ru.edgarakert.biblenote.ui.theme.CardSurface
-import ru.edgarakert.biblenote.ui.theme.Ink
-import ru.edgarakert.biblenote.ui.theme.WarmGray
 
 @Composable
 fun FolderRow(
@@ -37,14 +33,14 @@ fun FolderRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(CardSurface, RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
             .padding(horizontal = 15.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = Icons.Filled.Folder,
             contentDescription = null,
-            tint = Amber,
+            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(22.dp)
         )
 
@@ -54,7 +50,7 @@ fun FolderRow(
             Text(
                 text = folderWithCount.folder.name,
                 style = MaterialTheme.typography.titleLarge.copy(fontSize = 17.sp),
-                color = Ink,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -66,7 +62,7 @@ fun FolderRow(
                     folderWithCount.noteCount
                 ),
                 style = MaterialTheme.typography.labelSmall,
-                color = WarmGray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

@@ -49,6 +49,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,13 +67,6 @@ import org.koin.androidx.compose.koinViewModel
 import ru.edgarakert.biblenote.R
 import ru.edgarakert.biblenote.data.bible.HighlightColor
 import ru.edgarakert.biblenote.ui.components.BibleVerse
-import ru.edgarakert.biblenote.ui.theme.Amber
-import ru.edgarakert.biblenote.ui.theme.AmberSoft
-import ru.edgarakert.biblenote.ui.theme.CardSurface
-import ru.edgarakert.biblenote.ui.theme.Ink
-import ru.edgarakert.biblenote.ui.theme.Parchment
-import ru.edgarakert.biblenote.ui.theme.WarmGray
-import androidx.compose.runtime.LaunchedEffect
 import ru.edgarakert.biblenote.ui.viewmodels.BibleReaderViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -122,13 +116,13 @@ fun BibleReaderScreen(
                         Text(
                             text = "${uiState.bookName} ${uiState.chapter}",
                             style = MaterialTheme.typography.titleMedium,
-                            color = Ink
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.width(2.dp))
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowDown,
                             contentDescription = null,
-                            tint = Amber,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -142,10 +136,10 @@ fun BibleReaderScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Parchment)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
-        containerColor = Parchment
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Box(
             modifier = Modifier
@@ -155,7 +149,7 @@ fun BibleReaderScreen(
             when {
                 uiState.isLoading -> {
                     CircularProgressIndicator(
-                        color = Amber,
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
@@ -245,7 +239,7 @@ private fun EmptyStateContent(modifier: Modifier = Modifier) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.MenuOpen,
             contentDescription = null,
-            tint = AmberSoft,
+            tint = MaterialTheme.colorScheme.primaryContainer,
             modifier = Modifier.size(40.dp)
         )
         Spacer(modifier = Modifier.height(14.dp))
@@ -253,7 +247,7 @@ private fun EmptyStateContent(modifier: Modifier = Modifier) {
             text = stringResource(R.string.verse_not_found),
             style = MaterialTheme.typography.bodyLarge,
             fontFamily = FontFamily.Serif,
-            color = WarmGray
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -278,12 +272,12 @@ private fun ChapterNavBar(
                 onClick = onPrev,
                 modifier = Modifier
                     .size(48.dp)
-                    .background(CardSurface, CircleShape)
+                    .background(MaterialTheme.colorScheme.surface, CircleShape)
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                     contentDescription = null,
-                    tint = Amber,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -296,12 +290,12 @@ private fun ChapterNavBar(
                 onClick = onNext,
                 modifier = Modifier
                     .size(48.dp)
-                    .background(CardSurface, CircleShape)
+                    .background(MaterialTheme.colorScheme.surface, CircleShape)
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
-                    tint = Amber,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -322,7 +316,7 @@ private fun VerseActionBar(
 ) {
     Surface(
         shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-        color = CardSurface,
+        color = MaterialTheme.colorScheme.surface,
         tonalElevation = 4.dp,
         modifier = Modifier
             .fillMaxWidth()
@@ -333,14 +327,17 @@ private fun VerseActionBar(
                 Box(
                     modifier = Modifier
                         .size(28.dp)
-                        .background(WarmGray.copy(alpha = 0.1f), CircleShape)
+                        .background(
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f),
+                            CircleShape
+                        )
                         .clickable(onClick = onDismiss),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = null,
-                        tint = WarmGray,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -352,14 +349,14 @@ private fun VerseActionBar(
                         selectedCount
                     ),
                     style = MaterialTheme.typography.labelMedium,
-                    color = WarmGray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 IconButton(onClick = onCopy) {
                     Icon(
                         imageVector = Icons.Default.ContentCopy,
                         contentDescription = null,
-                        tint = Amber
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -419,7 +416,7 @@ private fun TranslationMenu(
             Text(
                 text = translationShortName(selectedTranslation),
                 style = MaterialTheme.typography.labelMedium,
-                color = Amber
+                color = MaterialTheme.colorScheme.primary
             )
         }
         DropdownMenu(
@@ -434,12 +431,12 @@ private fun TranslationMenu(
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = null,
-                                    tint = Amber,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                             }
-                            Text(translationDisplayName(t), color = Ink)
+                            Text(translationDisplayName(t), color = MaterialTheme.colorScheme.onSurface)
                         }
                     },
                     onClick = {

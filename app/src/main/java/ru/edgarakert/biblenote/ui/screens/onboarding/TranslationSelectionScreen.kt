@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,12 +48,6 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 import ru.edgarakert.biblenote.R
-import ru.edgarakert.biblenote.ui.theme.Amber
-import ru.edgarakert.biblenote.ui.theme.CardSurface
-import ru.edgarakert.biblenote.ui.theme.Hairline
-import ru.edgarakert.biblenote.ui.theme.Ink
-import ru.edgarakert.biblenote.ui.theme.Parchment
-import ru.edgarakert.biblenote.ui.theme.WarmGray
 import ru.edgarakert.biblenote.ui.viewmodels.SettingsViewModel
 
 @Composable
@@ -75,7 +70,7 @@ fun TranslationSelectionScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Parchment)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             AnimatedVisibility(
@@ -94,7 +89,7 @@ fun TranslationSelectionScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Outlined.MenuBook,
                         contentDescription = null,
-                        tint = Amber,
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
                             .padding(bottom = 8.dp)
                             .size(48.dp)
@@ -103,12 +98,12 @@ fun TranslationSelectionScreen(
                         text = stringResource(R.string.translations_select_title),
                         fontFamily = FontFamily.Serif,
                         fontSize = 26.sp,
-                        color = Ink
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = stringResource(R.string.translations_select_subtitle),
                         fontSize = 13.sp,
-                        color = WarmGray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
                         lineHeight = 18.sp,
                         modifier = Modifier
@@ -128,7 +123,7 @@ fun TranslationSelectionScreen(
                         Text(
                             text = stringResource(group.titleResId).uppercase(),
                             fontSize = 11.sp,
-                            color = WarmGray,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             letterSpacing = 0.8.sp,
                             modifier = Modifier
                                 .padding(horizontal = 4.dp, vertical = 8.dp)
@@ -170,9 +165,9 @@ fun TranslationSelectionScreen(
                     enabled = selected.isNotEmpty(),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Amber,
+                        containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = Color.White,
-                        disabledContainerColor = Amber.copy(alpha = 0.35f),
+                        disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
                         disabledContentColor = Color.White
                     ),
                     modifier = Modifier
@@ -204,11 +199,11 @@ private fun TranslationCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(CardSurface)
+            .background(MaterialTheme.colorScheme.surface)
             .then(
                 if (isSelected) Modifier.border(
                     1.5.dp,
-                    Amber.copy(alpha = 0.45f),
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.45f),
                     RoundedCornerShape(12.dp)
                 )
                 else Modifier
@@ -221,12 +216,12 @@ private fun TranslationCard(
                 text = name,
                 fontFamily = FontFamily.Serif,
                 fontSize = 16.sp,
-                color = Ink
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = subtitle,
                 fontSize = 12.sp,
-                color = WarmGray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 2.dp)
             )
         }
@@ -237,18 +232,21 @@ private fun TranslationCard(
                 .clip(CircleShape)
                 .border(
                     width = 2.dp,
-                    color = if (isSelected) Amber else Hairline,
+                    color = if (isSelected) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.outline,
                     shape = CircleShape
                 )
                 .then(
-                    if (isSelected) Modifier.background(Amber.copy(alpha = 0.15f)) else Modifier
+                    if (isSelected) Modifier.background(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                    ) else Modifier
                 )
         ) {
             if (isSelected) {
                 Icon(
                     imageVector = Icons.Filled.Check,
                     contentDescription = null,
-                    tint = Amber,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(12.dp)
                 )
             }

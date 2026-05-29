@@ -12,6 +12,7 @@ import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.widget.EditText
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
@@ -21,9 +22,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.viewinterop.AndroidView
 import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.bible.BibleReferenceParser
-import ru.edgarakert.biblenote.ui.theme.Amber
-import ru.edgarakert.biblenote.ui.theme.Ink
-import ru.edgarakert.biblenote.ui.theme.WarmGray
 
 @SuppressLint("ClickableViewAccessibility")
 @Composable
@@ -35,17 +33,19 @@ fun BibleEditText(
     modifier: Modifier = Modifier,
     placeholder: String = "",
 ) {
-    val amberArgb = Amber.toArgb()
-    val inkArgb = Ink.toArgb()
-    val hintArgb = WarmGray.copy(alpha = 0.6f).toArgb()
+    val amberArgb = MaterialTheme.colorScheme.primary.toArgb()
+    val inkArgb = MaterialTheme.colorScheme.onSurface.toArgb()
+    val hintArgb = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f).toArgb()
 
     val onTextChangedState = rememberUpdatedState(onTextChanged)
     val onReferenceTappedState = rememberUpdatedState(onReferenceTapped)
 
-    // flag to suppress TextWatcher during programmatic setText
     val isProgrammatic = remember { BooleanArray(1) { false } }
     val handler = remember { Handler(Looper.getMainLooper()) }
     val pendingHighlight = remember { arrayOfNulls<Runnable>(1) }
+    // Mutable color refs so theme changes propagate into TextWatcher closures
+    val currentAmberArgb = remember { intArrayOf(amberArgb) }
+    val currentInkArgb = remember { intArrayOf(inkArgb) }
 
     DisposableEffect(Unit) {
         onDispose { pendingHighlight[0]?.let { handler.removeCallbacks(it) } }
@@ -55,7 +55,7 @@ fun BibleEditText(
         factory = { context ->
             EditText(context).apply {
                 background = null
-                setTextColor(inkArgb)
+                setTextColor(currentInkArgb[0])
                 textSize = 17f
                 typeface = Typeface.SERIF
                 hint = placeholder
@@ -111,7 +111,12 @@ fun BibleEditText(
                         onTextChangedState.value(newText)
                         pendingHighlight[0]?.let { handler.removeCallbacks(it) }
                         val runnable = Runnable {
-                            applyHighlighting(this@apply, parser, amberArgb, inkArgb)
+                            applyHighlighting(
+                                this@apply,
+                                parser,
+                                currentAmberArgb[0],
+                                currentInkArgb[0]
+                            )
                         }
                         pendingHighlight[0] = runnable
                         handler.postDelayed(runnable, 400)
@@ -136,6 +141,15 @@ fun BibleEditText(
             }
         },
         update = { editText ->
+            val colorsChanged = currentAmberArgb[0] != amberArgb || currentInkArgb[0] != inkArgb
+            currentAmberArgb[0] = amberArgb
+            currentInkArgb[0] = inkArgb
+
+            if (colorsChanged) {
+                editText.setTextColor(inkArgb)
+                editText.setHintTextColor(hintArgb)
+            }
+
             if (editText.text.toString() != text) {
                 isProgrammatic[0] = true
                 try {
@@ -145,6 +159,8 @@ fun BibleEditText(
                 } finally {
                     isProgrammatic[0] = false
                 }
+            } else if (colorsChanged) {
+                applyHighlighting(editText, parser, amberArgb, inkArgb)
             }
         },
         modifier = modifier

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -12,8 +13,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.edgarakert.biblenote.data.bible.HighlightColor
-import ru.edgarakert.biblenote.ui.theme.Amber
-import ru.edgarakert.biblenote.ui.theme.Ink
 
 @Composable
 fun BibleVerse(
@@ -27,7 +26,7 @@ fun BibleVerse(
     val textSizeSp = (17f * verseScale).sp
     val numSizeSp = ((17f * verseScale) - 2f).coerceAtLeast(10f).sp
     val bgColor = when {
-        isSelected -> Amber.copy(alpha = 0.2f)
+        isSelected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
         else -> highlightColor?.lightColor ?: Color.Transparent
     }
 
@@ -41,13 +40,13 @@ fun BibleVerse(
         Text(
             text = "$verseNumber",
             fontSize = numSizeSp,
-            color = Amber,
+            color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(start = 24.dp, end = 12.dp)
         )
         Text(
             text = text,
             fontSize = textSizeSp,
-            color = Ink,
+            color = MaterialTheme.colorScheme.onSurface,
             lineHeight = textSizeSp * 1.15f,
             modifier = Modifier
                 .weight(1f)

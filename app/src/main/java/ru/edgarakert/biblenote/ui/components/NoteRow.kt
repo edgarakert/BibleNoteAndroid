@@ -28,10 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.edgarakert.biblenote.R
 import ru.edgarakert.biblenote.data.db.Note
-import ru.edgarakert.biblenote.ui.theme.Amber
-import ru.edgarakert.biblenote.ui.theme.CardSurface
-import ru.edgarakert.biblenote.ui.theme.Ink
-import ru.edgarakert.biblenote.ui.theme.WarmGray
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -45,7 +41,8 @@ fun NoteRow(
     isSelected: Boolean = false
 ) {
     val iconTint by animateColorAsState(
-        targetValue = if (isSelected) Amber else WarmGray.copy(alpha = 0.5f),
+        targetValue = if (isSelected) MaterialTheme.colorScheme.primary
+                      else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
         animationSpec = tween(150),
         label = "select_tint"
     )
@@ -53,7 +50,7 @@ fun NoteRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(CardSurface, RoundedCornerShape(12.dp)),
+            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp)),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (isSelectMode) {
@@ -75,7 +72,8 @@ fun NoteRow(
             Text(
                 text = note.title.ifEmpty { stringResource(R.string.notes_untitled) },
                 style = MaterialTheme.typography.titleLarge.copy(fontSize = 17.sp),
-                color = if (note.title.isEmpty()) WarmGray else Ink,
+                color = if (note.title.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant
+                        else MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -85,7 +83,7 @@ fun NoteRow(
                 Text(
                     text = note.content.take(100),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = WarmGray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -96,7 +94,7 @@ fun NoteRow(
             Text(
                 text = formattedDate,
                 style = MaterialTheme.typography.labelSmall,
-                color = Amber
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }
