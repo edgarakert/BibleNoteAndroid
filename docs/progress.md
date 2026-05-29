@@ -125,8 +125,22 @@
 
 **Следующий шаг:** Фаза 8 — Навигация (BottomNavigation, TabBar, интеграция всех экранов).
 
-## Фаза 8 — Навигация
-_Не начата_
+## Фаза 8 — Навигация ✅
+
+### 2026-05-29
+- [x] `ui/navigation/NavGraph.kt` — `AppNavHost` composable: Scaffold + NavigationBar (3 вкладки) + NavHost с nested graphs (notes_graph / bible_graph / settings_graph)
+- [x] `BottomNavigation` — Material 3 `NavigationBar`; цвета: selected=Amber, unselected=WarmGray, indicator=Hairline, background=Parchment; selected state через `NavDestination.hierarchy`
+- [x] `notes_graph` — notes + editor/{noteId} (back stack isolation, saveState/restoreState)
+- [x] `bible_graph` — bible (нормальная загрузка из DataStore) + bible_at/{bookId}/{chapter} (cross-tab deep navigation)
+- [x] `settings_graph` — settings + settings/theme + settings/translations + settings/about; settingsVm hoisted до NavGraph scope (shared instance)
+- [x] Связь шторки → Библия: route args `"bible_at/{bookId}/{chapter}"` вместо event bus; `BibleReaderScreen` получает `pendingBookId/pendingChapter`, проверяет отличие от текущего состояния ViewModel перед вызовом `navigateTo`
+- [x] `NoteEditorScreen` — добавлен `onOpenChapter: (BibleReference) -> Unit = {}` параметр
+- [x] `MainActivity.kt` — упрощён: делегирует в `AppNavHost()` из NavGraph.kt
+- [x] `strings.xml` / `values-ru/strings.xml` — `tab_notes`, `tab_bible`, `tab_settings`
+- [x] Ревью субагент: исправлены все HIGH (StateFlow-event-bus → route args, timing gap → route args, ViewModel scope)
+- [x] Сборка: `compileDebugKotlin` — BUILD SUCCESSFUL (без предупреждений)
+
+**Следующий шаг:** Фаза 9 — Папки (FolderScreen, MoveFolderScreen).
 
 ## Фаза 9 — Папки
 _Не начата_

@@ -60,6 +60,7 @@ import ru.edgarakert.biblenote.ui.viewmodels.NoteEditorViewModel
 fun NoteEditorScreen(
     noteId: Long,
     onBack: () -> Unit,
+    onOpenChapter: (BibleReference) -> Unit = {},
     viewModel: NoteEditorViewModel = koinViewModel(parameters = { parametersOf(noteId) })
 ) {
     val title by viewModel.title.collectAsStateWithLifecycle()
@@ -222,7 +223,10 @@ fun NoteEditorScreen(
         BibleVerseSheet(
             reference = ref,
             onDismiss = { tappedReference = null },
-            onOpenChapter = { tappedReference = null }
+            onOpenChapter = { ref ->
+                tappedReference = null
+                onOpenChapter(ref)
+            }
         )
     }
 }

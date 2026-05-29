@@ -110,4 +110,9 @@
     <string name="translations_select_title">Choose Translations</string>
     <string name="translations_select_subtitle">Select the Bible translations you want to use. You can change this later in Settings.</string>
     <string name="translations_select_continue">Continue</string>
+
+    <!-- Bottom navigation tabs -->
+    <string name="tab_notes">Notes</string>
+    <string name="tab_bible">Bible</string>
+    <string name="tab_settings">Settings</string>
 </resources>

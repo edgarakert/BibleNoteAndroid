@@ -72,14 +72,27 @@ import ru.edgarakert.biblenote.ui.theme.CardSurface
 import ru.edgarakert.biblenote.ui.theme.Ink
 import ru.edgarakert.biblenote.ui.theme.Parchment
 import ru.edgarakert.biblenote.ui.theme.WarmGray
+import androidx.compose.runtime.LaunchedEffect
 import ru.edgarakert.biblenote.ui.viewmodels.BibleReaderViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BibleReaderScreen(
+    pendingBookId: Int = -1,
+    pendingChapter: Int = -1,
     viewModel: BibleReaderViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(pendingBookId, pendingChapter) {
+        if (pendingBookId > 0 && pendingChapter > 0) {
+            val current = viewModel.uiState.value
+            if (current.bookId != pendingBookId || current.chapter != pendingChapter) {
+                viewModel.navigateTo(pendingBookId, pendingChapter)
+            }
+        }
+    }
+
     val context = LocalContext.current
     var showingPicker by remember { mutableStateOf(false) }
     val activeHighlight = remember(uiState.selectedVerseNumbers, uiState.highlights) {
@@ -149,9 +162,11 @@ fun BibleReaderScreen(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
+
                 uiState.verses.isEmpty() -> {
                     EmptyStateContent(modifier = Modifier.align(Alignment.Center))
                 }
+
                 else -> {
                     VersesContent(
                         uiState = uiState,
@@ -342,7 +357,11 @@ private fun VerseActionBar(
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = pluralStringResource(R.plurals.bible_verse_count, selectedCount, selectedCount),
+                    text = pluralStringResource(
+                        R.plurals.bible_verse_count,
+                        selectedCount,
+                        selectedCount
+                    ),
                     style = MaterialTheme.typography.labelMedium,
                     color = WarmGray
                 )
@@ -461,16 +480,16 @@ private fun copyToClipboard(context: Context, text: String) {
 
 private fun translationDisplayName(translation: String) = when (translation) {
     "synodal" -> "Синодальный"
-    "nrt"     -> "NRT"
-    "kjv"     -> "KJV"
-    "niv"     -> "NIV"
-    else      -> translation.uppercase()
+    "nrt" -> "NRT"
+    "kjv" -> "KJV"
+    "niv" -> "NIV"
+    else -> translation.uppercase()
 }
 
 private fun translationShortName(translation: String) = when (translation) {
     "synodal" -> "Синод."
-    "nrt"     -> "NRT"
-    "kjv"     -> "KJV"
-    "niv"     -> "NIV"
-    else      -> translation.uppercase()
+    "nrt" -> "NRT"
+    "kjv" -> "KJV"
+    "niv" -> "NIV"
+    else -> translation.uppercase()
 }

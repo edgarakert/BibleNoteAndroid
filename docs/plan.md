@@ -75,9 +75,9 @@
 - [ ] SettingsViewModel
 
 ### Фаза 8 — Навигация
-- [ ] BottomNavigation (3 вкладки: Заметки, Библия, Настройки)
-- [ ] NavGraph: вложенные графы для каждой вкладки
-- [ ] Связь шторки стиха с вкладкой Библии (через shared state / NavigationViewModel)
+- [x] BottomNavigation (3 вкладки: Заметки, Библия, Настройки)
+- [x] NavGraph: вложенные графы для каждой вкладки
+- [x] Связь шторки стиха с вкладкой Библии (через route arguments "bible_at/{bookId}/{chapter}")
 
 ### Фаза 9 — Папки
 - [ ] FolderScreen (список заметок внутри папки)
