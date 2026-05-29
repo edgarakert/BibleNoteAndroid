@@ -34,6 +34,7 @@ import org.koin.core.parameter.parametersOf
 import ru.edgarakert.biblenote.R
 import ru.edgarakert.biblenote.ui.screens.bible.BibleReaderScreen
 import ru.edgarakert.biblenote.ui.screens.editor.NoteEditorScreen
+import ru.edgarakert.biblenote.ui.screens.notes.FolderScreen
 import ru.edgarakert.biblenote.ui.screens.notes.NotesListScreen
 import ru.edgarakert.biblenote.ui.screens.settings.AboutScreen
 import ru.edgarakert.biblenote.ui.screens.settings.BibleThemeSettingsScreen
@@ -117,7 +118,8 @@ fun AppNavHost() {
             navigation(route = "notes_graph", startDestination = "notes") {
                 composable("notes") {
                     NotesListScreen(
-                        onNavigateToNote = { noteId -> navController.navigate("editor/$noteId") }
+                        onNavigateToNote = { noteId -> navController.navigate("editor/$noteId") },
+                        onNavigateToFolder = { folderId -> navController.navigate("folder/$folderId") }
                     )
                 }
                 composable(
@@ -138,6 +140,19 @@ fun AppNavHost() {
                             }
                         },
                         viewModel = koinViewModel(parameters = { parametersOf(noteId) })
+                    )
+                }
+                composable(
+                    route = "folder/{folderId}",
+                    arguments = listOf(navArgument("folderId") { type = NavType.LongType })
+                ) { backStackEntry ->
+                    val folderId = backStackEntry.arguments?.getLong("folderId") ?: return@composable
+                    FolderScreen(
+                        folderId = folderId,
+                        onBack = { navController.popBackStack() },
+                        onNavigateToNote = { noteId -> navController.navigate("editor/$noteId") },
+                        onNavigateToFolder = { subFolderId -> navController.navigate("folder/$subFolderId") },
+                        viewModel = koinViewModel(parameters = { parametersOf(folderId) })
                     )
                 }
             }

@@ -142,8 +142,23 @@
 
 **Следующий шаг:** Фаза 9 — Папки (FolderScreen, MoveFolderScreen).
 
-## Фаза 9 — Папки
-_Не начата_
+## Фаза 9 — Папки ✅
+
+### 2026-05-29
+- [x] `NoteDao.kt` — добавлен `updateFolderIds(ids, folderId?)` для перемещения заметок
+- [x] `FolderDao.kt` — добавлены `observeSubfoldersWithCount(parentId)`, `observeAllFolders()`, `observeById(id)` (reactive Flow)
+- [x] `NoteRepository.kt` — добавлены `getFolderById`, `observeFolderById`, `observeSubfoldersWithCount`, `observeAllFolders`, `moveNotesToFolder`
+- [x] `NotesViewModel.kt` — добавлены `allFolders`, `moveSelectedNotes`, `createFolderAndMoveSelected`; `onMove` в SelectionActionBar теперь работает
+- [x] `FolderViewModel.kt` — новый ViewModel: `folder` как реактивный StateFlow (observeById), `notes`, `subfolders`, `allFolders`; CRUD: createNote, deleteNote/selected, moveSelected, createSubfolder, renameFolder, deleteSubfolder, deleteThisFolder
+- [x] `MoveFolderSheet.kt` — ModalBottomSheet: «Без папки» + корневые папки + подпапки с отступом + «Новая папка»
+- [x] `FolderScreen.kt` — TopAppBar (back, +, меню: rename/new subfolder/select/delete), LazyColumn (subfolders + notes), SelectionActionBar, MoveFolderSheet, предупреждения о заметках при удалении папки
+- [x] `NavGraph.kt` — добавлен маршрут `folder/{folderId}`; `onNavigateToFolder` подключён
+- [x] `AppModule.kt` — зарегистрирован `FolderViewModel(folderId, repository)`
+- [x] `strings.xml` / `values-ru/strings.xml` — `folder_move_to`, `folder_no_folder`, `folder_subfolder_new`, `folder_delete_notes_warning`
+- [x] Ревью субагент: 3 HIGH исправлены (удалён default viewModel param → всегда из NavGraph; `deleteThisFolder` null guard; предупреждения о заметках в диалогах удаления); `_folder` → реактивный Flow
+- [x] Сборка: `compileDebugKotlin` — BUILD SUCCESSFUL (без ошибок)
+
+**Следующий шаг:** Фаза 10 — Полировка (иконка, локализация, edge-to-edge, анимации, тесты).
 
 ## Фаза 10 — Полировка
 _Не начата_

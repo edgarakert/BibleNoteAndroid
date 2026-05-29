@@ -21,13 +21,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.automirrored.filled.NoteAdd
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -41,8 +40,6 @@ import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberSwipeToDismissBoxState
@@ -62,7 +59,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 import ru.edgarakert.biblenote.R
+import ru.edgarakert.biblenote.data.db.Folder
 import ru.edgarakert.biblenote.data.db.FolderWithCount
 import ru.edgarakert.biblenote.data.db.Note
 import ru.edgarakert.biblenote.ui.components.FolderRow
@@ -74,28 +73,31 @@ import ru.edgarakert.biblenote.ui.theme.AmberSoft
 import ru.edgarakert.biblenote.ui.theme.Ink
 import ru.edgarakert.biblenote.ui.theme.Parchment
 import ru.edgarakert.biblenote.ui.theme.WarmGray
-import ru.edgarakert.biblenote.ui.viewmodels.NotesViewModel
+import ru.edgarakert.biblenote.ui.viewmodels.FolderViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NotesListScreen(
-    onNavigateToNote: (Long) -> Unit = {},
+fun FolderScreen(
+    folderId: Long,
+    onBack: () -> Unit,
+    onNavigateToNote: (Long) -> Unit,
     onNavigateToFolder: (Long) -> Unit = {},
-    viewModel: NotesViewModel = koinViewModel()
+    viewModel: FolderViewModel = koinViewModel(parameters = { parametersOf(folderId) })
 ) {
-    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val folder by viewModel.folder.collectAsStateWithLifecycle()
+    val notes by viewModel.notes.collectAsStateWithLifecycle()
+    val subfolders by viewModel.subfolders.collectAsStateWithLifecycle()
+    val allFolders by viewModel.allFolders.collectAsStateWithLifecycle()
     val isSelectMode by viewModel.isSelectMode.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
-    val rootFolders by viewModel.rootFolders.collectAsStateWithLifecycle()
-    val rootNotes by viewModel.rootNotes.collectAsStateWithLifecycle()
-    val searchResults by viewModel.searchResults.collectAsStateWithLifecycle()
-    val allFolders by viewModel.allFolders.collectAsStateWithLifecycle()
 
-    var isSearchActive by remember { mutableStateOf(false) }
+    val isSubfolder = folder?.parentId != null
+
     var showMoveSheet by remember { mutableStateOf(false) }
-    var showNewFolderDialog by remember { mutableStateOf(false) }
-    var newFolderName by remember { mutableStateOf("") }
-    var folderToRename by remember { mutableStateOf<FolderWithCount?>(null) }
+    var showNewSubfolderDialog by remember { mutableStateOf(false) }
+    var newSubfolderName by remember { mutableStateOf("") }
+    var showDeleteSelfDialog by remember { mutableStateOf(false) }
+    var folderToRename by remember { mutableStateOf<Folder?>(null) }
     var renameText by remember { mutableStateOf("") }
     var folderToDelete by remember { mutableStateOf<FolderWithCount?>(null) }
     var showDeleteSelectedConfirm by remember { mutableStateOf(false) }
@@ -103,28 +105,30 @@ fun NotesListScreen(
     LaunchedEffect(viewModel) {
         viewModel.navigateToNote.collect { id -> onNavigateToNote(id) }
     }
+    LaunchedEffect(viewModel) {
+        viewModel.navigateUp.collect { onBack() }
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = Parchment,
         topBar = {
-            if (isSearchActive) {
-                SearchTopBar(
-                    query = searchQuery,
-                    onQueryChange = viewModel::setSearchQuery,
-                    onClose = { isSearchActive = false; viewModel.setSearchQuery("") }
-                )
-            } else {
-                NotesTopBar(
-                    isSelectMode = isSelectMode,
-                    canEnterSelectMode = rootNotes.size > 1,
-                    onSearchClick = { isSearchActive = true },
-                    onCreateNote = viewModel::createNote,
-                    onNewFolder = { newFolderName = ""; showNewFolderDialog = true },
-                    onEnterSelectMode = viewModel::enterSelectMode,
-                    onCancelSelect = viewModel::exitSelectMode
-                )
-            }
+            FolderTopBar(
+                title = folder?.name ?: "",
+                isSelectMode = isSelectMode,
+                isSubfolder = isSubfolder,
+                canEnterSelectMode = notes.isNotEmpty(),
+                onBack = onBack,
+                onCreateNote = viewModel::createNote,
+                onEnterSelectMode = viewModel::enterSelectMode,
+                onCancelSelect = viewModel::exitSelectMode,
+                onRenameThis = {
+                    folderToRename = folder
+                    renameText = folder?.name ?: ""
+                },
+                onNewSubfolder = { newSubfolderName = ""; showNewSubfolderDialog = true },
+                onDeleteThis = { showDeleteSelfDialog = true }
+            )
         },
         bottomBar = {
             AnimatedVisibility(
@@ -140,71 +144,65 @@ fun NotesListScreen(
             }
         }
     ) { innerPadding ->
-        val isSearching = searchQuery.isNotBlank()
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            when {
-                isSearching && searchResults.isEmpty() -> EmptyState(
-                    icon = { Icon(Icons.Filled.Search, null, tint = AmberSoft, modifier = Modifier.size(48.dp)) },
-                    message = stringResource(R.string.search_no_results)
-                )
-
-                !isSearching && rootFolders.isEmpty() && rootNotes.isEmpty() -> EmptyState(
-                    icon = { Icon(Icons.Filled.Edit, null, tint = AmberSoft, modifier = Modifier.size(48.dp)) },
-                    message = stringResource(R.string.notes_empty_state)
-                )
-
-                else -> {
-                    val displayNotes = if (isSearching) searchResults else rootNotes
-                    LazyColumn(
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(5.dp),
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        if (!isSearching) {
-                            items(rootFolders, key = { it.folder.id }) { folderWithCount ->
-                                FolderListItem(
-                                    folderWithCount = folderWithCount,
-                                    onClick = { onNavigateToFolder(folderWithCount.folder.id) },
-                                    onRename = {
-                                        folderToRename = folderWithCount
-                                        renameText = folderWithCount.folder.name
-                                    },
-                                    onDelete = { folderToDelete = folderWithCount }
-                                )
-                            }
-                        }
-                        items(displayNotes, key = { it.id }) { note ->
-                            NoteListItem(
-                                note = note,
-                                isSelectMode = isSelectMode,
-                                isSelected = note.id in selectedIds,
-                                onClick = {
-                                    if (isSelectMode) viewModel.toggleSelection(note.id)
-                                    else onNavigateToNote(note.id)
-                                },
-                                onDelete = { viewModel.deleteNote(note) }
+            val isEmpty = notes.isEmpty() && (isSubfolder || subfolders.isEmpty())
+            if (isEmpty) {
+                FolderEmptyState()
+            } else {
+                LazyColumn(
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(5.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    if (!isSubfolder) {
+                        items(subfolders, key = { it.folder.id }) { fwc ->
+                            SubfolderListItem(
+                                folderWithCount = fwc,
+                                onClick = { onNavigateToFolder(fwc.folder.id) },
+                                onRename = { folderToRename = fwc.folder; renameText = fwc.folder.name },
+                                onDelete = { folderToDelete = fwc }
                             )
                         }
+                    }
+                    items(notes, key = { it.id }) { note ->
+                        FolderNoteListItem(
+                            note = note,
+                            isSelectMode = isSelectMode,
+                            isSelected = note.id in selectedIds,
+                            onClick = {
+                                if (isSelectMode) viewModel.toggleSelection(note.id)
+                                else onNavigateToNote(note.id)
+                            },
+                            onDelete = { viewModel.deleteNote(note) }
+                        )
                     }
                 }
             }
         }
     }
 
-    if (showNewFolderDialog) {
+    if (showMoveSheet) {
+        MoveFolderSheet(
+            allFolders = allFolders,
+            onDismiss = { showMoveSheet = false },
+            onMove = { targetId -> viewModel.moveSelectedNotes(targetId); showMoveSheet = false },
+            onCreateFolderAndMove = { name -> viewModel.createFolderAndMoveSelected(name); showMoveSheet = false }
+        )
+    }
+
+    if (showNewSubfolderDialog) {
         AlertDialog(
-            onDismissRequest = { showNewFolderDialog = false },
+            onDismissRequest = { showNewSubfolderDialog = false },
             containerColor = Parchment,
-            title = { Text(stringResource(R.string.folder_new), color = Ink) },
+            title = { Text(stringResource(R.string.folder_subfolder_new), color = Ink) },
             text = {
                 OutlinedTextField(
-                    value = newFolderName,
-                    onValueChange = { newFolderName = it },
+                    value = newSubfolderName,
+                    onValueChange = { newSubfolderName = it },
                     placeholder = { Text(stringResource(R.string.folder_name_placeholder)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
@@ -213,15 +211,15 @@ fun NotesListScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        val trimmed = newFolderName.trim()
-                        if (trimmed.isNotEmpty()) viewModel.createFolder(trimmed)
-                        showNewFolderDialog = false
+                        val trimmed = newSubfolderName.trim()
+                        if (trimmed.isNotEmpty()) viewModel.createSubfolder(trimmed)
+                        showNewSubfolderDialog = false
                     },
-                    enabled = newFolderName.isNotBlank()
-                ) { Text(stringResource(R.string.common_save), color = Amber) }
+                    enabled = newSubfolderName.isNotBlank()
+                ) { Text(stringResource(R.string.folder_new), color = Amber) }
             },
             dismissButton = {
-                TextButton(onClick = { showNewFolderDialog = false }) {
+                TextButton(onClick = { showNewSubfolderDialog = false }) {
                     Text(stringResource(R.string.folder_cancel), color = WarmGray)
                 }
             }
@@ -246,7 +244,7 @@ fun NotesListScreen(
                 TextButton(
                     onClick = {
                         val trimmed = renameText.trim()
-                        if (trimmed.isNotEmpty()) viewModel.renameFolder(f.folder.id, trimmed)
+                        if (trimmed.isNotEmpty()) viewModel.renameFolder(f.id, trimmed)
                         folderToRename = null
                     },
                     enabled = renameText.isNotBlank()
@@ -260,18 +258,42 @@ fun NotesListScreen(
         )
     }
 
-    folderToDelete?.let { f ->
+    folderToDelete?.let { fwc ->
         AlertDialog(
             onDismissRequest = { folderToDelete = null },
             containerColor = Parchment,
-            title = { Text(stringResource(R.string.folder_delete_title, f.folder.name), color = Ink) },
+            title = { Text(stringResource(R.string.folder_delete_title, fwc.folder.name), color = Ink) },
+            text = if (fwc.noteCount > 0) {
+                { Text(stringResource(R.string.folder_delete_notes_warning), color = WarmGray) }
+            } else null,
             confirmButton = {
-                TextButton(onClick = { viewModel.deleteFolder(f.folder); folderToDelete = null }) {
+                TextButton(onClick = { viewModel.deleteSubfolder(fwc.folder); folderToDelete = null }) {
                     Text(stringResource(R.string.folder_delete_confirm), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { folderToDelete = null }) {
+                    Text(stringResource(R.string.folder_cancel), color = WarmGray)
+                }
+            }
+        )
+    }
+
+    if (showDeleteSelfDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteSelfDialog = false },
+            containerColor = Parchment,
+            title = { Text(stringResource(R.string.folder_delete_title, folder?.name ?: ""), color = Ink) },
+            text = if (notes.isNotEmpty()) {
+                { Text(stringResource(R.string.folder_delete_notes_warning), color = WarmGray) }
+            } else null,
+            confirmButton = {
+                TextButton(onClick = { viewModel.deleteThisFolder(); showDeleteSelfDialog = false }) {
+                    Text(stringResource(R.string.folder_delete_confirm), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteSelfDialog = false }) {
                     Text(stringResource(R.string.folder_cancel), color = WarmGray)
                 }
             }
@@ -296,37 +318,37 @@ fun NotesListScreen(
             }
         )
     }
-
-    if (showMoveSheet) {
-        MoveFolderSheet(
-            allFolders = allFolders,
-            onDismiss = { showMoveSheet = false },
-            onMove = { targetId -> viewModel.moveSelectedNotes(targetId); showMoveSheet = false },
-            onCreateFolderAndMove = { name -> viewModel.createFolderAndMoveSelected(name); showMoveSheet = false }
-        )
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun NotesTopBar(
+private fun FolderTopBar(
+    title: String,
     isSelectMode: Boolean,
+    isSubfolder: Boolean,
     canEnterSelectMode: Boolean,
-    onSearchClick: () -> Unit,
+    onBack: () -> Unit,
     onCreateNote: () -> Unit,
-    onNewFolder: () -> Unit,
     onEnterSelectMode: () -> Unit,
-    onCancelSelect: () -> Unit
+    onCancelSelect: () -> Unit,
+    onRenameThis: () -> Unit,
+    onNewSubfolder: () -> Unit,
+    onDeleteThis: () -> Unit
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
     TopAppBar(
         title = {
             Text(
-                text = stringResource(R.string.notes_title),
+                text = title,
                 style = MaterialTheme.typography.headlineMedium,
                 color = Ink
             )
+        },
+        navigationIcon = {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = Amber)
+            }
         },
         actions = {
             if (isSelectMode) {
@@ -334,25 +356,29 @@ private fun NotesTopBar(
                     Text(stringResource(R.string.folder_cancel), color = Amber)
                 }
             } else {
-                IconButton(onClick = onSearchClick) {
-                    Icon(Icons.Filled.Search, contentDescription = null, tint = Amber)
-                }
                 IconButton(onClick = onCreateNote) {
                     Icon(Icons.Filled.Add, contentDescription = null, tint = Amber)
                 }
                 Box {
                     IconButton(onClick = { menuExpanded = true }) {
-                        Icon(Icons.Filled.MoreVert, contentDescription = null, tint = Amber)
+                        Icon(Icons.Filled.MoreVert, contentDescription = null, tint = WarmGray)
                     }
                     DropdownMenu(
                         expanded = menuExpanded,
                         onDismissRequest = { menuExpanded = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.folder_new)) },
-                            leadingIcon = { Icon(Icons.Filled.Folder, null, tint = Amber) },
-                            onClick = { menuExpanded = false; onNewFolder() }
+                            text = { Text(stringResource(R.string.folder_rename)) },
+                            leadingIcon = { Icon(Icons.Filled.Edit, null, tint = Amber) },
+                            onClick = { menuExpanded = false; onRenameThis() }
                         )
+                        if (!isSubfolder) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.folder_subfolder_new)) },
+                                leadingIcon = { Icon(Icons.AutoMirrored.Filled.NoteAdd, null, tint = Amber) },
+                                onClick = { menuExpanded = false; onNewSubfolder() }
+                            )
+                        }
                         if (canEnterSelectMode) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.notes_select)) },
@@ -360,6 +386,11 @@ private fun NotesTopBar(
                                 onClick = { menuExpanded = false; onEnterSelectMode() }
                             )
                         }
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.folder_delete_confirm), color = MaterialTheme.colorScheme.error) },
+                            leadingIcon = { Icon(Icons.Filled.Delete, null, tint = MaterialTheme.colorScheme.error) },
+                            onClick = { menuExpanded = false; onDeleteThis() }
+                        )
                     }
                 }
             }
@@ -370,42 +401,7 @@ private fun NotesTopBar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SearchTopBar(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    onClose: () -> Unit
-) {
-    TopAppBar(
-        title = {
-            TextField(
-                value = query,
-                onValueChange = onQueryChange,
-                placeholder = { Text(stringResource(R.string.search_placeholder), color = WarmGray) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedTextColor = Ink,
-                    unfocusedTextColor = Ink,
-                    cursorColor = Amber
-                )
-            )
-        },
-        navigationIcon = {
-            IconButton(onClick = onClose) {
-                Icon(Icons.Filled.Close, contentDescription = null, tint = Amber)
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Parchment)
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun NoteListItem(
+private fun FolderNoteListItem(
     note: Note,
     isSelectMode: Boolean,
     isSelected: Boolean,
@@ -468,7 +464,7 @@ private fun NoteListItem(
 }
 
 @Composable
-private fun FolderListItem(
+private fun SubfolderListItem(
     folderWithCount: FolderWithCount,
     onClick: () -> Unit,
     onRename: () -> Unit,
@@ -507,19 +503,16 @@ private fun FolderListItem(
 }
 
 @Composable
-private fun EmptyState(
-    icon: @Composable () -> Unit,
-    message: String
-) {
+private fun FolderEmptyState() {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            icon()
+            Icon(Icons.AutoMirrored.Filled.NoteAdd, null, tint = AmberSoft, modifier = Modifier.size(48.dp))
             Spacer(Modifier.size(14.dp))
             Text(
-                text = message,
+                text = stringResource(R.string.notes_empty_state),
                 style = MaterialTheme.typography.bodyLarge,
                 color = WarmGray,
                 textAlign = TextAlign.Center,

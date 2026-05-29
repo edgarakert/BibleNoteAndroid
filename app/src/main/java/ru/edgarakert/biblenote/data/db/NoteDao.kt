@@ -32,4 +32,7 @@ interface NoteDao {
 
     @Query("DELETE FROM notes WHERE id IN (:ids)")
     suspend fun deleteByIds(ids: List<Long>)
+
+    @Query("UPDATE notes SET folderId = :folderId WHERE id IN (:ids)")
+    suspend fun updateFolderIds(ids: List<Long>, folderId: Long?)
 }

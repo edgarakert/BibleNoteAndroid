@@ -38,4 +38,16 @@ class NoteRepository(
     suspend fun deleteFolder(folder: Folder) = folderDao.delete(folder)
 
     suspend fun renameFolder(id: Long, name: String) = folderDao.rename(id, name)
+
+    suspend fun getFolderById(id: Long): Folder? = folderDao.getById(id)
+
+    fun observeFolderById(id: Long): Flow<Folder?> = folderDao.observeById(id)
+
+    fun observeSubfoldersWithCount(parentId: Long): Flow<List<FolderWithCount>> =
+        folderDao.observeSubfoldersWithCount(parentId)
+
+    fun observeAllFolders(): Flow<List<Folder>> = folderDao.observeAllFolders()
+
+    suspend fun moveNotesToFolder(noteIds: Set<Long>, folderId: Long?) =
+        noteDao.updateFolderIds(noteIds.toList(), folderId)
 }

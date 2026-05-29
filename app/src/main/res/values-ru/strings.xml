@@ -20,6 +20,10 @@
     <string name="folder_delete_confirm">Удалить</string>
     <string name="folder_delete_title">Удалить \"%s\"?</string>
     <string name="folder_move">Переместить</string>
+    <string name="folder_move_to">Переместить в папку</string>
+    <string name="folder_no_folder">Без папки</string>
+    <string name="folder_subfolder_new">Новая подпапка</string>
+    <string name="folder_delete_notes_warning">Заметки внутри будут перемещены в корневую папку.</string>
     <string name="folder_cancel">Отмена</string>
 
     <!-- Editor -->

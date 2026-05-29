@@ -20,6 +20,10 @@
     <string name="folder_delete_confirm">Delete</string>
     <string name="folder_delete_title">Delete \"%s\"?</string>
     <string name="folder_move">Move</string>
+    <string name="folder_move_to">Move to Folder</string>
+    <string name="folder_no_folder">No Folder</string>
+    <string name="folder_subfolder_new">New Subfolder</string>
+    <string name="folder_delete_notes_warning">Notes inside will be moved to the root folder.</string>
     <string name="folder_cancel">Cancel</string>
 
     <!-- Editor -->
