@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.BibleNote" parent="Base.Theme.BibleNote">
+        <item name="android:windowSplashScreenBackground">#F6EFE4</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">#F6EFE4</item>
+    </style>
+
+</resources>
