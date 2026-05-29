@@ -120,14 +120,14 @@ class BibleReferenceParserTest {
     }
 
     @Test
-    fun `parses RU numbered book 1 Кор`() {
+    fun `parses RU numbered book 1 Corinthians`() {
         val refs = parser.parse("1 Кор 3:16")
         assertEquals(1, refs.size)
         assertEquals(46, refs[0].bookId)
     }
 
     @Test
-    fun `parses RU Откр as Revelation`() {
+    fun `parses RU Revelations as Revelation`() {
         val refs = parser.parse("Откр 22:1")
         assertEquals(1, refs.size)
         assertEquals(66, refs[0].bookId)

@@ -17,19 +17,13 @@ class NoteRepository(
 
     fun searchNotes(query: String): Flow<List<Note>> = noteDao.search(query)
 
-    fun observeRootFolders(): Flow<List<Folder>> = folderDao.observeRootFolders()
-
     fun observeRootFoldersWithCount(): Flow<List<FolderWithCount>> = folderDao.observeRootFoldersWithCount()
-
-    fun observeSubfolders(parentId: Long): Flow<List<Folder>> = folderDao.observeSubfolders(parentId)
 
     suspend fun getNoteById(id: Long): Note? = noteDao.getById(id)
 
     suspend fun saveNote(note: Note): Long = noteDao.upsert(note)
 
     suspend fun deleteNote(note: Note) = noteDao.delete(note)
-
-    suspend fun deleteNoteById(id: Long) = noteDao.deleteById(id)
 
     suspend fun deleteNotesByIds(ids: Set<Long>) = noteDao.deleteByIds(ids.toList())
 
@@ -38,8 +32,6 @@ class NoteRepository(
     suspend fun deleteFolder(folder: Folder) = folderDao.delete(folder)
 
     suspend fun renameFolder(id: Long, name: String) = folderDao.rename(id, name)
-
-    suspend fun getFolderById(id: Long): Folder? = folderDao.getById(id)
 
     fun observeFolderById(id: Long): Flow<Folder?> = folderDao.observeById(id)
 
