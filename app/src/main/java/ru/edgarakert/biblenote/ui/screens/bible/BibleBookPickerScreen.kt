@@ -40,11 +40,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.edgarakert.biblenote.R
 import ru.edgarakert.biblenote.data.bible.Book
-import ru.edgarakert.biblenote.ui.theme.Amber
-import ru.edgarakert.biblenote.ui.theme.CardSurface
-import ru.edgarakert.biblenote.ui.theme.Hairline
-import ru.edgarakert.biblenote.ui.theme.Ink
-import ru.edgarakert.biblenote.ui.theme.Parchment
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,7 +64,7 @@ fun BibleBookPickerScreen(
                         text = selectedBook?.name(translation)
                             ?: stringResource(R.string.bible_picker_title),
                         style = MaterialTheme.typography.titleMedium,
-                        color = Ink
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 },
                 navigationIcon = {
@@ -79,14 +74,14 @@ fun BibleBookPickerScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null,
-                            tint = Amber
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Parchment)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
-        containerColor = Parchment
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         if (selectedBook == null) {
             BookListContent(
@@ -120,27 +115,23 @@ private fun BookListContent(
     modifier: Modifier = Modifier
 ) {
     LazyColumn(modifier = modifier.fillMaxSize()) {
-        item {
-            SectionHeader(stringResource(R.string.bible_old_testament))
-        }
+        item { SectionHeader(stringResource(R.string.bible_old_testament)) }
         items(oldTestament, key = { it.id }) { book ->
             BookRow(
                 name = book.name(translation),
                 isCurrent = book.id == currentBookId,
                 onClick = { onBookSelect(book) }
             )
-            HorizontalDivider(color = Hairline, thickness = 0.5.dp)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 0.5.dp)
         }
-        item {
-            SectionHeader(stringResource(R.string.bible_new_testament))
-        }
+        item { SectionHeader(stringResource(R.string.bible_new_testament)) }
         items(newTestament, key = { it.id }) { book ->
             BookRow(
                 name = book.name(translation),
                 isCurrent = book.id == currentBookId,
                 onClick = { onBookSelect(book) }
             )
-            HorizontalDivider(color = Hairline, thickness = 0.5.dp)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 0.5.dp)
         }
     }
 }
@@ -150,11 +141,11 @@ private fun SectionHeader(title: String) {
     Text(
         text = title.uppercase(),
         style = MaterialTheme.typography.labelSmall,
-        color = Amber,
+        color = MaterialTheme.colorScheme.primary,
         letterSpacing = 0.8.sp,
         modifier = Modifier
             .fillMaxWidth()
-            .background(Parchment)
+            .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 20.dp, vertical = 8.dp)
     )
 }
@@ -169,10 +160,10 @@ private fun BookRow(
         text = name,
         style = MaterialTheme.typography.bodyLarge,
         fontFamily = FontFamily.Serif,
-        color = if (isCurrent) Amber else Ink,
+        color = if (isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
         modifier = Modifier
             .fillMaxWidth()
-            .background(CardSurface)
+            .background(MaterialTheme.colorScheme.surface)
             .clickable(onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 14.dp)
     )
@@ -207,7 +198,8 @@ private fun ChapterGridContent(
                 modifier = Modifier
                     .aspectRatio(1f)
                     .background(
-                        color = if (isCurrent) Amber.copy(alpha = 0.12f) else CardSurface,
+                        color = if (isCurrent) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                                else MaterialTheme.colorScheme.surface,
                         shape = RoundedCornerShape(8.dp)
                     )
                     .clickable { onSelect(chapter) }
@@ -216,7 +208,8 @@ private fun ChapterGridContent(
                     text = "$chapter",
                     fontFamily = FontFamily.Serif,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (isCurrent) Amber else Ink
+                    color = if (isCurrent) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurface
                 )
             }
         }

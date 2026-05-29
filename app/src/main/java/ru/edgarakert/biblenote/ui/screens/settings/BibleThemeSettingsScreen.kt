@@ -15,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -37,11 +38,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import ru.edgarakert.biblenote.R
 import ru.edgarakert.biblenote.data.settings.SettingsRepository
-import ru.edgarakert.biblenote.ui.theme.Amber
-import ru.edgarakert.biblenote.ui.theme.CardSurface
-import ru.edgarakert.biblenote.ui.theme.Ink
-import ru.edgarakert.biblenote.ui.theme.Parchment
-import ru.edgarakert.biblenote.ui.theme.WarmGray
 import ru.edgarakert.biblenote.ui.viewmodels.SettingsViewModel
 import kotlin.math.roundToInt
 
@@ -72,13 +68,13 @@ fun BibleThemeSettingsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Parchment,
-                    titleContentColor = Ink,
-                    navigationIconContentColor = Ink
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         },
-        containerColor = Parchment
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -92,7 +88,7 @@ fun BibleThemeSettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .background(CardSurface)
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(16.dp)
             ) {
                 val modes = listOf(
@@ -110,11 +106,11 @@ fun BibleThemeSettingsScreen(
                                 count = modes.size
                             ),
                             colors = SegmentedButtonDefaults.colors(
-                                activeContainerColor = Amber.copy(alpha = 0.15f),
-                                activeContentColor = Amber,
-                                activeBorderColor = Amber,
-                                inactiveContainerColor = CardSurface,
-                                inactiveContentColor = WarmGray
+                                activeContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                activeContentColor = MaterialTheme.colorScheme.primary,
+                                activeBorderColor = MaterialTheme.colorScheme.primary,
+                                inactiveContainerColor = MaterialTheme.colorScheme.surface,
+                                inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         ) {
                             Text(text = label, fontSize = 13.sp)
@@ -131,7 +127,7 @@ fun BibleThemeSettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .background(CardSurface)
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(16.dp)
             ) {
                 Row(modifier = Modifier.fillMaxWidth()) {
@@ -139,7 +135,7 @@ fun BibleThemeSettingsScreen(
                         text = stringResource(R.string.settings_font_size_row),
                         fontFamily = FontFamily.Serif,
                         fontSize = 16.sp,
-                        color = Ink,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f)
                     )
                     Text(
@@ -147,7 +143,7 @@ fun BibleThemeSettingsScreen(
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
                         fontFamily = FontFamily.Monospace,
-                        color = WarmGray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Slider(
@@ -156,9 +152,9 @@ fun BibleThemeSettingsScreen(
                     valueRange = 0.8f..1.4f,
                     steps = 11,
                     colors = SliderDefaults.colors(
-                        thumbColor = Amber,
-                        activeTrackColor = Amber,
-                        inactiveTrackColor = Amber.copy(alpha = 0.25f)
+                        thumbColor = MaterialTheme.colorScheme.primary,
+                        activeTrackColor = MaterialTheme.colorScheme.primary,
+                        inactiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
                     ),
                     modifier = Modifier
                         .fillMaxWidth()

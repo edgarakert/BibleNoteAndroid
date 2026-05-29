@@ -49,10 +49,6 @@ import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.bible.BibleReferenceParser
 import ru.edgarakert.biblenote.ui.components.BibleEditText
 import ru.edgarakert.biblenote.ui.components.BibleVerseSheet
-import ru.edgarakert.biblenote.ui.theme.Amber
-import ru.edgarakert.biblenote.ui.theme.Ink
-import ru.edgarakert.biblenote.ui.theme.Parchment
-import ru.edgarakert.biblenote.ui.theme.WarmGray
 import ru.edgarakert.biblenote.ui.viewmodels.NoteEditorViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,7 +72,7 @@ fun NoteEditorScreen(
     }
 
     Scaffold(
-        containerColor = Parchment,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = {},
@@ -85,7 +81,7 @@ fun NoteEditorScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.editor_back),
-                            tint = WarmGray
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 },
@@ -95,7 +91,7 @@ fun NoteEditorScreen(
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
                                 contentDescription = stringResource(R.string.editor_menu),
-                                tint = WarmGray
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                         DropdownMenu(
@@ -128,7 +124,7 @@ fun NoteEditorScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Parchment)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         }
     ) { innerPadding ->
@@ -136,7 +132,7 @@ fun NoteEditorScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Parchment)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             BasicTextField(
                 value = title,
@@ -145,7 +141,7 @@ fun NoteEditorScreen(
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
                     fontSize = 22.sp,
-                    color = Ink
+                    color = MaterialTheme.colorScheme.onSurface
                 ),
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.Sentences,
@@ -165,7 +161,7 @@ fun NoteEditorScreen(
                                     fontFamily = FontFamily.Serif,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 22.sp,
-                                    color = WarmGray.copy(alpha = 0.5f)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                                 )
                             )
                         }
@@ -179,7 +175,7 @@ fun NoteEditorScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
                     .height(1.dp)
-                    .background(Amber.copy(alpha = 0.30f))
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.30f))
             )
 
             BibleEditText(
@@ -190,7 +186,7 @@ fun NoteEditorScreen(
                 placeholder = stringResource(R.string.editor_content_placeholder),
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Parchment)
+                    .background(MaterialTheme.colorScheme.background)
             )
         }
     }

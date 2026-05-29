@@ -69,11 +69,6 @@ import ru.edgarakert.biblenote.ui.components.FolderRow
 import ru.edgarakert.biblenote.ui.components.MoveFolderSheet
 import ru.edgarakert.biblenote.ui.components.NoteRow
 import ru.edgarakert.biblenote.ui.components.SelectionActionBar
-import ru.edgarakert.biblenote.ui.theme.Amber
-import ru.edgarakert.biblenote.ui.theme.AmberSoft
-import ru.edgarakert.biblenote.ui.theme.Ink
-import ru.edgarakert.biblenote.ui.theme.Parchment
-import ru.edgarakert.biblenote.ui.theme.WarmGray
 import ru.edgarakert.biblenote.ui.viewmodels.NotesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -106,7 +101,7 @@ fun NotesListScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = Parchment,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             if (isSearchActive) {
                 SearchTopBar(
@@ -149,12 +144,26 @@ fun NotesListScreen(
         ) {
             when {
                 isSearching && searchResults.isEmpty() -> EmptyState(
-                    icon = { Icon(Icons.Filled.Search, null, tint = AmberSoft, modifier = Modifier.size(48.dp)) },
+                    icon = {
+                        Icon(
+                            Icons.Filled.Search,
+                            null,
+                            tint = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    },
                     message = stringResource(R.string.search_no_results)
                 )
 
                 !isSearching && rootFolders.isEmpty() && rootNotes.isEmpty() -> EmptyState(
-                    icon = { Icon(Icons.Filled.Edit, null, tint = AmberSoft, modifier = Modifier.size(48.dp)) },
+                    icon = {
+                        Icon(
+                            Icons.Filled.Edit,
+                            null,
+                            tint = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    },
                     message = stringResource(R.string.notes_empty_state)
                 )
 
@@ -199,8 +208,8 @@ fun NotesListScreen(
     if (showNewFolderDialog) {
         AlertDialog(
             onDismissRequest = { showNewFolderDialog = false },
-            containerColor = Parchment,
-            title = { Text(stringResource(R.string.folder_new), color = Ink) },
+            containerColor = MaterialTheme.colorScheme.background,
+            title = { Text(stringResource(R.string.folder_new), color = MaterialTheme.colorScheme.onSurface) },
             text = {
                 OutlinedTextField(
                     value = newFolderName,
@@ -218,11 +227,11 @@ fun NotesListScreen(
                         showNewFolderDialog = false
                     },
                     enabled = newFolderName.isNotBlank()
-                ) { Text(stringResource(R.string.common_save), color = Amber) }
+                ) { Text(stringResource(R.string.common_save), color = MaterialTheme.colorScheme.primary) }
             },
             dismissButton = {
                 TextButton(onClick = { showNewFolderDialog = false }) {
-                    Text(stringResource(R.string.folder_cancel), color = WarmGray)
+                    Text(stringResource(R.string.folder_cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         )
@@ -231,8 +240,8 @@ fun NotesListScreen(
     folderToRename?.let { f ->
         AlertDialog(
             onDismissRequest = { folderToRename = null },
-            containerColor = Parchment,
-            title = { Text(stringResource(R.string.folder_rename), color = Ink) },
+            containerColor = MaterialTheme.colorScheme.background,
+            title = { Text(stringResource(R.string.folder_rename), color = MaterialTheme.colorScheme.onSurface) },
             text = {
                 OutlinedTextField(
                     value = renameText,
@@ -250,11 +259,11 @@ fun NotesListScreen(
                         folderToRename = null
                     },
                     enabled = renameText.isNotBlank()
-                ) { Text(stringResource(R.string.folder_rename), color = Amber) }
+                ) { Text(stringResource(R.string.folder_rename), color = MaterialTheme.colorScheme.primary) }
             },
             dismissButton = {
                 TextButton(onClick = { folderToRename = null }) {
-                    Text(stringResource(R.string.folder_cancel), color = WarmGray)
+                    Text(stringResource(R.string.folder_cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         )
@@ -263,8 +272,13 @@ fun NotesListScreen(
     folderToDelete?.let { f ->
         AlertDialog(
             onDismissRequest = { folderToDelete = null },
-            containerColor = Parchment,
-            title = { Text(stringResource(R.string.folder_delete_title, f.folder.name), color = Ink) },
+            containerColor = MaterialTheme.colorScheme.background,
+            title = {
+                Text(
+                    stringResource(R.string.folder_delete_title, f.folder.name),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
             confirmButton = {
                 TextButton(onClick = { viewModel.deleteFolder(f.folder); folderToDelete = null }) {
                     Text(stringResource(R.string.folder_delete_confirm), color = MaterialTheme.colorScheme.error)
@@ -272,7 +286,7 @@ fun NotesListScreen(
             },
             dismissButton = {
                 TextButton(onClick = { folderToDelete = null }) {
-                    Text(stringResource(R.string.folder_cancel), color = WarmGray)
+                    Text(stringResource(R.string.folder_cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         )
@@ -281,9 +295,19 @@ fun NotesListScreen(
     if (showDeleteSelectedConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteSelectedConfirm = false },
-            containerColor = Parchment,
-            title = { Text(stringResource(R.string.notes_selection_delete_title), color = Ink) },
-            text = { Text(stringResource(R.string.note_delete_message), color = WarmGray) },
+            containerColor = MaterialTheme.colorScheme.background,
+            title = {
+                Text(
+                    stringResource(R.string.notes_selection_delete_title),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            text = {
+                Text(
+                    stringResource(R.string.note_delete_message),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
             confirmButton = {
                 TextButton(onClick = { viewModel.deleteSelectedNotes(); showDeleteSelectedConfirm = false }) {
                     Text(stringResource(R.string.folder_delete_confirm), color = MaterialTheme.colorScheme.error)
@@ -291,7 +315,7 @@ fun NotesListScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteSelectedConfirm = false }) {
-                    Text(stringResource(R.string.folder_cancel), color = WarmGray)
+                    Text(stringResource(R.string.folder_cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         )
@@ -325,24 +349,24 @@ private fun NotesTopBar(
             Text(
                 text = stringResource(R.string.notes_title),
                 style = MaterialTheme.typography.headlineMedium,
-                color = Ink
+                color = MaterialTheme.colorScheme.onSurface
             )
         },
         actions = {
             if (isSelectMode) {
                 TextButton(onClick = onCancelSelect) {
-                    Text(stringResource(R.string.folder_cancel), color = Amber)
+                    Text(stringResource(R.string.folder_cancel), color = MaterialTheme.colorScheme.primary)
                 }
             } else {
                 IconButton(onClick = onSearchClick) {
-                    Icon(Icons.Filled.Search, contentDescription = null, tint = Amber)
+                    Icon(Icons.Filled.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 }
                 IconButton(onClick = onCreateNote) {
-                    Icon(Icons.Filled.Add, contentDescription = null, tint = Amber)
+                    Icon(Icons.Filled.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 }
                 Box {
                     IconButton(onClick = { menuExpanded = true }) {
-                        Icon(Icons.Filled.MoreVert, contentDescription = null, tint = Amber)
+                        Icon(Icons.Filled.MoreVert, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     }
                     DropdownMenu(
                         expanded = menuExpanded,
@@ -350,13 +374,17 @@ private fun NotesTopBar(
                     ) {
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.folder_new)) },
-                            leadingIcon = { Icon(Icons.Filled.Folder, null, tint = Amber) },
+                            leadingIcon = {
+                                Icon(Icons.Filled.Folder, null, tint = MaterialTheme.colorScheme.primary)
+                            },
                             onClick = { menuExpanded = false; onNewFolder() }
                         )
                         if (canEnterSelectMode) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.notes_select)) },
-                                leadingIcon = { Icon(Icons.Filled.Edit, null, tint = Amber) },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.Edit, null, tint = MaterialTheme.colorScheme.primary)
+                                },
                                 onClick = { menuExpanded = false; onEnterSelectMode() }
                             )
                         }
@@ -364,7 +392,7 @@ private fun NotesTopBar(
                 }
             }
         },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Parchment)
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
     )
 }
 
@@ -380,7 +408,12 @@ private fun SearchTopBar(
             TextField(
                 value = query,
                 onValueChange = onQueryChange,
-                placeholder = { Text(stringResource(R.string.search_placeholder), color = WarmGray) },
+                placeholder = {
+                    Text(
+                        stringResource(R.string.search_placeholder),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 colors = TextFieldDefaults.colors(
@@ -388,18 +421,18 @@ private fun SearchTopBar(
                     unfocusedContainerColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
-                    focusedTextColor = Ink,
-                    unfocusedTextColor = Ink,
-                    cursorColor = Amber
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    cursorColor = MaterialTheme.colorScheme.primary
                 )
             )
         },
         navigationIcon = {
             IconButton(onClick = onClose) {
-                Icon(Icons.Filled.Close, contentDescription = null, tint = Amber)
+                Icon(Icons.Filled.Close, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             }
         },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Parchment)
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
     )
 }
 
@@ -498,7 +531,12 @@ private fun FolderListItem(
                 onClick = { menuExpanded = false; onRename() }
             )
             DropdownMenuItem(
-                text = { Text(stringResource(R.string.folder_delete_confirm), color = MaterialTheme.colorScheme.error) },
+                text = {
+                    Text(
+                        stringResource(R.string.folder_delete_confirm),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                },
                 leadingIcon = { Icon(Icons.Filled.Delete, null, tint = MaterialTheme.colorScheme.error) },
                 onClick = { menuExpanded = false; onDelete() }
             )
@@ -521,7 +559,7 @@ private fun EmptyState(
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyLarge,
-                color = WarmGray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 40.dp)
             )

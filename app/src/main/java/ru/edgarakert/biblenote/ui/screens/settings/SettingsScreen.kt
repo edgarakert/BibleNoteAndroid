@@ -39,12 +39,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import ru.edgarakert.biblenote.R
-import ru.edgarakert.biblenote.ui.theme.Amber
-import ru.edgarakert.biblenote.ui.theme.CardSurface
-import ru.edgarakert.biblenote.ui.theme.Hairline
-import ru.edgarakert.biblenote.ui.theme.Ink
-import ru.edgarakert.biblenote.ui.theme.Parchment
-import ru.edgarakert.biblenote.ui.theme.WarmGray
 import ru.edgarakert.biblenote.ui.viewmodels.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -86,13 +80,13 @@ fun SettingsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Parchment,
-                    titleContentColor = Ink,
-                    navigationIconContentColor = Ink
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         },
-        containerColor = Parchment
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -110,7 +104,7 @@ fun SettingsScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.OpenInNew,
                             contentDescription = null,
-                            tint = WarmGray,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(start = 8.dp)
                         )
                     },
@@ -131,14 +125,14 @@ fun SettingsScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                             contentDescription = null,
-                            tint = WarmGray,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(start = 8.dp)
                         )
                     },
                     onClick = onNavigateToTheme
                 )
                 HorizontalDivider(
-                    color = Hairline,
+                    color = MaterialTheme.colorScheme.outline,
                     modifier = Modifier.padding(start = 16.dp)
                 )
                 SettingsRow(
@@ -148,7 +142,7 @@ fun SettingsScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                             contentDescription = null,
-                            tint = WarmGray,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(start = 8.dp)
                         )
                     },
@@ -167,7 +161,7 @@ fun SettingsScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                             contentDescription = null,
-                            tint = WarmGray,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(start = 8.dp)
                         )
                     },
@@ -184,7 +178,7 @@ fun SettingsScreen(
 internal fun SectionHeader(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text.uppercase(),
-        color = Amber,
+        color = MaterialTheme.colorScheme.primary,
         fontSize = 11.sp,
         letterSpacing = 0.8.sp,
         fontFamily = FontFamily.SansSerif,
@@ -198,7 +192,7 @@ internal fun SettingsCard(content: @Composable () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(CardSurface)
+            .background(MaterialTheme.colorScheme.surface)
     ) {
         content()
     }
@@ -223,13 +217,13 @@ internal fun SettingsRow(
                 text = title,
                 fontFamily = FontFamily.Serif,
                 fontSize = 16.sp,
-                color = Ink
+                color = MaterialTheme.colorScheme.onSurface
             )
             if (subtitle != null) {
                 Text(
                     text = subtitle,
                     fontSize = 12.sp,
-                    color = WarmGray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 2.dp)
                 )
             }

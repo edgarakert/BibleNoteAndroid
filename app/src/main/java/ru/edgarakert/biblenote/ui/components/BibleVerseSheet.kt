@@ -20,6 +20,7 @@ import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -40,12 +41,6 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import ru.edgarakert.biblenote.R
 import ru.edgarakert.biblenote.data.bible.BibleReference
-import ru.edgarakert.biblenote.ui.theme.Amber
-import ru.edgarakert.biblenote.ui.theme.AmberSoft
-import ru.edgarakert.biblenote.ui.theme.Hairline
-import ru.edgarakert.biblenote.ui.theme.Ink
-import ru.edgarakert.biblenote.ui.theme.Parchment
-import ru.edgarakert.biblenote.ui.theme.WarmGray
 import ru.edgarakert.biblenote.ui.viewmodels.BibleVerseSheetViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,7 +60,7 @@ fun BibleVerseSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Parchment
+        containerColor = MaterialTheme.colorScheme.background
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
@@ -73,7 +68,7 @@ fun BibleVerseSheet(
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 18.sp,
-                color = Ink,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .padding(horizontal = 24.dp)
                     .padding(bottom = 8.dp)
@@ -95,14 +90,23 @@ fun BibleVerseSheet(
                                 .padding(end = 6.dp)
                                 .clip(CircleShape)
                                 .clickable { viewModel.setTranslation(t) }
-                                .background(if (selected) Amber.copy(alpha = 0.12f) else Color.Transparent)
-                                .border(1.dp, if (selected) Amber.copy(alpha = 0.35f) else Hairline, CircleShape)
+                                .background(
+                                    if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                                    else Color.Transparent
+                                )
+                                .border(
+                                    1.dp,
+                                    if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
+                                    else MaterialTheme.colorScheme.outline,
+                                    CircleShape
+                                )
                                 .padding(horizontal = 10.dp, vertical = 6.dp)
                         ) {
                             Text(
                                 text = t.uppercase(),
                                 fontSize = 12.sp,
-                                color = if (selected) Amber else WarmGray
+                                color = if (selected) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -111,7 +115,7 @@ fun BibleVerseSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(1.dp)
-                        .background(Hairline)
+                        .background(MaterialTheme.colorScheme.outline)
                 )
             }
 
@@ -122,7 +126,7 @@ fun BibleVerseSheet(
                         .fillMaxWidth()
                         .padding(vertical = 48.dp)
                 ) {
-                    CircularProgressIndicator(color = Amber)
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             } else if (uiState.verses.isEmpty()) {
                 Column(
@@ -134,14 +138,14 @@ fun BibleVerseSheet(
                     Icon(
                         imageVector = Icons.AutoMirrored.Outlined.MenuBook,
                         contentDescription = null,
-                        tint = AmberSoft,
+                        tint = MaterialTheme.colorScheme.primaryContainer,
                         modifier = Modifier.size(40.dp)
                     )
                     Spacer(modifier = Modifier.height(14.dp))
                     Text(
                         text = stringResource(R.string.verse_not_found),
                         fontSize = 16.sp,
-                        color = WarmGray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             } else {
@@ -169,13 +173,13 @@ fun BibleVerseSheet(
                             Icon(
                                 imageVector = Icons.AutoMirrored.Outlined.MenuBook,
                                 contentDescription = null,
-                                tint = Amber,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = stringResource(R.string.verse_open_chapter),
-                                color = Amber,
+                                color = MaterialTheme.colorScheme.primary,
                                 fontSize = 14.sp
                             )
                         }

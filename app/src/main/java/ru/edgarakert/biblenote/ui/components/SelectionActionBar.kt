@@ -20,8 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.edgarakert.biblenote.R
-import ru.edgarakert.biblenote.ui.theme.Amber
-import ru.edgarakert.biblenote.ui.theme.Parchment
 
 @Composable
 fun SelectionActionBar(
@@ -33,7 +31,7 @@ fun SelectionActionBar(
     if (selectedCount > 0) {
         Surface(
             modifier = modifier.fillMaxWidth(),
-            color = Parchment,
+            color = MaterialTheme.colorScheme.background,
             tonalElevation = 3.dp,
             shadowElevation = 8.dp
         ) {
@@ -44,9 +42,9 @@ fun SelectionActionBar(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = onMove) {
-                    Icon(Icons.Filled.Folder, contentDescription = null, tint = Amber)
+                    Icon(Icons.Filled.Folder, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.width(6.dp))
-                    Text(stringResource(R.string.folder_move), color = Amber)
+                    Text(stringResource(R.string.folder_move), color = MaterialTheme.colorScheme.primary)
                 }
 
                 Spacer(Modifier.weight(1f))

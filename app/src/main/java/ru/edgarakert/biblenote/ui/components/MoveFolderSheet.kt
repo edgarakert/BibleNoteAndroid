@@ -39,11 +39,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import ru.edgarakert.biblenote.R
 import ru.edgarakert.biblenote.data.db.Folder
-import ru.edgarakert.biblenote.ui.theme.Amber
-import ru.edgarakert.biblenote.ui.theme.Hairline
-import ru.edgarakert.biblenote.ui.theme.Ink
-import ru.edgarakert.biblenote.ui.theme.Parchment
-import ru.edgarakert.biblenote.ui.theme.WarmGray
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,20 +60,30 @@ fun MoveFolderSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Parchment
+        containerColor = MaterialTheme.colorScheme.background
     ) {
         Text(
             text = stringResource(R.string.folder_move_to),
             style = MaterialTheme.typography.titleMedium,
-            color = Ink,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
         )
-        HorizontalDivider(color = Hairline, modifier = Modifier.padding(vertical = 8.dp))
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outline,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
 
         LazyColumn {
             item {
                 MoveSheetRow(
-                    icon = { Icon(Icons.Outlined.Inbox, null, tint = WarmGray, modifier = Modifier.size(22.dp)) },
+                    icon = {
+                        Icon(
+                            Icons.Outlined.Inbox,
+                            null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    },
                     label = stringResource(R.string.folder_no_folder),
                     onClick = { onMove(null) }
                 )
@@ -87,7 +92,14 @@ fun MoveFolderSheet(
             rootFolders.forEach { folder ->
                 item(key = folder.id) {
                     MoveSheetRow(
-                        icon = { Icon(Icons.Filled.Folder, null, tint = Amber, modifier = Modifier.size(22.dp)) },
+                        icon = {
+                            Icon(
+                                Icons.Filled.Folder,
+                                null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        },
                         label = folder.name,
                         onClick = { onMove(folder.id) }
                     )
@@ -95,7 +107,14 @@ fun MoveFolderSheet(
                 val subs = subfoldersByParent[folder.id].orEmpty()
                 items(subs, key = { "sub_${it.id}" }) { sub ->
                     MoveSheetRow(
-                        icon = { Icon(Icons.Outlined.Folder, null, tint = Amber, modifier = Modifier.size(20.dp)) },
+                        icon = {
+                            Icon(
+                                Icons.Outlined.Folder,
+                                null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        },
                         label = sub.name,
                         indent = 20.dp,
                         onClick = { onMove(sub.id) }
@@ -104,11 +123,21 @@ fun MoveFolderSheet(
             }
 
             item {
-                HorizontalDivider(color = Hairline, modifier = Modifier.padding(vertical = 4.dp))
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
                 MoveSheetRow(
-                    icon = { Icon(Icons.Filled.CreateNewFolder, null, tint = Amber, modifier = Modifier.size(22.dp)) },
+                    icon = {
+                        Icon(
+                            Icons.Filled.CreateNewFolder,
+                            null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    },
                     label = stringResource(R.string.folder_new),
-                    labelColor = Amber,
+                    labelColor = MaterialTheme.colorScheme.primary,
                     onClick = { newFolderName = ""; showNewFolderDialog = true }
                 )
                 Spacer(Modifier.size(16.dp))
@@ -119,8 +148,8 @@ fun MoveFolderSheet(
     if (showNewFolderDialog) {
         AlertDialog(
             onDismissRequest = { showNewFolderDialog = false },
-            containerColor = Parchment,
-            title = { Text(stringResource(R.string.folder_new), color = Ink) },
+            containerColor = MaterialTheme.colorScheme.background,
+            title = { Text(stringResource(R.string.folder_new), color = MaterialTheme.colorScheme.onSurface) },
             text = {
                 OutlinedTextField(
                     value = newFolderName,
@@ -140,11 +169,11 @@ fun MoveFolderSheet(
                         }
                     },
                     enabled = newFolderName.isNotBlank()
-                ) { Text(stringResource(R.string.common_save), color = Amber) }
+                ) { Text(stringResource(R.string.common_save), color = MaterialTheme.colorScheme.primary) }
             },
             dismissButton = {
                 TextButton(onClick = { showNewFolderDialog = false }) {
-                    Text(stringResource(R.string.folder_cancel), color = WarmGray)
+                    Text(stringResource(R.string.folder_cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         )
@@ -155,7 +184,7 @@ fun MoveFolderSheet(
 private fun MoveSheetRow(
     icon: @Composable () -> Unit,
     label: String,
-    labelColor: Color = Ink,
+    labelColor: Color? = null,
     indent: Dp = 0.dp,
     onClick: () -> Unit
 ) {
@@ -171,7 +200,7 @@ private fun MoveSheetRow(
         Text(
             text = label,
             style = MaterialTheme.typography.bodyLarge,
-            color = labelColor
+            color = labelColor ?: MaterialTheme.colorScheme.onSurface
         )
     }
 }

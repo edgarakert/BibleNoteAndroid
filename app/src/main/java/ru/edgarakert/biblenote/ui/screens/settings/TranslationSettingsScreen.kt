@@ -16,6 +16,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -31,11 +32,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import ru.edgarakert.biblenote.R
-import ru.edgarakert.biblenote.ui.theme.Amber
-import ru.edgarakert.biblenote.ui.theme.Hairline
-import ru.edgarakert.biblenote.ui.theme.Ink
-import ru.edgarakert.biblenote.ui.theme.Parchment
-import ru.edgarakert.biblenote.ui.theme.WarmGray
 import ru.edgarakert.biblenote.ui.viewmodels.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,13 +61,13 @@ fun TranslationSettingsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Parchment,
-                    titleContentColor = Ink,
-                    navigationIconContentColor = Ink
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         },
-        containerColor = Parchment
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -96,12 +92,12 @@ fun TranslationSettingsScreen(
                                     text = stringResource(info.nameResId),
                                     fontFamily = FontFamily.Serif,
                                     fontSize = 16.sp,
-                                    color = Ink
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
                                     text = stringResource(info.subtitleResId),
                                     fontSize = 12.sp,
-                                    color = WarmGray,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(top = 2.dp)
                                 )
                             }
@@ -109,13 +105,14 @@ fun TranslationSettingsScreen(
                                 Icon(
                                     imageVector = if (isEnabled) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
                                     contentDescription = null,
-                                    tint = if (isEnabled) Amber else WarmGray.copy(alpha = 0.35f)
+                                    tint = if (isEnabled) MaterialTheme.colorScheme.primary
+                                           else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)
                                 )
                             }
                         }
                         if (index < group.translations.lastIndex) {
                             HorizontalDivider(
-                                color = Hairline,
+                                color = MaterialTheme.colorScheme.outline,
                                 modifier = Modifier.padding(start = 16.dp)
                             )
                         }
@@ -140,7 +137,7 @@ fun TranslationSettingsScreen(
                             Icon(
                                 imageVector = Icons.Filled.CheckCircle,
                                 contentDescription = null,
-                                tint = Amber,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.padding(start = 8.dp)
                             )
                         }) else null,
@@ -148,7 +145,7 @@ fun TranslationSettingsScreen(
                     )
                     if (index < enabledInfos.lastIndex) {
                         HorizontalDivider(
-                            color = Hairline,
+                            color = MaterialTheme.colorScheme.outline,
                             modifier = Modifier.padding(start = 16.dp)
                         )
                     }
