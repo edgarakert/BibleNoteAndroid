@@ -43,20 +43,30 @@ class BibleReaderViewModel(
     private var initJob: Job? = null
     private var loadJob: Job? = null
 
+    // navigateTo() called before initJob completes sets this; initJob uses it over last saved position.
+    private var pendingNavigation: Pair<Int, Int>? = null
+    private var isInitialized = false
+
     init {
         initJob = viewModelScope.launch {
             val enabled = settingsRepository.enabledTranslations.first()
             val default = settingsRepository.defaultTranslation.first()
             val lastTranslation = settingsRepository.lastBibleTranslation.first()
             val scale = settingsRepository.verseScale.first()
-            val bookId = settingsRepository.lastBookId.first()
-            val chapter = settingsRepository.lastChapter.first()
+            val lastBookId = settingsRepository.lastBookId.first()
+            val lastChapter = settingsRepository.lastChapter.first()
             val translation = when {
                 lastTranslation.isNotEmpty() && lastTranslation in enabled -> lastTranslation
                 default in enabled -> default
                 else -> enabled.firstOrNull() ?: default
             }
             val books = bibleService.fetchAllBooks(translation)
+
+            val nav = pendingNavigation
+            val bookId = nav?.first ?: lastBookId
+            val chapter = nav?.second ?: lastChapter
+
+            isInitialized = true
             _uiState.update {
                 it.copy(
                     bookId = bookId,
@@ -90,8 +100,13 @@ class BibleReaderViewModel(
     }
 
     fun navigateTo(bookId: Int, chapter: Int) {
-        _uiState.update { it.copy(bookId = bookId, chapter = chapter, selectedVerseNumbers = emptySet()) }
         persistPosition(bookId, chapter)
+        if (!isInitialized) {
+            pendingNavigation = bookId to chapter
+            _uiState.update { it.copy(bookId = bookId, chapter = chapter, selectedVerseNumbers = emptySet()) }
+            return
+        }
+        _uiState.update { it.copy(bookId = bookId, chapter = chapter, selectedVerseNumbers = emptySet()) }
         triggerLoad()
     }
 

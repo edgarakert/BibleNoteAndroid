@@ -71,15 +71,26 @@ fun BibleEditText(
                     if (event.action != MotionEvent.ACTION_UP) return@setOnTouchListener false
                     val editText = view as EditText
                     val layout = editText.layout ?: return@setOnTouchListener false
-                    val x = (event.x - editText.totalPaddingLeft).toInt()
+                    val x = event.x - editText.totalPaddingLeft
                     val y = (event.y - editText.totalPaddingTop).toInt()
                     val line = layout.getLineForVertical(y)
-                    val off = layout.getOffsetForHorizontal(line, x.toFloat())
+                    if (y < layout.getLineTop(line) || y > layout.getLineBottom(line)) return@setOnTouchListener false
+                    val off = layout.getOffsetForHorizontal(line, x)
                     val spans = editText.text.getSpans(off, off, BibleClickSpan::class.java)
                     if (spans.isNotEmpty()) {
-                        onReferenceTappedState.value(spans[0].reference)
-                        view.performClick()
-                        true
+                        val spannable = editText.text
+                        val spanStart = spannable.getSpanStart(spans[0])
+                        val spanEnd = spannable.getSpanEnd(spans[0])
+                        val spanStartX = layout.getPrimaryHorizontal(spanStart)
+                        val spanEndX = layout.getPrimaryHorizontal(spanEnd)
+                        val spanLine = layout.getLineForOffset(spanStart)
+                        if (line == spanLine && x >= spanStartX && x <= spanEndX) {
+                            onReferenceTappedState.value(spans[0].reference)
+                            view.performClick()
+                            true
+                        } else {
+                            false
+                        }
                     } else {
                         false
                     }

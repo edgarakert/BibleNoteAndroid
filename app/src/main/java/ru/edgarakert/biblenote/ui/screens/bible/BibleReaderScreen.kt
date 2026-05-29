@@ -86,10 +86,7 @@ fun BibleReaderScreen(
 
     LaunchedEffect(pendingBookId, pendingChapter) {
         if (pendingBookId > 0 && pendingChapter > 0) {
-            val current = viewModel.uiState.value
-            if (current.bookId != pendingBookId || current.chapter != pendingChapter) {
-                viewModel.navigateTo(pendingBookId, pendingChapter)
-            }
+            viewModel.navigateTo(pendingBookId, pendingChapter)
         }
     }
 
