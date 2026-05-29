@@ -107,8 +107,23 @@
 
 **Следующий шаг:** Фаза 7 — SettingsScreen, TranslationSettingsScreen, BibleThemeSettingsScreen, AboutScreen, OnboardingScreen.
 
-## Фаза 7 — Настройки и онбординг
-_Не начата_
+## Фаза 7 — Настройки и онбординг ✅
+
+### 2026-05-29
+- [x] `SettingsViewModel.kt` — UiState (defaultTranslation, enabledTranslations, appearanceMode, verseScale, translationGroups); toggleEnabledTranslation с Mutex (anti-race); saveOnboardingSelections suspend; TranslationInfo/TranslationGroup inner types; locale-ordered groups
+- [x] `SettingsScreen.kt` — TopAppBar, секции (Язык→system settings, Библия→Theme+Translations, Приложение→About); внутренние компоненты: SectionHeader, SettingsCard, SettingsRow
+- [x] `TranslationSettingsScreen.kt` — группы переводов с toggle (CheckCircle icon); секция «по умолчанию» (только enabled); ViewModel как параметр
+- [x] `BibleThemeSettingsScreen.kt` — SingleChoiceSegmentedButtonRow (System/Light/Dark); Slider размера шрифта (0.8..1.4, 12 steps); ViewModel как параметр
+- [x] `AboutScreen.kt` — лого, версия (PackageManager), описание, контакт + mailto Intent
+- [x] `OnboardingScreen.kt` — HorizontalPager 3 слайда, PageDotsView (анимированные капсулы), слайд 2: анимированный демо-текст с remember; кнопка Далее/Выбрать переводы
+- [x] `TranslationSelectionScreen.kt` — карточки переводов с border при выборе, collectAsStateWithLifecycle, scope.launch + suspend saveOnboardingSelections → onComplete()
+- [x] `MainActivity.kt` — onboarding gating (collectAsStateWithLifecycle false→OnboardingFlow), darkTheme из AppearanceMode, AppNavHost с settingsVm hoisted до Activity scope
+- [x] `AppModule.kt` — добавлен viewModel { SettingsViewModel(get()) }
+- [x] `strings.xml` / `values-ru/strings.xml` — все новые строки (настройки, переводы, онбординг, about)
+- [x] Ревью субагент: 5 HIGH исправлены (Mutex toggleEnabled, suspend saveOnboardingSelections, collectAsStateWithLifecycle, scope.launch перед onComplete, ViewModel hoisting)
+- [x] Сборка: `compileDebugKotlin` — BUILD SUCCESSFUL (без ошибок)
+
+**Следующий шаг:** Фаза 8 — Навигация (BottomNavigation, TabBar, интеграция всех экранов).
 
 ## Фаза 8 — Навигация
 _Не начата_

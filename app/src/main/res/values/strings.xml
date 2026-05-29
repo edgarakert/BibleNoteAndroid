@@ -50,4 +50,64 @@
         <item quantity="one">%d verse selected</item>
         <item quantity="other">%d verses selected</item>
     </plurals>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_language_header">Language</string>
+    <string name="settings_language_row">App Language</string>
+    <string name="settings_language_hint">Opens system settings</string>
+    <string name="settings_bible_header">Bible</string>
+    <string name="settings_bible_theme_row">Appearance</string>
+    <string name="settings_translations_row">Translations</string>
+    <string name="settings_app_header">App</string>
+    <string name="settings_about_row">About</string>
+
+    <!-- Bible theme settings -->
+    <string name="settings_appearance_header">Appearance</string>
+    <string name="settings_appearance_system">System</string>
+    <string name="settings_appearance_light">Light</string>
+    <string name="settings_appearance_dark">Dark</string>
+    <string name="settings_reading_header">Reading</string>
+    <string name="settings_font_size_row">Font Size</string>
+
+    <!-- Translation settings -->
+    <string name="settings_active_translations_header">Active Translations</string>
+    <string name="settings_default_translation_header">Default Translation</string>
+    <string name="translations_group_russian">Russian</string>
+    <string name="translations_group_english">English</string>
+    <string name="translation_synodal_name">Synodal</string>
+    <string name="translation_synodal_subtitle">Russian Synodal Translation, 1876</string>
+    <string name="translation_nrt_name">NRT</string>
+    <string name="translation_nrt_subtitle">New Russian Translation, 2011</string>
+    <string name="translation_kjv_name">KJV</string>
+    <string name="translation_kjv_subtitle">King James Version, 1611</string>
+    <string name="translation_niv_name">NIV</string>
+    <string name="translation_niv_subtitle">New International Version, 1978</string>
+
+    <!-- About -->
+    <string name="about_title">About</string>
+    <string name="about_subtitle">Bible notes with verse recognition</string>
+    <string name="about_description">BibleNote helps you create notes that automatically detect Bible references. Tap any highlighted reference to see the verse text. Read full chapters in the built-in Bible reader with multiple translations and verse highlighting.</string>
+    <string name="about_contact_text">Questions or suggestions? Write to us:</string>
+    <string name="about_email">edormerdez@gmail.com</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_choose_translations">Choose Translations</string>
+    <string name="onboarding_slide1_title">BibleNote</string>
+    <string name="onboarding_slide1_subtitle">Your Bible journal</string>
+    <string name="onboarding_slide1_body">Write notes that come alive with Scripture. Bible references are automatically recognised and linked to the full text.</string>
+    <string name="onboarding_slide2_title">Auto-recognition</string>
+    <string name="onboarding_slide2_body">Just write naturally. Mentions of Bible passages are highlighted automatically — tap to read the verse.</string>
+    <string name="onboarding_slide2_demo_label">Example</string>
+    <string name="onboarding_slide2_demo_prefix">Today I read </string>
+    <string name="onboarding_slide2_demo_ref">John 3:16</string>
+    <string name="onboarding_slide2_demo_suffix"> and it was inspiring.</string>
+    <string name="onboarding_slide3_title">Bible Offline</string>
+    <string name="onboarding_slide3_body">The full Bible is included — read any passage without an internet connection, in multiple translations.</string>
+
+    <!-- Translation selection (onboarding) -->
+    <string name="translations_select_title">Choose Translations</string>
+    <string name="translations_select_subtitle">Select the Bible translations you want to use. You can change this later in Settings.</string>
+    <string name="translations_select_continue">Continue</string>
 </resources>

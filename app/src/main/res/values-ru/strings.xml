@@ -54,4 +54,64 @@
         <item quantity="many">%d стихов выбрано</item>
         <item quantity="other">%d стихов выбрано</item>
     </plurals>
+
+    <!-- Settings -->
+    <string name="settings_title">Настройки</string>
+    <string name="settings_language_header">Язык</string>
+    <string name="settings_language_row">Язык приложения</string>
+    <string name="settings_language_hint">Откроет системные настройки</string>
+    <string name="settings_bible_header">Библия</string>
+    <string name="settings_bible_theme_row">Оформление</string>
+    <string name="settings_translations_row">Переводы</string>
+    <string name="settings_app_header">Приложение</string>
+    <string name="settings_about_row">О приложении</string>
+
+    <!-- Bible theme settings -->
+    <string name="settings_appearance_header">Тема</string>
+    <string name="settings_appearance_system">Системная</string>
+    <string name="settings_appearance_light">Светлая</string>
+    <string name="settings_appearance_dark">Тёмная</string>
+    <string name="settings_reading_header">Чтение</string>
+    <string name="settings_font_size_row">Размер шрифта</string>
+
+    <!-- Translation settings -->
+    <string name="settings_active_translations_header">Активные переводы</string>
+    <string name="settings_default_translation_header">Перевод по умолчанию</string>
+    <string name="translations_group_russian">Русские</string>
+    <string name="translations_group_english">Английские</string>
+    <string name="translation_synodal_name">Синодальный</string>
+    <string name="translation_synodal_subtitle">Синодальный перевод, 1876</string>
+    <string name="translation_nrt_name">НРП</string>
+    <string name="translation_nrt_subtitle">Новый русский перевод, 2011</string>
+    <string name="translation_kjv_name">KJV</string>
+    <string name="translation_kjv_subtitle">King James Version, 1611</string>
+    <string name="translation_niv_name">NIV</string>
+    <string name="translation_niv_subtitle">New International Version, 1978</string>
+
+    <!-- About -->
+    <string name="about_title">О приложении</string>
+    <string name="about_subtitle">Заметки с распознаванием стихов</string>
+    <string name="about_description">BibleNote помогает вести заметки, в которых автоматически распознаются библейские ссылки. Нажмите на выделенную ссылку, чтобы увидеть текст стиха. Читайте полные главы во встроенной читалке с несколькими переводами и подсветкой стихов.</string>
+    <string name="about_contact_text">Вопросы или предложения? Напишите нам:</string>
+    <string name="about_email">edormerdez@gmail.com</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">Далее</string>
+    <string name="onboarding_choose_translations">Выбрать переводы</string>
+    <string name="onboarding_slide1_title">BibleNote</string>
+    <string name="onboarding_slide1_subtitle">Ваш библейский журнал</string>
+    <string name="onboarding_slide1_body">Пишите заметки, оживлённые Писанием. Библейские ссылки распознаются автоматически и связываются с полным текстом.</string>
+    <string name="onboarding_slide2_title">Авто-распознавание</string>
+    <string name="onboarding_slide2_body">Просто пишите как обычно. Упоминания библейских отрывков выделяются автоматически — нажмите, чтобы прочитать стих.</string>
+    <string name="onboarding_slide2_demo_label">Пример</string>
+    <string name="onboarding_slide2_demo_prefix">Сегодня я читал </string>
+    <string name="onboarding_slide2_demo_ref">Ин. 3:16</string>
+    <string name="onboarding_slide2_demo_suffix"> — вдохновляет.</string>
+    <string name="onboarding_slide3_title">Библия офлайн</string>
+    <string name="onboarding_slide3_body">Полная Библия включена в приложение — читайте любой отрывок без интернета на нескольких переводах.</string>
+
+    <!-- Translation selection (onboarding) -->
+    <string name="translations_select_title">Выберите переводы</string>
+    <string name="translations_select_subtitle">Выберите переводы Библии, которые хотите использовать. Вы можете изменить это в Настройках.</string>
+    <string name="translations_select_continue">Продолжить</string>
 </resources>
