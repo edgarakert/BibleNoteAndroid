@@ -160,5 +160,15 @@
 
 **Следующий шаг:** Фаза 10 — Полировка (иконка, локализация, edge-to-edge, анимации, тесты).
 
-## Фаза 10 — Полировка
-_Не начата_
+## Фаза 10 — Полировка ✅
+
+### 2026-05-29
+- [x] `ic_launcher_background.xml` — заменён на Parchment (#F6EFE4) вместо Android-зелёного
+- [x] `ic_launcher_foreground.xml` — нарисован открытый Bible: обложка Amber (#C29A3D), страницы Parchment (#FEFCF7), строки текста, корешок (#A88028); вписан в safe zone 72×72 внутри 108dp
+- [x] Локализация — все строки присутствуют в EN и RU файлах, новые ключи фазы 9 добавлены в обе локали
+- [x] Edge-to-edge — `enableEdgeToEdge()` уже был. Добавлен `SideEffect` в `MainActivity`: синхронизирует `isAppearanceLightStatusBars`/`isAppearanceLightNavigationBars` с текущей темой (dark/light)
+- [x] Анимации навигации — в `NavGraph.kt` добавлены глобальные transitions для `NavHost`: вперёд `slideIntoContainer(Start) + fadeIn(280ms)`, назад `slideOutOfContainer(End) + fadeOut(280ms)`, exit/popEnter — `fadeOut/fadeIn(200ms)`
+- [x] `BibleReferenceParserTest.kt` — 24 unit-теста: пустой ввод, EN/RU ссылки, главы, диапазоны, регистронезависимость, границы слов, несколько ссылок, индексы, displayText, helpers isWholeChapter/isSingleVerse
+- [x] Сборка + тесты: `compileDebugKotlin` BUILD SUCCESSFUL, `test` 24/24 PASSED (0 failures)
+
+**Все 10 фаз завершены. Приложение готово к первому релизу.**

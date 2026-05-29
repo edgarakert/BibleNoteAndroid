@@ -1,6 +1,10 @@
 package ru.edgarakert.biblenote.ui.navigation
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
@@ -113,7 +117,17 @@ fun AppNavHost() {
         NavHost(
             navController = navController,
             startDestination = "notes_graph",
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            enterTransition = {
+                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(280)) +
+                        fadeIn(tween(280))
+            },
+            exitTransition = { fadeOut(tween(200)) },
+            popEnterTransition = { fadeIn(tween(200)) },
+            popExitTransition = {
+                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(280)) +
+                        fadeOut(tween(280))
+            }
         ) {
             navigation(route = "notes_graph", startDestination = "notes") {
                 composable("notes") {

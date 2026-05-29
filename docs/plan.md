@@ -84,11 +84,11 @@
 - [x] MoveFolderScreen (переместить заметки в папку)
 
 ### Фаза 10 — Полировка
-- [ ] Иконка приложения
-- [ ] Локализация (ru/en strings)
-- [ ] Edge-to-edge UI
-- [ ] Анимации переходов
-- [ ] Unit-тесты BibleReferenceParser
+- [x] Иконка приложения
+- [x] Локализация (ru/en strings)
+- [x] Edge-to-edge UI
+- [x] Анимации переходов
+- [x] Unit-тесты BibleReferenceParser
 
 ---
 
