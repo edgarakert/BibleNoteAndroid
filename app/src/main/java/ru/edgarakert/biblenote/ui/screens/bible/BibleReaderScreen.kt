@@ -73,7 +73,6 @@ import ru.edgarakert.biblenote.ui.theme.Ink
 import ru.edgarakert.biblenote.ui.theme.Parchment
 import ru.edgarakert.biblenote.ui.theme.WarmGray
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.tooling.preview.Preview
 import ru.edgarakert.biblenote.ui.viewmodels.BibleReaderViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
