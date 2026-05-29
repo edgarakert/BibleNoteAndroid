@@ -69,20 +69,27 @@ fun BibleEditText(
 
                 setOnTouchListener { view, event ->
                     if (event.action != MotionEvent.ACTION_UP) return@setOnTouchListener false
+
                     val editText = view as EditText
                     val layout = editText.layout ?: return@setOnTouchListener false
+
                     val x = event.x - editText.totalPaddingLeft
                     val y = (event.y - editText.totalPaddingTop).toInt()
                     val line = layout.getLineForVertical(y)
+
                     if (y < layout.getLineTop(line) || y > layout.getLineBottom(line)) return@setOnTouchListener false
-                    val off = layout.getOffsetForHorizontal(line, x)
-                    val spans = editText.text.getSpans(off, off, BibleClickSpan::class.java)
+
+                    val offset = layout.getOffsetForHorizontal(line, x)
+
+                    val spans = editText.text.getSpans(offset, offset, BibleClickSpan::class.java)
                     if (spans.isNotEmpty()) {
                         val spannable = editText.text
+
                         val spanStart = spannable.getSpanStart(spans[0])
                         val spanEnd = spannable.getSpanEnd(spans[0])
                         val spanStartX = layout.getPrimaryHorizontal(spanStart)
                         val spanEndX = layout.getPrimaryHorizontal(spanEnd)
+
                         val spanLine = layout.getLineForOffset(spanStart)
                         if (line == spanLine && x >= spanStartX && x <= spanEndX) {
                             onReferenceTappedState.value(spans[0].reference)
@@ -103,11 +110,11 @@ fun BibleEditText(
                         val newText = s?.toString() ?: ""
                         onTextChangedState.value(newText)
                         pendingHighlight[0]?.let { handler.removeCallbacks(it) }
-                        val r = Runnable {
+                        val runnable = Runnable {
                             applyHighlighting(this@apply, parser, amberArgb, inkArgb)
                         }
-                        pendingHighlight[0] = r
-                        handler.postDelayed(r, 400)
+                        pendingHighlight[0] = runnable
+                        handler.postDelayed(runnable, 400)
                     }
 
                     override fun beforeTextChanged(

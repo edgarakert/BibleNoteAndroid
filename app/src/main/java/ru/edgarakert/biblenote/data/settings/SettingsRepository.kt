@@ -56,7 +56,9 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     }
 
     val lastBookId: Flow<Int> = dataStore.data.map { prefs -> prefs[KEY_LAST_BOOK_ID] ?: 1 }
+
     val lastChapter: Flow<Int> = dataStore.data.map { prefs -> prefs[KEY_LAST_CHAPTER] ?: 1 }
+
     val lastBibleTranslation: Flow<String> = dataStore.data.map { prefs ->
         prefs[KEY_LAST_BIBLE_TRANSLATION] ?: ""
     }

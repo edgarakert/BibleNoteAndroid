@@ -53,7 +53,9 @@ class NotesViewModel(private val repository: NoteRepository) : ViewModel() {
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    fun setSearchQuery(q: String) { _searchQuery.value = q }
+    fun setSearchQuery(q: String) {
+        _searchQuery.value = q
+    }
 
     fun enterSelectMode() {
         _isSelectMode.value = true

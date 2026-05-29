@@ -33,8 +33,11 @@ val appModule = module {
 
     // Room
     single<AppDatabase> { AppDatabase.create(androidContext()) }
+
     single<NoteDao> { get<AppDatabase>().noteDao() }
+
     single<FolderDao> { get<AppDatabase>().folderDao() }
+
     single<NoteRepository> {
         NoteRepository(
             noteDao = get<NoteDao>(),
@@ -53,6 +56,7 @@ val appModule = module {
 
     // Settings
     single<DataStore<Preferences>> { androidContext().settingsDataStore }
+
     single<SettingsRepository> { SettingsRepository(dataStore = get<DataStore<Preferences>>()) }
 
     // ViewModels
@@ -63,12 +67,14 @@ val appModule = module {
         )
     }
     viewModel { NotesViewModel(repository = get<NoteRepository>()) }
+
     viewModel { params ->
         NoteEditorViewModel(
             noteId = params.get<Long>(),
             repository = get<NoteRepository>()
         )
     }
+
     viewModel { params ->
         BibleVerseSheetViewModel(
             reference = params.get<BibleReference>(),
@@ -76,7 +82,9 @@ val appModule = module {
             settingsRepository = get<SettingsRepository>()
         )
     }
+
     viewModel { SettingsViewModel(repository = get<SettingsRepository>()) }
+
     viewModel { params ->
         FolderViewModel(
             folderId = params.get<Long>(),

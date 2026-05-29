@@ -49,7 +49,6 @@ import ru.edgarakert.biblenote.ui.theme.Amber
 import ru.edgarakert.biblenote.ui.theme.Hairline
 import ru.edgarakert.biblenote.ui.theme.Parchment
 import ru.edgarakert.biblenote.ui.theme.WarmGray
-import ru.edgarakert.biblenote.ui.viewmodels.SettingsViewModel
 
 private enum class TopLevelRoute(
     val graphRoute: String,
@@ -57,25 +56,30 @@ private enum class TopLevelRoute(
     val outlinedIcon: ImageVector,
     val filledIcon: ImageVector
 ) {
-    NOTES("notes_graph", R.string.tab_notes, Icons.Outlined.Description, Icons.Filled.Description),
+    NOTES(
+        graphRoute = "notes_graph",
+        labelRes = R.string.tab_notes,
+        outlinedIcon = Icons.Outlined.Description,
+        filledIcon = Icons.Filled.Description
+    ),
     BIBLE(
-        "bible_graph",
-        R.string.tab_bible,
-        Icons.AutoMirrored.Outlined.MenuBook,
-        Icons.AutoMirrored.Filled.MenuBook
+        graphRoute = "bible_graph",
+        labelRes = R.string.tab_bible,
+        outlinedIcon = Icons.AutoMirrored.Outlined.MenuBook,
+        filledIcon = Icons.AutoMirrored.Filled.MenuBook
     ),
     SETTINGS(
-        "settings_graph",
-        R.string.tab_settings,
-        Icons.Outlined.Settings,
-        Icons.Filled.Settings
+        graphRoute = "settings_graph",
+        labelRes = R.string.tab_settings,
+        outlinedIcon = Icons.Outlined.Settings,
+        filledIcon = Icons.Filled.Settings
     )
 }
 
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
-    val settingsVm: SettingsViewModel = koinViewModel()
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
@@ -117,12 +121,15 @@ fun AppNavHost() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "notes_graph",
+            startDestination = TopLevelRoute.NOTES.graphRoute,
             modifier = Modifier
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding),
             enterTransition = {
-                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(280)) +
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Start,
+                    tween(280)
+                ) +
                         fadeIn(tween(280))
             },
             exitTransition = { fadeOut(tween(200)) },
@@ -132,7 +139,7 @@ fun AppNavHost() {
                         fadeOut(tween(280))
             }
         ) {
-            navigation(route = "notes_graph", startDestination = "notes") {
+            navigation(route = TopLevelRoute.NOTES.graphRoute, startDestination = "notes") {
                 composable("notes") {
                     NotesListScreen(
                         onNavigateToNote = { noteId -> navController.navigate("editor/$noteId") },
@@ -163,7 +170,8 @@ fun AppNavHost() {
                     route = "folder/{folderId}",
                     arguments = listOf(navArgument("folderId") { type = NavType.LongType })
                 ) { backStackEntry ->
-                    val folderId = backStackEntry.arguments?.getLong("folderId") ?: return@composable
+                    val folderId =
+                        backStackEntry.arguments?.getLong("folderId") ?: return@composable
                     FolderScreen(
                         folderId = folderId,
                         onBack = { navController.popBackStack() },
@@ -174,7 +182,7 @@ fun AppNavHost() {
                 }
             }
 
-            navigation(route = "bible_graph", startDestination = "bible") {
+            navigation(route = TopLevelRoute.BIBLE.graphRoute, startDestination = "bible") {
                 composable("bible") {
                     BibleReaderScreen()
                 }
@@ -191,10 +199,9 @@ fun AppNavHost() {
                 }
             }
 
-            navigation(route = "settings_graph", startDestination = "settings") {
+            navigation(route = TopLevelRoute.SETTINGS.graphRoute, startDestination = "settings") {
                 composable("settings") {
                     SettingsScreen(
-                        viewModel = settingsVm,
                         onNavigateToTheme = { navController.navigate("settings/theme") },
                         onNavigateToTranslations = { navController.navigate("settings/translations") },
                         onNavigateToAbout = { navController.navigate("settings/about") }
@@ -202,13 +209,11 @@ fun AppNavHost() {
                 }
                 composable("settings/theme") {
                     BibleThemeSettingsScreen(
-                        viewModel = settingsVm,
                         onBack = { navController.popBackStack() }
                     )
                 }
                 composable("settings/translations") {
                     TranslationSettingsScreen(
-                        viewModel = settingsVm,
                         onBack = { navController.popBackStack() }
                     )
                 }
