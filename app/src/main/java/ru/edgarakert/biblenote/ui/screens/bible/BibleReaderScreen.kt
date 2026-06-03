@@ -466,7 +466,7 @@ private fun copyToClipboard(context: Context, text: String) {
 
 private fun translationDisplayName(translation: String) = when (translation) {
     "synodal" -> "Синодальный"
-    "nrt" -> "NRT"
+//    "nrt" -> "NRT"
     "kjv" -> "KJV"
     "niv" -> "NIV"
     else -> translation.uppercase()
@@ -474,7 +474,7 @@ private fun translationDisplayName(translation: String) = when (translation) {
 
 private fun translationShortName(translation: String) = when (translation) {
     "synodal" -> "Синод."
-    "nrt" -> "NRT"
+    // "nrt" -> "NRT"
     "kjv" -> "KJV"
     "niv" -> "NIV"
     else -> translation.uppercase()

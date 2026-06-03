@@ -16,7 +16,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     enum class AppearanceMode { SYSTEM, LIGHT, DARK }
 
     companion object {
-        val ALL_TRANSLATIONS = listOf("synodal", "nrt", "kjv", "niv")
+        val ALL_TRANSLATIONS = listOf("synodal", /*"nrt",*/ "kjv", "niv")
 
         private val KEY_TRANSLATION = stringPreferencesKey("defaultTranslation")
         private val KEY_ENABLED_TRANSLATIONS = stringSetPreferencesKey("enabledTranslations")
