@@ -112,7 +112,7 @@ fun NotesListScreen(
             } else {
                 NotesTopBar(
                     isSelectMode = isSelectMode,
-                    canEnterSelectMode = rootNotes.size > 1,
+                    canEnterSelectMode = rootNotes.isNotEmpty(),
                     onSearchClick = { isSearchActive = true },
                     onCreateNote = viewModel::createNote,
                     onNewFolder = { newFolderName = ""; showNewFolderDialog = true },
