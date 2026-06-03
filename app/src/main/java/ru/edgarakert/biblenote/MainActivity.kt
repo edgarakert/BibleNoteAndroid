@@ -68,7 +68,11 @@ private fun OnboardingFlow() {
     NavHost(navController = navController, startDestination = "onboarding") {
         composable("onboarding") {
             OnboardingScreen(
-                onNavigateToTranslations = { navController.navigate("onboarding/translations") }
+                onNavigateToTranslations = {
+                    navController.navigate("onboarding/translations") {
+                        popUpTo("onboarding") { inclusive = true }
+                    }
+                }
             )
         }
         composable("onboarding/translations") {
