@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Bible Note</string>
+    <string name="app_name">Заметки веры</string>
 
     <!-- Notes list -->
     <string name="notes_title">Заметки</string>
@@ -95,14 +95,14 @@
     <!-- About -->
     <string name="about_title">О приложении</string>
     <string name="about_subtitle">Заметки с распознаванием стихов</string>
-    <string name="about_description">BibleNote помогает вести заметки, в которых автоматически распознаются библейские ссылки. Нажмите на выделенную ссылку, чтобы увидеть текст стиха. Читайте полные главы во встроенной читалке с несколькими переводами и подсветкой стихов.</string>
+    <string name="about_description">Заметки веры помогают вести заметки, в которых автоматически распознаются библейские ссылки. Нажмите на выделенную ссылку, чтобы увидеть текст стиха. Читайте полные главы во встроенной читалке с несколькими переводами и подсветкой стихов.</string>
     <string name="about_contact_text">Вопросы или предложения? Напишите нам:</string>
     <string name="about_email">edormerdez@gmail.com</string>
 
     <!-- Onboarding -->
     <string name="onboarding_next">Далее</string>
     <string name="onboarding_choose_translations">Выбрать переводы</string>
-    <string name="onboarding_slide1_title">BibleNote</string>
+    <string name="onboarding_slide1_title">Заметки веры</string>
     <string name="onboarding_slide1_subtitle">Ваш библейский журнал</string>
     <string name="onboarding_slide1_body">Пишите заметки, оживлённые Писанием. Библейские ссылки распознаются автоматически и связываются с полным текстом.</string>
     <string name="onboarding_slide2_title">Авто-распознавание</string>

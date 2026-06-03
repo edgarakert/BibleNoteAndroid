@@ -4,7 +4,7 @@
     <style name="Theme.BibleNote" parent="Base.Theme.BibleNote">
         <item name="android:windowSplashScreenBackground">#F6EFE4</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
-        <item name="android:windowSplashScreenIconBackgroundColor">#F6EFE4</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">#FFFFFF</item>
     </style>
 
 </resources>

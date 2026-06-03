@@ -5,34 +5,49 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Amber book cover (outer shape; pages sit on top) -->
-    <path
-        android:fillColor="#C29A3D"
-        android:pathData="M54,27 L20,34 L20,79 L54,73 L88,79 L88,34 Z" />
+    <!--
+        Android adaptive icon standard:
+        - Total canvas: 108dp x 108dp
+        - Safe zone (always visible): center 66dp x 66dp (x: 21-87, y: 21-87)
+        - Scale 0.75 brings the notebook from x=18-90 into x=27-81 — safely within safe zone
+    -->
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.65"
+        android:scaleY="0.65">
 
-    <!-- Left page -->
-    <path
-        android:fillColor="#FEFCF7"
-        android:pathData="M54,31 L24,37 L24,76 L54,70 Z" />
+        <!-- Bookmark tab (top-left, rounded top corners) -->
+        <path
+            android:fillColor="#C29A3D"
+            android:pathData="M18,27 Q18,20 25,20 L29,20 Q35,20 35,27 L35,38 L18,38 Z" />
 
-    <!-- Right page -->
-    <path
-        android:fillColor="#FDFAF5"
-        android:pathData="M54,31 L84,37 L84,76 L54,70 Z" />
+        <!-- Left spine (full height below tab) -->
+        <path
+            android:fillColor="#C29A3D"
+            android:pathData="M18,38 L35,38 L35,90 L18,90 Z" />
 
-    <!-- Central spine -->
-    <path
-        android:fillColor="#A88028"
-        android:pathData="M52,27 L56,27 L56,73 L52,73 Z" />
+        <!-- Top cover flap (right side, rounded top-right corner) -->
+        <path
+            android:fillColor="#C29A3D"
+            android:pathData="M38,20 L83,20 Q90,20 90,27 L90,38 L38,38 Z" />
 
-    <!-- Text lines – left page -->
-    <path android:fillColor="#C29A3D" android:pathData="M28,49 L51,46 L51,49 L28,52 Z" />
-    <path android:fillColor="#C29A3D" android:pathData="M28,58 L51,55 L51,58 L28,61 Z" />
-    <path android:fillColor="#C29A3D" android:pathData="M28,67 L46,65 L46,68 L28,71 Z" />
+        <!-- Main notebook body (right side, rounded bottom-right corner) -->
+        <path
+            android:fillColor="#C29A3D"
+            android:pathData="M38,41 L90,41 L90,83 Q90,90 83,90 L38,90 Z" />
 
-    <!-- Text lines – right page -->
-    <path android:fillColor="#C29A3D" android:pathData="M57,46 L80,49 L80,52 L57,49 Z" />
-    <path android:fillColor="#C29A3D" android:pathData="M57,55 L80,58 L80,61 L57,58 Z" />
-    <path android:fillColor="#C29A3D" android:pathData="M62,65 L80,67 L80,70 L62,68 Z" />
+        <!-- Spiral ring holes on spine (4 circles, parchment color) -->
+        <path android:fillColor="#F6EFE4" android:pathData="M22.5,50 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z" />
+        <path android:fillColor="#F6EFE4" android:pathData="M22.5,61 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z" />
+        <path android:fillColor="#F6EFE4" android:pathData="M22.5,72 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z" />
+        <path android:fillColor="#F6EFE4" android:pathData="M22.5,83 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z" />
+
+        <!-- Text lines on main body (3 lines, darker amber) -->
+        <path android:fillColor="#A88028" android:pathData="M48,55 L82,55 L82,59 L48,59 Z" />
+        <path android:fillColor="#A88028" android:pathData="M48,65 L76,65 L76,69 L48,69 Z" />
+        <path android:fillColor="#A88028" android:pathData="M48,75 L68,75 L68,79 L48,79 Z" />
+
+    </group>
 
 </vector>

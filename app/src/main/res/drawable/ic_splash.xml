@@ -5,24 +5,48 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Book icon scaled to 70% from center to add padding for splash screen circle -->
-    <path
-        android:fillColor="#C29A3D"
-        android:pathData="M54,35 L30,40 L30,72 L54,67 L78,72 L78,40 Z" />
-    <path
-        android:fillColor="#FEFCF7"
-        android:pathData="M54,38 L33,42 L33,69 L54,65 Z" />
-    <path
-        android:fillColor="#FDFAF5"
-        android:pathData="M54,38 L75,42 L75,69 L54,65 Z" />
-    <path
-        android:fillColor="#A88028"
-        android:pathData="M53,35 L55,35 L55,67 L53,67 Z" />
-    <path android:fillColor="#C29A3D" android:pathData="M36,51 L52,48 L52,51 L36,53 Z" />
-    <path android:fillColor="#C29A3D" android:pathData="M36,57 L52,55 L52,57 L36,59 Z" />
-    <path android:fillColor="#C29A3D" android:pathData="M36,63 L48,62 L48,64 L36,66 Z" />
-    <path android:fillColor="#C29A3D" android:pathData="M56,48 L72,51 L72,53 L56,51 Z" />
-    <path android:fillColor="#C29A3D" android:pathData="M56,55 L72,57 L72,59 L56,57 Z" />
-    <path android:fillColor="#C29A3D" android:pathData="M60,62 L72,63 L72,64 L60,64 Z" />
+    <!--
+        Splash screen icon (Android 12+ windowSplashScreenAnimatedIcon).
+        Displayed in a circle at ~1/3 of screen height.
+        Scale 0.5 keeps the notebook well inside the circular clip area.
+    -->
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.43"
+        android:scaleY="0.43">
+
+        <!-- Bookmark tab (top-left, rounded top corners) -->
+        <path
+            android:fillColor="#C29A3D"
+            android:pathData="M18,27 Q18,20 25,20 L29,20 Q35,20 35,27 L35,38 L18,38 Z" />
+
+        <!-- Left spine (full height below tab) -->
+        <path
+            android:fillColor="#C29A3D"
+            android:pathData="M18,38 L35,38 L35,90 L18,90 Z" />
+
+        <!-- Top cover flap (right side, rounded top-right corner) -->
+        <path
+            android:fillColor="#C29A3D"
+            android:pathData="M38,20 L83,20 Q90,20 90,27 L90,38 L38,38 Z" />
+
+        <!-- Main notebook body (right side, rounded bottom-right corner) -->
+        <path
+            android:fillColor="#C29A3D"
+            android:pathData="M38,41 L90,41 L90,83 Q90,90 83,90 L38,90 Z" />
+
+        <!-- Spiral ring holes on spine (4 circles, parchment color) -->
+        <path android:fillColor="#F6EFE4" android:pathData="M22.5,50 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z" />
+        <path android:fillColor="#F6EFE4" android:pathData="M22.5,61 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z" />
+        <path android:fillColor="#F6EFE4" android:pathData="M22.5,72 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z" />
+        <path android:fillColor="#F6EFE4" android:pathData="M22.5,83 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z" />
+
+        <!-- Text lines on main body (3 lines, darker amber) -->
+        <path android:fillColor="#A88028" android:pathData="M48,55 L82,55 L82,59 L48,59 Z" />
+        <path android:fillColor="#A88028" android:pathData="M48,65 L76,65 L76,69 L48,69 Z" />
+        <path android:fillColor="#A88028" android:pathData="M48,75 L68,75 L68,79 L48,79 Z" />
+
+    </group>
 
 </vector>

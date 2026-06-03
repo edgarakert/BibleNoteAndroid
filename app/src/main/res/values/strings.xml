@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Bible Note</string>
+    <string name="app_name">Заметки веры</string>
 
     <!-- Notes list -->
     <string name="notes_title">Notes</string>
@@ -91,14 +91,14 @@
     <!-- About -->
     <string name="about_title">About</string>
     <string name="about_subtitle">Bible notes with verse recognition</string>
-    <string name="about_description">BibleNote helps you create notes that automatically detect Bible references. Tap any highlighted reference to see the verse text. Read full chapters in the built-in Bible reader with multiple translations and verse highlighting.</string>
+    <string name="about_description">Заметки веры helps you create notes that automatically detect Bible references. Tap any highlighted reference to see the verse text. Read full chapters in the built-in Bible reader with multiple translations and verse highlighting.</string>
     <string name="about_contact_text">Questions or suggestions? Write to us:</string>
     <string name="about_email">edormerdez@gmail.com</string>
 
     <!-- Onboarding -->
     <string name="onboarding_next">Next</string>
     <string name="onboarding_choose_translations">Choose Translations</string>
-    <string name="onboarding_slide1_title">BibleNote</string>
+    <string name="onboarding_slide1_title">Заметки веры</string>
     <string name="onboarding_slide1_subtitle">Your Bible journal</string>
     <string name="onboarding_slide1_body">Write notes that come alive with Scripture. Bible references are automatically recognised and linked to the full text.</string>
     <string name="onboarding_slide2_title">Auto-recognition</string>
