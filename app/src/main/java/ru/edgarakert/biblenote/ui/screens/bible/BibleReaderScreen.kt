@@ -48,6 +48,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -89,6 +90,8 @@ fun BibleReaderScreen(
     val activeHighlight = remember(uiState.selectedVerseNumbers, uiState.highlights) {
         sharedHighlight(uiState.selectedVerseNumbers, uiState.highlights)
     }
+
+    BackHandler(enabled = showingPicker) { showingPicker = false }
 
     if (showingPicker) {
         BibleBookPickerScreen(
