@@ -64,12 +64,14 @@ private fun buildDemoAnnotatedString(
     defaultColor: Color
 ): AnnotatedString = buildAnnotatedString {
     withStyle(SpanStyle(color = defaultColor)) { append(prefix) }
+    withStyle(SpanStyle()) { append(" ") }
     withStyle(
         SpanStyle(
             color = if (highlight) highlightColor else defaultColor,
             textDecoration = if (highlight) TextDecoration.Underline else TextDecoration.None
         )
     ) { append(ref) }
+    withStyle(SpanStyle()) { append(" ") }
     withStyle(SpanStyle(color = defaultColor)) { append(suffix) }
 }
 

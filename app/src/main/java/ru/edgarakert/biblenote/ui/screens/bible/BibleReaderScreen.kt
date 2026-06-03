@@ -48,6 +48,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -89,6 +90,8 @@ fun BibleReaderScreen(
     val activeHighlight = remember(uiState.selectedVerseNumbers, uiState.highlights) {
         sharedHighlight(uiState.selectedVerseNumbers, uiState.highlights)
     }
+
+    BackHandler(enabled = showingPicker) { showingPicker = false }
 
     if (showingPicker) {
         BibleBookPickerScreen(
@@ -466,7 +469,7 @@ private fun copyToClipboard(context: Context, text: String) {
 
 private fun translationDisplayName(translation: String) = when (translation) {
     "synodal" -> "Синодальный"
-    "nrt" -> "NRT"
+//    "nrt" -> "NRT"
     "kjv" -> "KJV"
     "niv" -> "NIV"
     else -> translation.uppercase()
@@ -474,7 +477,7 @@ private fun translationDisplayName(translation: String) = when (translation) {
 
 private fun translationShortName(translation: String) = when (translation) {
     "synodal" -> "Синод."
-    "nrt" -> "NRT"
+    // "nrt" -> "NRT"
     "kjv" -> "KJV"
     "niv" -> "NIV"
     else -> translation.uppercase()

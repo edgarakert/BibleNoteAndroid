@@ -1,6 +1,7 @@
 package ru.edgarakert.biblenote.ui.components
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.Typeface
 import android.os.Handler
 import android.os.Looper
@@ -32,6 +33,8 @@ fun BibleEditText(
     parser: BibleReferenceParser,
     modifier: Modifier = Modifier,
     placeholder: String = "",
+    initialCursorPosition: Int = -1,
+    onCursorPositionChanged: (Int) -> Unit = {},
 ) {
     val amberArgb = MaterialTheme.colorScheme.primary.toArgb()
     val inkArgb = MaterialTheme.colorScheme.onSurface.toArgb()
@@ -39,11 +42,10 @@ fun BibleEditText(
 
     val onTextChangedState = rememberUpdatedState(onTextChanged)
     val onReferenceTappedState = rememberUpdatedState(onReferenceTapped)
+    val onCursorPositionChangedState = rememberUpdatedState(onCursorPositionChanged)
 
-    val isProgrammatic = remember { BooleanArray(1) { false } }
     val handler = remember { Handler(Looper.getMainLooper()) }
     val pendingHighlight = remember { arrayOfNulls<Runnable>(1) }
-    // Mutable color refs so theme changes propagate into TextWatcher closures
     val currentAmberArgb = remember { intArrayOf(amberArgb) }
     val currentInkArgb = remember { intArrayOf(inkArgb) }
 
@@ -53,7 +55,7 @@ fun BibleEditText(
 
     AndroidView(
         factory = { context ->
-            EditText(context).apply {
+            CursorTrackingEditText(context).apply {
                 background = null
                 setTextColor(currentInkArgb[0])
                 textSize = 17f
@@ -66,6 +68,8 @@ fun BibleEditText(
                 val padH = (16 * density).toInt()
                 val padV = (12 * density).toInt()
                 setPadding(padH, padV, padH, padV)
+
+                selectionListener = { pos -> onCursorPositionChangedState.value(pos) }
 
                 setOnTouchListener { view, event ->
                     if (event.action != MotionEvent.ACTION_UP) return@setOnTouchListener false
@@ -84,14 +88,30 @@ fun BibleEditText(
                     val spans = editText.text.getSpans(offset, offset, BibleClickSpan::class.java)
                     if (spans.isNotEmpty()) {
                         val spannable = editText.text
-
                         val spanStart = spannable.getSpanStart(spans[0])
                         val spanEnd = spannable.getSpanEnd(spans[0])
+                        val spanStartLine = layout.getLineForOffset(spanStart)
+                        val spanEndLine = layout.getLineForOffset((spanEnd - 1).coerceAtLeast(spanStart))
                         val spanStartX = layout.getPrimaryHorizontal(spanStart)
                         val spanEndX = layout.getPrimaryHorizontal(spanEnd)
 
-                        val spanLine = layout.getLineForOffset(spanStart)
-                        if (line == spanLine && x >= spanStartX && x <= spanEndX) {
+                        val hit = when (line) {
+                            spanStartLine if line == spanEndLine ->
+                                x in spanStartX..spanEndX
+
+                            spanStartLine ->
+                                x >= spanStartX
+
+                            spanEndLine ->
+                                x <= spanEndX
+
+                            in (spanStartLine + 1) until spanEndLine ->
+                                true
+
+                            else -> false
+                        }
+
+                        if (hit) {
                             onReferenceTappedState.value(spans[0].reference)
                             view.performClick()
                             true
@@ -105,7 +125,7 @@ fun BibleEditText(
 
                 addTextChangedListener(object : android.text.TextWatcher {
                     override fun afterTextChanged(s: android.text.Editable?) {
-                        if (isProgrammatic[0]) return
+                        if (isProgrammatic) return
 
                         val newText = s?.toString() ?: ""
                         onTextChangedState.value(newText)
@@ -122,45 +142,39 @@ fun BibleEditText(
                         handler.postDelayed(runnable, 400)
                     }
 
-                    override fun beforeTextChanged(
-                        s: CharSequence?,
-                        start: Int,
-                        count: Int,
-                        after: Int
-                    ) {
-                    }
-
-                    override fun onTextChanged(
-                        s: CharSequence?,
-                        start: Int,
-                        before: Int,
-                        count: Int
-                    ) {
-                    }
+                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
                 })
             }
         },
-        update = { editText ->
+        update = { view ->
             val colorsChanged = currentAmberArgb[0] != amberArgb || currentInkArgb[0] != inkArgb
             currentAmberArgb[0] = amberArgb
             currentInkArgb[0] = inkArgb
 
             if (colorsChanged) {
-                editText.setTextColor(inkArgb)
-                editText.setHintTextColor(hintArgb)
+                view.setTextColor(inkArgb)
+                view.setHintTextColor(hintArgb)
             }
 
-            if (editText.text.toString() != text) {
-                isProgrammatic[0] = true
+            if (view.text?.toString() != text) {
+                view.isProgrammatic = true
                 try {
-                    editText.setText(text)
-                    editText.setSelection(editText.text.length)
-                    applyHighlighting(editText, parser, amberArgb, inkArgb)
+                    view.setText(text)
+                    val len = view.text?.length ?: 0
+                    val target = if (initialCursorPosition >= 0) {
+                        initialCursorPosition.coerceIn(0, len)
+                    } else {
+                        len
+                    }
+                    view.setSelection(target)
+                    applyHighlighting(view, parser, amberArgb, inkArgb)
                 } finally {
-                    isProgrammatic[0] = false
+                    view.isProgrammatic = false
                 }
+                handler.post { if (view.isAttachedToWindow) view.requestFocus() }
             } else if (colorsChanged) {
-                applyHighlighting(editText, parser, amberArgb, inkArgb)
+                applyHighlighting(view, parser, amberArgb, inkArgb)
             }
         },
         modifier = modifier
@@ -178,9 +192,7 @@ private fun applyHighlighting(
     val selStart = editText.selectionStart.coerceIn(0, len)
     val selEnd = editText.selectionEnd.coerceIn(0, len)
 
-    for (span in spannable.getSpans(0, len, ForegroundColorSpan::class.java)) spannable.removeSpan(
-        span
-    )
+    for (span in spannable.getSpans(0, len, ForegroundColorSpan::class.java)) spannable.removeSpan(span)
     for (span in spannable.getSpans(0, len, BibleClickSpan::class.java)) spannable.removeSpan(span)
 
     spannable.setSpan(ForegroundColorSpan(inkArgb), 0, len, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
@@ -202,6 +214,17 @@ private fun applyHighlighting(
     }
 
     editText.setSelection(selStart, selEnd)
+}
+
+@SuppressLint("AppCompatCustomView")
+private class CursorTrackingEditText(context: Context) : EditText(context) {
+    var isProgrammatic = false
+    var selectionListener: ((Int) -> Unit)? = null
+
+    override fun onSelectionChanged(selStart: Int, selEnd: Int) {
+        super.onSelectionChanged(selStart, selEnd)
+        if (!isProgrammatic) selectionListener?.invoke(selEnd)
+    }
 }
 
 internal class BibleClickSpan(val reference: BibleReference) : ClickableSpan() {

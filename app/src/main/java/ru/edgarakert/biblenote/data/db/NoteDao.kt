@@ -9,10 +9,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NoteDao {
-    @Query("SELECT * FROM notes WHERE folderId IS NULL ORDER BY updatedAt DESC")
+    @Query("SELECT * FROM notes WHERE folderId IS NULL AND NOT (title = '' AND content = '') ORDER BY updatedAt DESC")
     fun observeRootNotes(): Flow<List<Note>>
 
-    @Query("SELECT * FROM notes WHERE folderId = :folderId ORDER BY updatedAt DESC")
+    @Query("SELECT * FROM notes WHERE folderId = :folderId AND NOT (title = '' AND content = '') ORDER BY updatedAt DESC")
     fun observeNotesInFolder(folderId: Long): Flow<List<Note>>
 
     @Query("SELECT * FROM notes WHERE id = :id")
