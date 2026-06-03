@@ -88,14 +88,30 @@ fun BibleEditText(
                     val spans = editText.text.getSpans(offset, offset, BibleClickSpan::class.java)
                     if (spans.isNotEmpty()) {
                         val spannable = editText.text
-
                         val spanStart = spannable.getSpanStart(spans[0])
                         val spanEnd = spannable.getSpanEnd(spans[0])
+                        val spanStartLine = layout.getLineForOffset(spanStart)
+                        val spanEndLine = layout.getLineForOffset((spanEnd - 1).coerceAtLeast(spanStart))
                         val spanStartX = layout.getPrimaryHorizontal(spanStart)
                         val spanEndX = layout.getPrimaryHorizontal(spanEnd)
 
-                        val spanLine = layout.getLineForOffset(spanStart)
-                        if (line == spanLine && x >= spanStartX && x <= spanEndX) {
+                        val hit = when (line) {
+                            spanStartLine if line == spanEndLine ->
+                                x in spanStartX..spanEndX
+
+                            spanStartLine ->
+                                x >= spanStartX
+
+                            spanEndLine ->
+                                x <= spanEndX
+
+                            in (spanStartLine + 1) until spanEndLine ->
+                                true
+
+                            else -> false
+                        }
+
+                        if (hit) {
                             onReferenceTappedState.value(spans[0].reference)
                             view.performClick()
                             true
