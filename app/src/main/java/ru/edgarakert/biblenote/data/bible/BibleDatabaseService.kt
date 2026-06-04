@@ -71,7 +71,7 @@ class BibleDatabaseService(
     }
 
     suspend fun fetchBookName(bookId: Int, translation: String): String? = withContext(ioDispatcher) {
-        val col = if (translation == "kjv" || translation == "niv") "name_en" else "name_ru"
+        val col = if (translation == "kjv" /* || translation == "niv" */) "name_en" else "name_ru"
         val cursor = db.rawQuery("SELECT $col FROM books WHERE id = ?", arrayOf(bookId.toString()))
         cursor.use { if (it.moveToFirst()) it.getString(0) else null }
     }

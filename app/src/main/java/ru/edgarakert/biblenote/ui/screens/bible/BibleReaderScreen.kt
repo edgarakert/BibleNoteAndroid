@@ -471,7 +471,7 @@ private fun translationDisplayName(translation: String) = when (translation) {
     "synodal" -> "Синодальный"
 //    "nrt" -> "NRT"
     "kjv" -> "KJV"
-    "niv" -> "NIV"
+    // "niv" -> "NIV"
     else -> translation.uppercase()
 }
 
@@ -479,6 +479,6 @@ private fun translationShortName(translation: String) = when (translation) {
     "synodal" -> "Синод."
     // "nrt" -> "NRT"
     "kjv" -> "KJV"
-    "niv" -> "NIV"
+    // "niv" -> "NIV"
     else -> translation.uppercase()
 }

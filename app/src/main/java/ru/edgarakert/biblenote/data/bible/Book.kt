@@ -7,5 +7,5 @@ data class Book(
     val abbreviation: String
 ) {
     fun name(translation: String) =
-        if (translation == "kjv" || translation == "niv") nameEn else nameRu
+        if (translation == "kjv" /* || translation == "niv" */) nameEn else nameRu
 }

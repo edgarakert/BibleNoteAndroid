@@ -48,7 +48,7 @@ class SettingsViewModel(
         titleResId = R.string.translations_group_english,
         translations = listOf(
             TranslationInfo("kjv", R.string.translation_kjv_name, R.string.translation_kjv_subtitle),
-            TranslationInfo("niv", R.string.translation_niv_name, R.string.translation_niv_subtitle)
+            // TranslationInfo("niv", R.string.translation_niv_name, R.string.translation_niv_subtitle)
         )
     )
 
