@@ -91,11 +91,18 @@ class BibleDatabaseService(
             "SELECT verse, text FROM verses WHERE translation = ? AND book_id = ? AND chapter = ?"
         )
         val args = mutableListOf(translation, reference.bookId.toString(), reference.chapter.toString())
-        if (!reference.isWholeChapter) {
-            val start = reference.verseStart ?: 1
-            val end = reference.verseEnd ?: start
-            sb.append(" AND verse >= ? AND verse <= ?")
-            args += listOf(start.toString(), end.toString())
+        when {
+            reference.verseList.isNotEmpty() -> {
+                val placeholders = reference.verseList.joinToString(",") { "?" }
+                sb.append(" AND verse IN ($placeholders)")
+                args.addAll(reference.verseList.map { it.toString() })
+            }
+            !reference.isWholeChapter -> {
+                val start = reference.verseStart ?: 1
+                val end = reference.verseEnd ?: start
+                sb.append(" AND verse >= ? AND verse <= ?")
+                args += listOf(start.toString(), end.toString())
+            }
         }
         sb.append(" ORDER BY verse")
         val cursor = db.rawQuery(sb.toString(), args.toTypedArray())

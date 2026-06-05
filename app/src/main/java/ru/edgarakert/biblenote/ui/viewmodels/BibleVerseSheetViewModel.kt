@@ -70,13 +70,9 @@ class BibleVerseSheetViewModel(
     }
 
     private fun buildTitle(bookName: String): String {
-        val vs = reference.verseStart
-        val ve = reference.verseEnd
-        return when {
-            vs == null -> "$bookName ${reference.chapter}"
-            ve != null -> "$bookName ${reference.chapter}:$vs–$ve"
-            else -> "$bookName ${reference.chapter}:$vs"
-        }
+        val suffix = reference.verseDisplaySuffix
+        return if (suffix.isEmpty()) "$bookName ${reference.chapter}"
+               else "$bookName ${reference.chapter}:$suffix"
     }
 
     override fun onCleared() {

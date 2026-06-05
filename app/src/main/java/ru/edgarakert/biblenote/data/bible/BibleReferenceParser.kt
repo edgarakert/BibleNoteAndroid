@@ -150,7 +150,8 @@ class BibleReferenceParser {
         val sorted = bookAliases.keys.sortedByDescending { it.length }
         val alternation = sorted.joinToString("|") { Pattern.quote(it) }
         // (?<!\p{L}) — not preceded by any Unicode letter (avoids matching inside words)
-        val patternStr = "(?<!\\p{L})($alternation)\\s*\\.?\\s*(\\d+)(?::(\\d+)(?:-(\\d+))?)?"
+        // Group 5 captures trailing comma-separated verses/ranges like ",5,7-9"
+        val patternStr = "(?<!\\p{L})($alternation)\\s*\\.?\\s*(\\d+)(?::(\\d+)(?:-(\\d+))?((?:,\\d+(?:-\\d+)?)*))?"
         pattern = Pattern.compile(patternStr, Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE)
     }
 
@@ -164,12 +165,33 @@ class BibleReferenceParser {
             val chapter = matcher.group(2)?.toIntOrNull() ?: continue
             val verseStart = matcher.group(3)?.toIntOrNull()
             val verseEnd = matcher.group(4)?.toIntOrNull()
+            val extraPart = matcher.group(5)  // e.g. ",5,19" or ",5-7" or ""
+
+            val verseList: List<Int> = if (verseStart != null && !extraPart.isNullOrEmpty()) {
+                val result = mutableListOf<Int>()
+                if (verseEnd != null) result.addAll(verseStart..verseEnd) else result.add(verseStart)
+                for (segment in extraPart.split(",").filter { it.isNotEmpty() }) {
+                    val dash = segment.indexOf('-')
+                    if (dash > 0) {
+                        val s = segment.substring(0, dash).toIntOrNull() ?: continue
+                        val e = segment.substring(dash + 1).toIntOrNull() ?: continue
+                        result.addAll(s..e)
+                    } else {
+                        result.add(segment.toIntOrNull() ?: continue)
+                    }
+                }
+                result.sorted()
+            } else {
+                emptyList()
+            }
+
             results.add(
                 BibleReference(
                     bookId = bookId,
                     chapter = chapter,
                     verseStart = verseStart,
                     verseEnd = verseEnd,
+                    verseList = verseList,
                     displayText = text.substring(matcher.start(), matcher.end()),
                     startIndex = matcher.start(),
                     endIndex = matcher.end()
