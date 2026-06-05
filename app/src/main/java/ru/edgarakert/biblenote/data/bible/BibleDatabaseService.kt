@@ -13,11 +13,19 @@ class BibleDatabaseService(
 ) {
 
     companion object {
-        private const val DB_VERSION = 2
+        private const val DB_VERSION = 3
         private const val DB_NAME = "bible.sqlite"
         private const val VERSION_PREF_KEY = "bible.db.version"
         private const val PREFS_NAME = "biblenote_prefs"
     }
+
+    private data class HighlightRow(
+        val bookId: Int,
+        val chapter: Int,
+        val verseNumber: Int,
+        val colorName: String,
+        val createdAt: Long
+    )
 
     private val db: SQLiteDatabase by lazy { openDatabase() }
 
@@ -27,10 +35,21 @@ class BibleDatabaseService(
         val storedVersion = prefs.getInt(VERSION_PREF_KEY, 0)
 
         if (storedVersion < DB_VERSION || !dbFile.exists()) {
+            val savedHighlights = if (dbFile.exists() && storedVersion > 0) {
+                backupHighlights(dbFile.absolutePath)
+            } else emptyList()
+
             context.assets.open(DB_NAME).use { input ->
                 dbFile.outputStream().use { output -> input.copyTo(output) }
             }
             prefs.edit { putInt(VERSION_PREF_KEY, DB_VERSION) }
+
+            val database = SQLiteDatabase.openDatabase(
+                dbFile.absolutePath, null, SQLiteDatabase.OPEN_READWRITE
+            )
+            runMigrations(database)
+            restoreHighlights(database, savedHighlights)
+            return database
         }
 
         val database = SQLiteDatabase.openDatabase(
@@ -38,6 +57,50 @@ class BibleDatabaseService(
         )
         runMigrations(database)
         return database
+    }
+
+    private fun backupHighlights(dbPath: String): List<HighlightRow> {
+        return try {
+            val tempDb = SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.OPEN_READONLY)
+            tempDb.use { db ->
+                val tableCheck = db.rawQuery(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='verse_highlights'", null
+                )
+                val hasTable = tableCheck.use { it.moveToFirst() }
+                if (!hasTable) return emptyList()
+
+                db.rawQuery(
+                    "SELECT book_id, chapter, verse_number, color_name, created_at FROM verse_highlights", null
+                ).use { cur ->
+                    buildList {
+                        while (cur.moveToNext()) {
+                            add(HighlightRow(
+                                cur.getInt(0), cur.getInt(1), cur.getInt(2),
+                                cur.getString(3), cur.getLong(4)
+                            ))
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun restoreHighlights(database: SQLiteDatabase, highlights: List<HighlightRow>) {
+        if (highlights.isEmpty()) return
+        database.beginTransaction()
+        try {
+            for (h in highlights) {
+                database.execSQL(
+                    "INSERT OR IGNORE INTO verse_highlights (book_id, chapter, verse_number, color_name, created_at) VALUES (?,?,?,?,?)",
+                    arrayOf<Any>(h.bookId, h.chapter, h.verseNumber, h.colorName, h.createdAt)
+                )
+            }
+            database.setTransactionSuccessful()
+        } finally {
+            database.endTransaction()
+        }
     }
 
     private fun runMigrations(database: SQLiteDatabase) {
