@@ -79,7 +79,8 @@ private fun buildDemoAnnotatedString(
 fun OnboardingScreen(
     onNavigateToTranslations: () -> Unit
 ) {
-    val pagerState = rememberPagerState(pageCount = { 3 })
+    val pagerCount = 3
+    val pagerState = rememberPagerState(pageCount = { pagerCount })
     val scope = rememberCoroutineScope()
 
     Box(
@@ -106,7 +107,7 @@ fun OnboardingScreen(
                     .padding(horizontal = 32.dp)
                     .padding(bottom = 52.dp, top = 16.dp)
             ) {
-                PageDotsView(count = 3, current = pagerState.currentPage)
+                PageDotsView(count = pagerCount, current = pagerState.currentPage)
                 Spacer(modifier = Modifier.height(24.dp))
                 if (pagerState.currentPage < 2) {
                     OnboardingButton(
@@ -186,7 +187,8 @@ private fun OnboardingSlide1() {
             text = stringResource(R.string.onboarding_slide1_title),
             fontFamily = FontFamily.Serif,
             fontSize = 30.sp,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
         )
         Text(
             text = stringResource(R.string.onboarding_slide1_subtitle),
@@ -201,7 +203,7 @@ private fun OnboardingSlide1() {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             lineHeight = 20.sp,
-            modifier = Modifier.padding(top = 20.dp)
+            modifier = Modifier.padding(top = 20.dp, start = 28.dp, end = 28.dp)
         )
     }
 }
@@ -230,42 +232,48 @@ private fun OnboardingSlide2() {
             text = stringResource(R.string.onboarding_slide2_title),
             fontFamily = FontFamily.Serif,
             fontSize = 30.sp,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            text = stringResource(R.string.onboarding_slide2_body),
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
-            lineHeight = 20.sp,
-            modifier = Modifier.padding(top = 14.dp)
         )
-        val prefix = stringResource(R.string.onboarding_slide2_demo_prefix)
-        val ref = stringResource(R.string.onboarding_slide2_demo_ref)
-        val suffix = stringResource(R.string.onboarding_slide2_demo_suffix)
-        val demoText = remember(highlightVisible, prefix, ref, suffix, amber, ink) {
-            buildDemoAnnotatedString(highlightVisible, prefix, ref, suffix, amber, ink)
-        }
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 28.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(14.dp)
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(horizontal = 28.dp)
         ) {
             Text(
-                text = stringResource(R.string.onboarding_slide2_demo_label).uppercase(),
-                fontSize = 11.sp,
+                text = stringResource(R.string.onboarding_slide2_body),
+                fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                letterSpacing = 0.6.sp
+                textAlign = TextAlign.Center,
+                lineHeight = 20.sp,
+                modifier = Modifier.padding(top = 14.dp)
             )
-            Text(
-                text = demoText,
-                fontFamily = FontFamily.Serif,
-                fontSize = 15.sp,
-                modifier = Modifier.padding(top = 6.dp)
-            )
+            val prefix = stringResource(R.string.onboarding_slide2_demo_prefix)
+            val ref = stringResource(R.string.onboarding_slide2_demo_ref)
+            val suffix = stringResource(R.string.onboarding_slide2_demo_suffix)
+            val demoText = remember(highlightVisible, prefix, ref, suffix, amber, ink) {
+                buildDemoAnnotatedString(highlightVisible, prefix, ref, suffix, amber, ink)
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 28.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(14.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.onboarding_slide2_demo_label).uppercase(),
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    letterSpacing = 0.6.sp
+                )
+                Text(
+                    text = demoText,
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 15.sp,
+                    modifier = Modifier.padding(top = 6.dp)
+                )
+            }
         }
     }
 }
@@ -284,17 +292,20 @@ private fun OnboardingSlide3() {
             text = stringResource(R.string.onboarding_slide3_title),
             fontFamily = FontFamily.Serif,
             fontSize = 30.sp,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            text = stringResource(R.string.onboarding_slide3_body),
-            fontFamily = FontFamily.Serif,
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
-            lineHeight = 20.sp,
-            modifier = Modifier.padding(top = 14.dp)
         )
+        Box(modifier = Modifier.padding(horizontal = 28.dp)) {
+            Text(
+                text = stringResource(R.string.onboarding_slide3_body),
+                fontFamily = FontFamily.Serif,
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                lineHeight = 20.sp,
+                modifier = Modifier.padding(top = 14.dp)
+            )
+        }
     }
 }
 
@@ -310,7 +321,7 @@ private fun SlideLayout(
         verticalArrangement = Arrangement.Center,
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 44.dp)
+            .padding(horizontal = 16.dp)
     ) {
         Spacer(modifier = Modifier.weight(1f))
         AnimatedVisibility(
