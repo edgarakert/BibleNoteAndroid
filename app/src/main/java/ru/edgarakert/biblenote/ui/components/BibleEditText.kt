@@ -385,7 +385,7 @@ private class CursorTrackingEditText(context: Context) : EditText(context) {
         pushUndoState(onUndoState)
         val s = selectionStart
         val e = selectionEnd
-        val start: Int;
+        val start: Int
         val end: Int
         if (s == e) {
             val word = getWordRangeAt(s); start = word.first; end = word.second
@@ -424,7 +424,7 @@ private class CursorTrackingEditText(context: Context) : EditText(context) {
     private fun applyStyleTrait(trait: Int) {
         val s = selectionStart
         val e = selectionEnd
-        val start: Int;
+        val start: Int
         val end: Int
         if (s == e) {
             val word = getWordRangeAt(s); start = word.first; end = word.second
@@ -437,13 +437,13 @@ private class CursorTrackingEditText(context: Context) : EditText(context) {
         val existing = spannable.getSpans(start, end, StyleSpan::class.java)
 
         val allHave = existing.isNotEmpty() && existing.all { sp ->
-            val ss = spannable.getSpanStart(sp);
+            val ss = spannable.getSpanStart(sp)
             val se = spannable.getSpanEnd(sp)
             ss <= start && se >= end && (sp.style == trait || sp.style == Typeface.BOLD_ITALIC)
         }
 
         for (sp in existing) {
-            val ss = spannable.getSpanStart(sp);
+            val ss = spannable.getSpanStart(sp)
             val se = spannable.getSpanEnd(sp)
             if (ss < 0 || se < 0) continue
             val oldStyle = sp.style
