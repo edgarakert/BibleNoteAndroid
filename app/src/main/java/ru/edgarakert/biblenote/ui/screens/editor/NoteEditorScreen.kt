@@ -3,12 +3,17 @@ package ru.edgarakert.biblenote.ui.screens.editor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Redo
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.MoreVert
@@ -51,9 +56,10 @@ import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.bible.BibleReferenceParser
 import ru.edgarakert.biblenote.ui.components.BibleEditText
 import ru.edgarakert.biblenote.ui.components.BibleVerseSheet
+import ru.edgarakert.biblenote.ui.components.FormattingToolbar
 import ru.edgarakert.biblenote.ui.viewmodels.NoteEditorViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun NoteEditorScreen(
     noteId: Long,
@@ -63,7 +69,20 @@ fun NoteEditorScreen(
 ) {
     val title by viewModel.title.collectAsStateWithLifecycle()
     val content by viewModel.content.collectAsStateWithLifecycle()
+    val contentHtml by viewModel.contentHtml.collectAsStateWithLifecycle()
+    val isBold by viewModel.isBold.collectAsStateWithLifecycle()
+    val isItalic by viewModel.isItalic.collectAsStateWithLifecycle()
+    val isLarge by viewModel.isLarge.collectAsStateWithLifecycle()
+    val canUndo by viewModel.canUndo.collectAsStateWithLifecycle()
+    val canRedo by viewModel.canRedo.collectAsStateWithLifecycle()
+    val boldTrigger by viewModel.boldTrigger.collectAsStateWithLifecycle()
+    val italicTrigger by viewModel.italicTrigger.collectAsStateWithLifecycle()
+    val largeTrigger by viewModel.largeTrigger.collectAsStateWithLifecycle()
+    val undoTrigger by viewModel.undoTrigger.collectAsStateWithLifecycle()
+    val redoTrigger by viewModel.redoTrigger.collectAsStateWithLifecycle()
+
     val parser = remember { BibleReferenceParser() }
+    val isImeVisible = WindowInsets.isImeVisible
 
     var showMenu by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -76,6 +95,7 @@ fun NoteEditorScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
                 title = {},
@@ -89,6 +109,24 @@ fun NoteEditorScreen(
                     }
                 },
                 actions = {
+                    if (canUndo) {
+                        IconButton(onClick = viewModel::undo) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Undo,
+                                contentDescription = "Undo",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    if (canRedo) {
+                        IconButton(onClick = viewModel::redo) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Redo,
+                                contentDescription = "Redo",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                     Box {
                         IconButton(onClick = { showMenu = true }) {
                             Icon(
@@ -183,16 +221,36 @@ fun NoteEditorScreen(
 
             BibleEditText(
                 text = content,
-                onTextChanged = viewModel::setContent,
+                contentHtml = contentHtml,
+                onContentChanged = { plain, html -> viewModel.setContent(plain, html) },
                 onReferenceTapped = { tappedReference = it },
                 parser = parser,
                 placeholder = stringResource(R.string.editor_content_placeholder),
                 initialCursorPosition = savedCursorPosition,
                 onCursorPositionChanged = { savedCursorPosition = it },
+                boldTrigger = boldTrigger,
+                italicTrigger = italicTrigger,
+                largeTrigger = largeTrigger,
+                undoTrigger = undoTrigger,
+                redoTrigger = redoTrigger,
+                onFormattingChanged = { bold, italic, large -> viewModel.setFormattingState(bold, italic, large) },
+                onUndoStateChanged = { canU, canR -> viewModel.setUndoState(canU, canR) },
                 modifier = Modifier
-                    .fillMaxSize()
+                    .weight(1f)
                     .background(MaterialTheme.colorScheme.background)
             )
+
+            if (isImeVisible) {
+                FormattingToolbar(
+                    isBold = isBold,
+                    isItalic = isItalic,
+                    isLarge = isLarge,
+                    onBold = viewModel::toggleBold,
+                    onItalic = viewModel::toggleItalic,
+                    onLarge = viewModel::toggleLarge,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 
