@@ -6,6 +6,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -14,9 +16,29 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import ru.edgarakert.biblenote.data.NoteRepository
 import ru.edgarakert.biblenote.data.db.Note
+
+data class FormattingState(
+    val bold: Boolean = false,
+    val italic: Boolean = false,
+    val large: Boolean = false,
+)
+
+data class UndoRedoState(
+    val canUndo: Boolean = false,
+    val canRedo: Boolean = false,
+)
+
+sealed class FormattingCommand {
+    object Bold : FormattingCommand()
+    object Italic : FormattingCommand()
+    object Large : FormattingCommand()
+    object Undo : FormattingCommand()
+    object Redo : FormattingCommand()
+}
 
 @OptIn(FlowPreview::class)
 class NoteEditorViewModel(
@@ -36,37 +58,14 @@ class NoteEditorViewModel(
     private val _navigateBack = MutableSharedFlow<Unit>()
     val navigateBack: SharedFlow<Unit> = _navigateBack.asSharedFlow()
 
-    // Formatting state (reported by BibleEditText on selection change)
-    private val _isBold = MutableStateFlow(false)
-    val isBold: StateFlow<Boolean> = _isBold.asStateFlow()
+    private val _formattingState = MutableStateFlow(FormattingState())
+    val formattingState: StateFlow<FormattingState> = _formattingState.asStateFlow()
 
-    private val _isItalic = MutableStateFlow(false)
-    val isItalic: StateFlow<Boolean> = _isItalic.asStateFlow()
+    private val _undoRedoState = MutableStateFlow(UndoRedoState())
+    val undoRedoState: StateFlow<UndoRedoState> = _undoRedoState.asStateFlow()
 
-    private val _isLarge = MutableStateFlow(false)
-    val isLarge: StateFlow<Boolean> = _isLarge.asStateFlow()
-
-    private val _canUndo = MutableStateFlow(false)
-    val canUndo: StateFlow<Boolean> = _canUndo.asStateFlow()
-
-    private val _canRedo = MutableStateFlow(false)
-    val canRedo: StateFlow<Boolean> = _canRedo.asStateFlow()
-
-    // Trigger counters: increment to signal BibleEditText to perform action
-    private val _boldTrigger = MutableStateFlow(0)
-    val boldTrigger: StateFlow<Int> = _boldTrigger.asStateFlow()
-
-    private val _italicTrigger = MutableStateFlow(0)
-    val italicTrigger: StateFlow<Int> = _italicTrigger.asStateFlow()
-
-    private val _largeTrigger = MutableStateFlow(0)
-    val largeTrigger: StateFlow<Int> = _largeTrigger.asStateFlow()
-
-    private val _undoTrigger = MutableStateFlow(0)
-    val undoTrigger: StateFlow<Int> = _undoTrigger.asStateFlow()
-
-    private val _redoTrigger = MutableStateFlow(0)
-    val redoTrigger: StateFlow<Int> = _redoTrigger.asStateFlow()
+    private val _formattingCommands = Channel<FormattingCommand>(Channel.UNLIMITED)
+    val formattingCommands: Flow<FormattingCommand> = _formattingCommands.receiveAsFlow()
 
     private var currentNote: Note? = null
     private var isDirty = false
@@ -101,25 +100,22 @@ class NoteEditorViewModel(
     }
 
     fun setFormattingState(bold: Boolean, italic: Boolean, large: Boolean) {
-        _isBold.value = bold
-        _isItalic.value = italic
-        _isLarge.value = large
+        _formattingState.value = FormattingState(bold, italic, large)
     }
 
     fun setUndoState(canUndo: Boolean, canRedo: Boolean) {
-        _canUndo.value = canUndo
-        _canRedo.value = canRedo
+        _undoRedoState.value = UndoRedoState(canUndo, canRedo)
     }
 
-    fun toggleBold() = _boldTrigger.value++
+    fun toggleBold() = _formattingCommands.trySend(FormattingCommand.Bold)
 
-    fun toggleItalic() = _italicTrigger.value++
+    fun toggleItalic() = _formattingCommands.trySend(FormattingCommand.Italic)
 
-    fun toggleLarge() = _largeTrigger.value++
+    fun toggleLarge() = _formattingCommands.trySend(FormattingCommand.Large)
 
-    fun undo() = _undoTrigger.value++
+    fun undo() = _formattingCommands.trySend(FormattingCommand.Undo)
 
-    fun redo() = _redoTrigger.value++
+    fun redo() = _formattingCommands.trySend(FormattingCommand.Redo)
 
     fun deleteNote() {
         viewModelScope.launch {
@@ -130,6 +126,7 @@ class NoteEditorViewModel(
 
     override fun onCleared() {
         super.onCleared()
+        _formattingCommands.close()
         val note = currentNote ?: return
 
         val title = _title.value

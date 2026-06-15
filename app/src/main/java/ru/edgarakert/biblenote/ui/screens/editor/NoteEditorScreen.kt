@@ -70,16 +70,8 @@ fun NoteEditorScreen(
     val title by viewModel.title.collectAsStateWithLifecycle()
     val content by viewModel.content.collectAsStateWithLifecycle()
     val contentHtml by viewModel.contentHtml.collectAsStateWithLifecycle()
-    val isBold by viewModel.isBold.collectAsStateWithLifecycle()
-    val isItalic by viewModel.isItalic.collectAsStateWithLifecycle()
-    val isLarge by viewModel.isLarge.collectAsStateWithLifecycle()
-    val canUndo by viewModel.canUndo.collectAsStateWithLifecycle()
-    val canRedo by viewModel.canRedo.collectAsStateWithLifecycle()
-    val boldTrigger by viewModel.boldTrigger.collectAsStateWithLifecycle()
-    val italicTrigger by viewModel.italicTrigger.collectAsStateWithLifecycle()
-    val largeTrigger by viewModel.largeTrigger.collectAsStateWithLifecycle()
-    val undoTrigger by viewModel.undoTrigger.collectAsStateWithLifecycle()
-    val redoTrigger by viewModel.redoTrigger.collectAsStateWithLifecycle()
+    val formattingState by viewModel.formattingState.collectAsStateWithLifecycle()
+    val undoRedoState by viewModel.undoRedoState.collectAsStateWithLifecycle()
 
     val parser = remember { BibleReferenceParser() }
     val isImeVisible = WindowInsets.isImeVisible
@@ -109,7 +101,7 @@ fun NoteEditorScreen(
                     }
                 },
                 actions = {
-                    if (canUndo) {
+                    if (undoRedoState.canUndo) {
                         IconButton(onClick = viewModel::undo) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.Undo,
@@ -118,7 +110,7 @@ fun NoteEditorScreen(
                             )
                         }
                     }
-                    if (canRedo) {
+                    if (undoRedoState.canRedo) {
                         IconButton(onClick = viewModel::redo) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.Redo,
@@ -228,11 +220,7 @@ fun NoteEditorScreen(
                 placeholder = stringResource(R.string.editor_content_placeholder),
                 initialCursorPosition = savedCursorPosition,
                 onCursorPositionChanged = { savedCursorPosition = it },
-                boldTrigger = boldTrigger,
-                italicTrigger = italicTrigger,
-                largeTrigger = largeTrigger,
-                undoTrigger = undoTrigger,
-                redoTrigger = redoTrigger,
+                formattingCommands = viewModel.formattingCommands,
                 onFormattingChanged = { bold, italic, large -> viewModel.setFormattingState(bold, italic, large) },
                 onUndoStateChanged = { canU, canR -> viewModel.setUndoState(canU, canR) },
                 modifier = Modifier
@@ -242,9 +230,9 @@ fun NoteEditorScreen(
 
             if (isImeVisible) {
                 FormattingToolbar(
-                    isBold = isBold,
-                    isItalic = isItalic,
-                    isLarge = isLarge,
+                    isBold = formattingState.bold,
+                    isItalic = formattingState.italic,
+                    isLarge = formattingState.large,
                     onBold = viewModel::toggleBold,
                     onItalic = viewModel::toggleItalic,
                     onLarge = viewModel::toggleLarge,

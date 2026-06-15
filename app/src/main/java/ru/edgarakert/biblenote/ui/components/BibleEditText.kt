@@ -26,9 +26,12 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.viewinterop.AndroidView
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.bible.BibleReferenceParser
 import ru.edgarakert.biblenote.data.db.RichTextSerializer
+import ru.edgarakert.biblenote.ui.viewmodels.FormattingCommand
 
 @SuppressLint("ClickableViewAccessibility")
 @Composable
@@ -42,11 +45,7 @@ fun BibleEditText(
     placeholder: String = "",
     initialCursorPosition: Int = -1,
     onCursorPositionChanged: (Int) -> Unit = {},
-    boldTrigger: Int = 0,
-    italicTrigger: Int = 0,
-    largeTrigger: Int = 0,
-    undoTrigger: Int = 0,
-    redoTrigger: Int = 0,
+    formattingCommands: Flow<FormattingCommand> = emptyFlow(),
     onFormattingChanged: (bold: Boolean, italic: Boolean, large: Boolean) -> Unit = { _, _, _ -> },
     onUndoStateChanged: (canUndo: Boolean, canRedo: Boolean) -> Unit = { _, _ -> },
 ) {
@@ -65,50 +64,22 @@ fun BibleEditText(
     val currentAmberArgb = remember { intArrayOf(amberArgb) }
     val currentInkArgb = remember { intArrayOf(inkArgb) }
 
-    val prevBoldTrigger = remember { intArrayOf(boldTrigger) }
-    val prevItalicTrigger = remember { intArrayOf(italicTrigger) }
-    val prevLargeTrigger = remember { intArrayOf(largeTrigger) }
-    val prevUndoTrigger = remember { intArrayOf(undoTrigger) }
-    val prevRedoTrigger = remember { intArrayOf(redoTrigger) }
-
     val viewRef = remember { arrayOfNulls<CursorTrackingEditText>(1) }
 
     DisposableEffect(Unit) {
         onDispose { pendingHighlight[0]?.let { handler.removeCallbacks(it) } }
     }
 
-    LaunchedEffect(boldTrigger) {
-        if (boldTrigger != prevBoldTrigger[0]) {
-            prevBoldTrigger[0] = boldTrigger
-            viewRef[0]?.applyBold(onFormattingChangedState.value, onUndoStateChangedState.value, onContentChangedState.value)
-        }
-    }
-
-    LaunchedEffect(italicTrigger) {
-        if (italicTrigger != prevItalicTrigger[0]) {
-            prevItalicTrigger[0] = italicTrigger
-            viewRef[0]?.applyItalic(onFormattingChangedState.value, onUndoStateChangedState.value, onContentChangedState.value)
-        }
-    }
-
-    LaunchedEffect(largeTrigger) {
-        if (largeTrigger != prevLargeTrigger[0]) {
-            prevLargeTrigger[0] = largeTrigger
-            viewRef[0]?.applyLarge(onFormattingChangedState.value, onUndoStateChangedState.value, onContentChangedState.value)
-        }
-    }
-
-    LaunchedEffect(undoTrigger) {
-        if (undoTrigger != prevUndoTrigger[0]) {
-            prevUndoTrigger[0] = undoTrigger
-            viewRef[0]?.applyUndo(onUndoStateChangedState.value)
-        }
-    }
-
-    LaunchedEffect(redoTrigger) {
-        if (redoTrigger != prevRedoTrigger[0]) {
-            prevRedoTrigger[0] = redoTrigger
-            viewRef[0]?.applyRedo(onUndoStateChangedState.value)
+    LaunchedEffect(formattingCommands) {
+        formattingCommands.collect { command ->
+            val view = viewRef[0] ?: return@collect
+            when (command) {
+                is FormattingCommand.Bold -> view.applyBold(onFormattingChangedState.value, onUndoStateChangedState.value, onContentChangedState.value)
+                is FormattingCommand.Italic -> view.applyItalic(onFormattingChangedState.value, onUndoStateChangedState.value, onContentChangedState.value)
+                is FormattingCommand.Large -> view.applyLarge(onFormattingChangedState.value, onUndoStateChangedState.value, onContentChangedState.value)
+                is FormattingCommand.Undo -> view.applyUndo(onUndoStateChangedState.value)
+                is FormattingCommand.Redo -> view.applyRedo(onUndoStateChangedState.value)
+            }
         }
     }
 
