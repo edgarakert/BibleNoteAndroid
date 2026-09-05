@@ -49,6 +49,7 @@
     <!-- Verse sheet -->
     <string name="verse_not_found">Стих не найден</string>
     <string name="verse_open_chapter">Открыть главу</string>
+    <string name="verse_notes_title">Заметки об этом стихе</string>
 
     <!-- Bible reader -->
     <string name="bible_picker_title">Выбор книги</string>

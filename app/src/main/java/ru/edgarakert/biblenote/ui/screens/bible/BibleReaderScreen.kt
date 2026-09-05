@@ -68,6 +68,7 @@ import org.koin.androidx.compose.koinViewModel
 import ru.edgarakert.biblenote.R
 import ru.edgarakert.biblenote.data.bible.HighlightColor
 import ru.edgarakert.biblenote.ui.components.BibleVerse
+import ru.edgarakert.biblenote.ui.components.VerseNotesSheet
 import ru.edgarakert.biblenote.ui.viewmodels.BibleReaderViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -75,6 +76,7 @@ import ru.edgarakert.biblenote.ui.viewmodels.BibleReaderViewModel
 fun BibleReaderScreen(
     pendingBookId: Int = -1,
     pendingChapter: Int = -1,
+    onOpenNote: (Long) -> Unit = {},
     viewModel: BibleReaderViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -87,6 +89,7 @@ fun BibleReaderScreen(
 
     val context = LocalContext.current
     var showingPicker by remember { mutableStateOf(false) }
+    var verseNotesFor by remember { mutableStateOf<Int?>(null) }
     val activeHighlight = remember(uiState.selectedVerseNumbers, uiState.highlights) {
         sharedHighlight(uiState.selectedVerseNumbers, uiState.highlights)
     }
@@ -165,6 +168,7 @@ fun BibleReaderScreen(
                     VersesContent(
                         uiState = uiState,
                         onToggleVerse = viewModel::toggleVerseSelection,
+                        onNoteBadgeClick = { verseNum -> verseNotesFor = verseNum },
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -207,12 +211,28 @@ fun BibleReaderScreen(
             }
         }
     }
+
+    val notesVerseNumber = verseNotesFor
+    if (notesVerseNumber != null) {
+        VerseNotesSheet(
+            bookName = uiState.bookName,
+            chapter = uiState.chapter,
+            verseNumber = notesVerseNumber,
+            notes = viewModel.notesForVerse(notesVerseNumber),
+            onOpenNote = { noteId ->
+                verseNotesFor = null
+                onOpenNote(noteId)
+            },
+            onDismiss = { verseNotesFor = null }
+        )
+    }
 }
 
 @Composable
 private fun VersesContent(
     uiState: BibleReaderViewModel.UiState,
     onToggleVerse: (Int) -> Unit,
+    onNoteBadgeClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -226,6 +246,8 @@ private fun VersesContent(
                 highlightColor = uiState.highlights[verseNum],
                 verseScale = uiState.verseScale,
                 isSelected = verseNum in uiState.selectedVerseNumbers,
+                noteCount = uiState.noteCounts[verseNum] ?: 0,
+                onNoteBadgeClick = { onNoteBadgeClick(verseNum) },
                 modifier = Modifier.clickable { onToggleVerse(verseNum) }
             )
         }

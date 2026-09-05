@@ -263,8 +263,26 @@ fun AppNavHost(initialNotesPath: List<NotesPathEntry> = emptyList()) {
             }
 
             navigation(route = TopLevelRoute.BIBLE.graphRoute, startDestination = "bible") {
+                // Заметка, открытая из шторки стиха, приземляется на вкладке «Заметки», в
+                // редакторе поверх свежего корня "notes" — ровно то, что делает popUpTo(start
+                // Destination){saveState=true} + restoreState=false: он отбрасывает сохранённое
+                // состояние графа "Заметки" и строит его заново от старта. Поэтому notesPath
+                // сбрасывается до пустого и туда кладётся только эта заметка — так persisted
+                // notesLastPath не разойдётся с реальным back stack, если процесс убьют сразу
+                // после перехода.
+                val onOpenNoteFromBible: (Long) -> Unit = { noteId ->
+                    popNotesPathTo(0)
+                    pushNotesPath(NotesPathEntry.Note(noteId))
+                    navController.navigate("editor/$noteId") {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = false
+                    }
+                }
                 composable("bible") {
-                    BibleReaderScreen()
+                    BibleReaderScreen(onOpenNote = onOpenNoteFromBible)
                 }
                 composable(
                     route = "bible_at/{bookId}/{chapter}",
@@ -275,7 +293,11 @@ fun AppNavHost(initialNotesPath: List<NotesPathEntry> = emptyList()) {
                 ) { backStackEntry ->
                     val bookId = backStackEntry.arguments?.getInt("bookId") ?: return@composable
                     val chapter = backStackEntry.arguments?.getInt("chapter") ?: return@composable
-                    BibleReaderScreen(pendingBookId = bookId, pendingChapter = chapter)
+                    BibleReaderScreen(
+                        pendingBookId = bookId,
+                        pendingChapter = chapter,
+                        onOpenNote = onOpenNoteFromBible
+                    )
                 }
             }
 

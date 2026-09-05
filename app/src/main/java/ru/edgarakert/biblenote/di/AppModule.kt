@@ -63,7 +63,9 @@ val appModule = module {
     viewModel {
         BibleReaderViewModel(
             bibleService = get<BibleDatabaseService>(),
-            settingsRepository = get<SettingsRepository>()
+            settingsRepository = get<SettingsRepository>(),
+            parser = get<BibleReferenceParser>(),
+            repository = get<NoteRepository>()
         )
     }
     viewModel { NotesViewModel(repository = get<NoteRepository>()) }
