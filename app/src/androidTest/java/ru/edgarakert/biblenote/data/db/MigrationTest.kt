@@ -1,0 +1,41 @@
+package ru.edgarakert.biblenote.data.db
+
+import androidx.room.testing.MigrationTestHelper
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+
+@RunWith(AndroidJUnit4::class)
+class MigrationTest {
+
+    private val dbName = "migration-test"
+
+    @get:Rule
+    val helper = MigrationTestHelper(
+        InstrumentationRegistry.getInstrumentation(),
+        AppDatabase::class.java
+    )
+
+    @Test
+    fun migrate1To2_keepsExistingNotesAndDefaultsIsPinnedToFalse() {
+        helper.createDatabase(dbName, 1).apply {
+            execSQL(
+                "INSERT INTO notes (id, title, content, folderId, createdAt, updatedAt) " +
+                    "VALUES (1, 'Старая заметка', 'Быт 1:1', NULL, 1000, 2000)"
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(dbName, 2, true)
+
+        db.query("SELECT title, isPinned FROM notes WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("Старая заметка", cursor.getString(0))
+            assertEquals(0, cursor.getInt(1))
+        }
+    }
+}

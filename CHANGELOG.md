@@ -11,6 +11,18 @@
   иначе диапазон `verseStart..verseEnd`, иначе пусто для ссылки на всю главу).
 - `BibleReference.replacementText` — пересобирает текст ссылки под новый набор стихов, сохраняя
   сокращение книги ровно так, как его набрал пользователь.
+- Room-миграция `AppDatabase` версии 1 → 2 (закрывает риск **R1**): добавлена автомиграция
+  (`AutoMigration(from = 1, to = 2)`) вместо сборки без `addMigrations`/`fallbackToDestructiveMigration`.
+  Колонка `notes.isPinned` (`Boolean`, SQL-default `0`) едет вместе с этим bump'ом версии — она нужна
+  задаче 12.3, отдельный bump ради пустой миграции не нужен. Проверено `MigrationTest`
+  (`app/src/androidTest/.../data/db/MigrationTest.kt`): существующие заметки переживают миграцию,
+  `isPinned` по умолчанию `false`.
+- Для инструментальных тестов миграций подключена `androidx.room:room-testing`; androidTest-классам
+  добавлен доступ к экспортированным JSON-схемам (`app/schemas`). Также форсирована версия
+  `kotlinx-serialization-core`/`-json` до `1.8.1` для androidTest-конфигураций — Compose BOM
+  (`2026.05.01`) жёстко фиксирует `1.7.3`, а `room-testing` 2.8.4 требует API из `1.8.1`
+  (`GeneratedSerializer.typeParametersSerializers()`); без форса `MigrationTestHelper` падал с
+  `AbstractMethodError`.
 
 ### Исправлено (Данные — Синодальный перевод)
 
