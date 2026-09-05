@@ -45,8 +45,9 @@ import ru.edgarakert.biblenote.data.db.Note
  *
  * Инкапсулирует поведение строки заметки, общее для NotesListScreen и FolderScreen (устраняет
  * дублирование, риск R6): режим выбора с чекбоксом, свайп влево для удаления, и long-press меню
- * с единственным пунктом «Закрепить/Открепить» — это единственный дискаверабельный путь к
- * закреплению (риск R7), поэтому оно обязательно даже с уже существующим свайпом на удаление.
+ * с тремя пунктами — «Закрепить/Открепить», «Переместить», «Удалить» — это единственный
+ * дискаверабельный путь к закреплению и перемещению одной заметки (риск R7), поэтому меню
+ * обязательно даже с уже существующим свайпом на удаление.
  *
  * [keyPrefix] обязателен и должен различаться у секций, иначе ключи `items()` столкнутся.
  */
@@ -57,6 +58,7 @@ fun LazyListScope.noteListSection(
     selectedIds: Set<Long>,
     onNoteClick: (Note) -> Unit,
     onTogglePin: (Note) -> Unit,
+    onMoveNote: (Note) -> Unit,
     onDeleteNote: (Note) -> Unit,
 ) {
     items(notes, key = { "${keyPrefix}_${it.id}" }) { note ->
@@ -66,6 +68,7 @@ fun LazyListScope.noteListSection(
             isSelected = note.id in selectedIds,
             onClick = { onNoteClick(note) },
             onTogglePin = { onTogglePin(note) },
+            onMove = { onMoveNote(note) },
             onDelete = { onDeleteNote(note) }
         )
     }
@@ -79,6 +82,7 @@ private fun NoteListEntry(
     isSelected: Boolean,
     onClick: () -> Unit,
     onTogglePin: () -> Unit,
+    onMove: () -> Unit,
     onDelete: () -> Unit
 ) {
     if (isSelectMode) {
@@ -152,6 +156,14 @@ private fun NoteListEntry(
                         )
                     },
                     onClick = { menuOpen = false; onTogglePin() }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.folder_move)) },
+                    onClick = { menuOpen = false; onMove() }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.note_delete)) },
+                    onClick = { menuOpen = false; onDelete() }
                 )
             }
         }

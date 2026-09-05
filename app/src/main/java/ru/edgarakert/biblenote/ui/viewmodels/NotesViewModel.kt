@@ -130,4 +130,17 @@ class NotesViewModel(private val repository: NoteRepository) : ViewModel() {
             exitSelectMode()
         }
     }
+
+    fun moveNote(noteId: Long, targetFolderId: Long?) {
+        viewModelScope.launch {
+            repository.moveNotesToFolder(setOf(noteId), targetFolderId)
+        }
+    }
+
+    fun createFolderAndMoveNote(name: String, noteId: Long) {
+        viewModelScope.launch {
+            val folderId = repository.saveFolder(Folder(name = name))
+            repository.moveNotesToFolder(setOf(noteId), folderId)
+        }
+    }
 }

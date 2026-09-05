@@ -96,6 +96,19 @@ class FolderViewModel(
         }
     }
 
+    fun moveNote(noteId: Long, targetFolderId: Long?) {
+        viewModelScope.launch {
+            repository.moveNotesToFolder(setOf(noteId), targetFolderId)
+        }
+    }
+
+    fun createFolderAndMoveNote(name: String, noteId: Long) {
+        viewModelScope.launch {
+            val newFolderId = repository.saveFolder(Folder(name = name))
+            repository.moveNotesToFolder(setOf(noteId), newFolderId)
+        }
+    }
+
     fun enterSelectMode() {
         _isSelectMode.value = true
         _selectedIds.value = emptySet()

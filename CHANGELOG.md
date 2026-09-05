@@ -5,14 +5,20 @@
 ### Добавлено (Фаза 12 — Фундамент)
 
 - Закреплённые заметки теперь рендерятся отдельной секцией сверху списка (задача 12.4,
-  закрывает риски **R6**/**R7**): long-press по заметке открывает меню «Закрепить»/«Открепить»
-  (`NoteRow` — иконка `pin.fill` 11dp рядом с заголовком); `NotesViewModel`/`FolderViewModel`
-  делят поток заметок на `pinnedNotes`/`unpinnedNotes` в коде (порядок `updatedAt DESC` внутри
-  каждой группы не меняется), а `togglePin` вызывает точечный `NoteRepository.setNotePinned`
-  (из задачи 12.3), не трогая `updatedAt`. Общая логика строки (режим выбора, свайп-удаление,
-  long-press меню) вынесена в `ui/components/NoteListSection.kt` — единый `LazyListScope`-
-  расширитель для `NotesListScreen` и `FolderScreen`, устраняющий дублирование двух экранов.
-  Во время поиска секции не показываются — один плоский список, как и раньше.
+  закрывает риски **R6**/**R7**): long-press по заметке открывает меню из трёх пунктов —
+  «Закрепить»/«Открепить», «Переместить», «Удалить заметку» (`NoteRow` — иконка `pin.fill` 11dp
+  рядом с заголовком); `NotesViewModel`/`FolderViewModel` делят поток заметок на
+  `pinnedNotes`/`unpinnedNotes` в коде (порядок `updatedAt DESC` внутри каждой группы не меняется),
+  а `togglePin` вызывает точечный `NoteRepository.setNotePinned` (из задачи 12.3), не трогая
+  `updatedAt`. Пункт «Переместить» открывает `MoveFolderSheet` для одной заметки — новые
+  `moveNote`/`createFolderAndMoveNote` в обоих ViewModel'ях зеркалят существующие
+  `moveSelectedNotes`/`createFolderAndMoveSelected`, переиспользуя тот же
+  `NoteRepository.moveNotesToFolder`; мультивыбор со своим независимым состоянием
+  `showMoveSheet` не затронут. Пункт «Удалить» подключён к тому же `onDeleteNote`, что и
+  свайп-удаление — без отдельного диалога подтверждения. Общая логика строки (режим выбора,
+  свайп-удаление, long-press меню) вынесена в `ui/components/NoteListSection.kt` — единый
+  `LazyListScope`-расширитель для `NotesListScreen` и `FolderScreen`, устраняющий дублирование
+  двух экранов. Во время поиска секции не показываются — один плоский список, как и раньше.
 - `BibleReference.formatVerseSpec` — компактная запись списка стихов (`"14-16,20"`) с настраиваемым
   разделителем диапазона; по умолчанию ASCII-дефис, который `BibleReferenceParser` может прочитать обратно
   (риск **R2**: `compactVerseString` для экрана по-прежнему использует en dash `–`, непригодный для текста заметки).

@@ -83,6 +83,7 @@ fun FolderScreen(
     val isSubfolder = folder?.parentId != null
 
     var showMoveSheet by remember { mutableStateOf(false) }
+    var pendingMoveNote by remember { mutableStateOf<Note?>(null) }
     var showNewSubfolderDialog by remember { mutableStateOf(false) }
     var newSubfolderName by remember { mutableStateOf("") }
     var showDeleteSelfDialog by remember { mutableStateOf(false) }
@@ -169,6 +170,7 @@ fun FolderScreen(
                         selectedIds = selectedIds,
                         onNoteClick = onNoteClick,
                         onTogglePin = viewModel::togglePin,
+                        onMoveNote = { pendingMoveNote = it },
                         onDeleteNote = viewModel::deleteNote
                     )
                     noteListSection(
@@ -178,6 +180,7 @@ fun FolderScreen(
                         selectedIds = selectedIds,
                         onNoteClick = onNoteClick,
                         onTogglePin = viewModel::togglePin,
+                        onMoveNote = { pendingMoveNote = it },
                         onDeleteNote = viewModel::deleteNote
                     )
                 }
@@ -191,6 +194,15 @@ fun FolderScreen(
             onDismiss = { showMoveSheet = false },
             onMove = { targetId -> viewModel.moveSelectedNotes(targetId); showMoveSheet = false },
             onCreateFolderAndMove = { name -> viewModel.createFolderAndMoveSelected(name); showMoveSheet = false }
+        )
+    }
+
+    pendingMoveNote?.let { note ->
+        MoveFolderSheet(
+            allFolders = allFolders,
+            onDismiss = { pendingMoveNote = null },
+            onMove = { targetId -> viewModel.moveNote(note.id, targetId); pendingMoveNote = null },
+            onCreateFolderAndMove = { name -> viewModel.createFolderAndMoveNote(name, note.id); pendingMoveNote = null }
         )
     }
 

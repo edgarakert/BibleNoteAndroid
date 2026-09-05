@@ -83,6 +83,7 @@ fun NotesListScreen(
 
     var isSearchActive by remember { mutableStateOf(false) }
     var showMoveSheet by remember { mutableStateOf(false) }
+    var pendingMoveNote by remember { mutableStateOf<Note?>(null) }
     var showNewFolderDialog by remember { mutableStateOf(false) }
     var newFolderName by remember { mutableStateOf("") }
     var folderToRename by remember { mutableStateOf<FolderWithCount?>(null) }
@@ -195,6 +196,7 @@ fun NotesListScreen(
                                 selectedIds = selectedIds,
                                 onNoteClick = onNoteClick,
                                 onTogglePin = viewModel::togglePin,
+                                onMoveNote = { pendingMoveNote = it },
                                 onDeleteNote = viewModel::deleteNote
                             )
                         } else {
@@ -205,6 +207,7 @@ fun NotesListScreen(
                                 selectedIds = selectedIds,
                                 onNoteClick = onNoteClick,
                                 onTogglePin = viewModel::togglePin,
+                                onMoveNote = { pendingMoveNote = it },
                                 onDeleteNote = viewModel::deleteNote
                             )
                             noteListSection(
@@ -214,6 +217,7 @@ fun NotesListScreen(
                                 selectedIds = selectedIds,
                                 onNoteClick = onNoteClick,
                                 onTogglePin = viewModel::togglePin,
+                                onMoveNote = { pendingMoveNote = it },
                                 onDeleteNote = viewModel::deleteNote
                             )
                         }
@@ -345,6 +349,15 @@ fun NotesListScreen(
             onDismiss = { showMoveSheet = false },
             onMove = { targetId -> viewModel.moveSelectedNotes(targetId); showMoveSheet = false },
             onCreateFolderAndMove = { name -> viewModel.createFolderAndMoveSelected(name); showMoveSheet = false }
+        )
+    }
+
+    pendingMoveNote?.let { note ->
+        MoveFolderSheet(
+            allFolders = allFolders,
+            onDismiss = { pendingMoveNote = null },
+            onMove = { targetId -> viewModel.moveNote(note.id, targetId); pendingMoveNote = null },
+            onCreateFolderAndMove = { name -> viewModel.createFolderAndMoveNote(name, note.id); pendingMoveNote = null }
         )
     }
 }
