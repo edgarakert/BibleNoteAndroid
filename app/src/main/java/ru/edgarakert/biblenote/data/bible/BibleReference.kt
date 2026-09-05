@@ -80,6 +80,9 @@ data class BibleReference(
          * Пересобирает текст ссылки под новый набор стихов, сохраняя сокращение книги
          * ровно так, как его набрал пользователь ("быт.3:2" → "быт.3:7").
          * Пустой набор схлопывает ссылку до главы целиком.
+         *
+         * Ожидает displayText в грамматике BibleReferenceParser ("книга глава[:стихи]"):
+         * первое двоеточие считается разделителем главы и стихов, всё после него отбрасывается.
          */
         fun replacementText(displayText: String, verses: List<Int>): String {
             val head = displayText.substringBefore(':')
