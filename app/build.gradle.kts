@@ -62,12 +62,25 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
+// Только для androidTest: Compose BOM 2026.05.01 объявляет kotlinx-serialization
+// как `strictly 1.7.3`, а room-testing 2.8.4 скомпилирована против API 1.8.1.
+// Без форса MigrationTestHelper падает с
+// AbstractMethodError: GeneratedSerializer.typeParametersSerializers().
+// Продакшен- и релизный classpath не затронуты — там остаётся 1.7.3.
+// УДАЛИТЬ, когда Compose BOM начнёт тянуть kotlinx-serialization >= 1.8.1:
+// проверяется командой
+//   ./gradlew :app:dependencies --configuration debugAndroidTestRuntimeClasspath | grep serialization
+val serializationForcedForTests = "1.8.1"
 configurations.matching { it.name.contains("AndroidTest") }.configureEach {
     resolutionStrategy {
-        force("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1")
-        force("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.8.1")
-        force("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
-        force("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.8.1")
+        listOf(
+            "kotlinx-serialization-core",
+            "kotlinx-serialization-core-jvm",
+            "kotlinx-serialization-json",
+            "kotlinx-serialization-json-jvm",
+        ).forEach { artifact ->
+            force("org.jetbrains.kotlinx:$artifact:$serializationForcedForTests")
+        }
     }
 }
 

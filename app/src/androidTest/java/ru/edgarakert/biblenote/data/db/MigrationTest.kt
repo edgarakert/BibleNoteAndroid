@@ -38,4 +38,36 @@ class MigrationTest {
             assertEquals(0, cursor.getInt(1))
         }
     }
+
+    /**
+     * У notes есть внешний ключ на folders. ALTER TABLE ADD COLUMN его не трогает,
+     * но именно на таблицах с FK автомиграции ломаются тише всего, а впереди ещё
+     * три bump'а схемы (фазы 14 и 16) — проверяем связь явно.
+     */
+    @Test
+    fun migrate1To2_preservesFoldersAndTheNoteToFolderLink() {
+        helper.createDatabase(dbName, 1).apply {
+            execSQL(
+                "INSERT INTO folders (id, name, parentId, createdAt) " +
+                    "VALUES (7, 'Проповеди', NULL, 500)"
+            )
+            execSQL(
+                "INSERT INTO notes (id, title, content, folderId, createdAt, updatedAt) " +
+                    "VALUES (2, 'В папке', 'Ин 3:16', 7, 1000, 2000)"
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(dbName, 2, true)
+
+        db.query("SELECT name FROM folders WHERE id = 7").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("Проповеди", cursor.getString(0))
+        }
+        db.query("SELECT folderId, isPinned FROM notes WHERE id = 2").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(7, cursor.getInt(0))
+            assertEquals(0, cursor.getInt(1))
+        }
+    }
 }

@@ -18,6 +18,14 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun folderDao(): FolderDao
 
     companion object {
+        /**
+         * Обработчика даунгрейда сознательно нет.
+         * fallbackToDestructiveMigrationOnDowngrade() стёр бы заметки пользователя,
+         * а облачной синхронизации в приложении нет — потеря была бы безвозвратной.
+         * Play Store откатов не раздаёт, так что путь достижим только при ручной
+         * установке старого APK; там падение с «migration required» лучше молчаливого
+         * удаления данных: обратная установка свежей версии возвращает всё на место.
+         */
         fun create(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "biblenote.db").build()
     }
