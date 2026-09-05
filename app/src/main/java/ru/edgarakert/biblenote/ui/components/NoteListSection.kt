@@ -3,7 +3,8 @@ package ru.edgarakert.biblenote.ui.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.edgarakert.biblenote.R
@@ -74,7 +74,7 @@ fun LazyListScope.noteListSection(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 private fun NoteListEntry(
     note: Note,
@@ -137,12 +137,14 @@ private fun NoteListEntry(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .pointerInput(note.id) {
-                    detectTapGestures(
-                        onTap = { onClick() },
-                        onLongPress = { menuOpen = true }
-                    )
-                }
+                // combinedClickable, а не pointerInput { detectTapGestures }: он приносит
+                // ripple и семантику onClick/onLongClick. Долгое нажатие — единственный путь
+                // к закреплению, и без этой семантики оно недостижимо для TalkBack.
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = { menuOpen = true },
+                    onLongClickLabel = stringResource(R.string.notes_actions)
+                )
         ) {
             NoteRow(note = note)
 
