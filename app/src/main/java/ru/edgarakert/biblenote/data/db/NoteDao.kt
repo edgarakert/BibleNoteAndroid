@@ -15,6 +15,14 @@ interface NoteDao {
     @Query("SELECT * FROM notes WHERE folderId = :folderId AND NOT (title = '' AND content = '') ORDER BY updatedAt DESC")
     fun observeNotesInFolder(folderId: Long): Flow<List<Note>>
 
+    /**
+     * Все заметки во всех папках — нужен индексу упоминаний стихов.
+     * Пустые заметки отфильтрованы, как и в остальных запросах: ссылок в них нет.
+     * Порядок детерминированный, чтобы список заметок у стиха не «прыгал» между пересчётами.
+     */
+    @Query("SELECT * FROM notes WHERE NOT (title = '' AND content = '') ORDER BY updatedAt DESC")
+    fun observeAllNotes(): Flow<List<Note>>
+
     @Query("SELECT * FROM notes WHERE id = :id")
     suspend fun getById(id: Long): Note?
 
