@@ -15,6 +15,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import org.koin.android.ext.android.inject
 import ru.edgarakert.biblenote.data.settings.SettingsRepository
 import ru.edgarakert.biblenote.ui.navigation.AppNavHost
@@ -28,6 +30,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Синхронно, до setContent: иначе back stack достраивается уже после первого кадра,
+        // и пользователь видит вспышку корневого списка заметок. Единственное блокирующее
+        // чтение за весь запуск.
+        val restoredNotesPath = runBlocking { settingsRepository.notesLastPath.first() }
+
         setContent {
             val appearanceMode by settingsRepository.appearanceMode
                 .collectAsStateWithLifecycle(SettingsRepository.AppearanceMode.SYSTEM)
@@ -55,7 +63,7 @@ class MainActivity : ComponentActivity() {
                 if (!onboardingCompleted) {
                     OnboardingFlow()
                 } else {
-                    AppNavHost()
+                    AppNavHost(initialNotesPath = restoredNotesPath)
                 }
             }
         }
