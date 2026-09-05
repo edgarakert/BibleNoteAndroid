@@ -8,6 +8,8 @@
     <string name="notes_select">Выбрать заметки</string>
     <string name="notes_selection_delete_title">Удалить заметки</string>
     <string name="note_delete_message">Это действие нельзя отменить.</string>
+    <string name="notes_pin">Закрепить</string>
+    <string name="notes_unpin">Открепить</string>
 
     <!-- Search -->
     <string name="search_placeholder">Поиск</string>

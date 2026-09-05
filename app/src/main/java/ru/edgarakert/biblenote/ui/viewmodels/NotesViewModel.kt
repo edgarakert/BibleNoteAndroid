@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -44,6 +45,16 @@ class NotesViewModel(private val repository: NoteRepository) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val rootNotes: StateFlow<List<Note>> = repository.observeRootNotes()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    // Разделение закреплённых/обычных — в коде, а не в SQL: порядок внутри каждой
+    // группы остаётся updatedAt DESC (см. NoteDao.observeRootNotes).
+    val pinnedNotes: StateFlow<List<Note>> = rootNotes
+        .map { notes -> notes.filter { it.isPinned } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val unpinnedNotes: StateFlow<List<Note>> = rootNotes
+        .map { notes -> notes.filterNot { it.isPinned } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val searchResults: StateFlow<List<Note>> = _searchQuery
@@ -80,6 +91,10 @@ class NotesViewModel(private val repository: NoteRepository) : ViewModel() {
 
     fun deleteNote(note: Note) {
         viewModelScope.launch { repository.deleteNote(note) }
+    }
+
+    fun togglePin(note: Note) {
+        viewModelScope.launch { repository.setNotePinned(note.id, !note.isPinned) }
     }
 
     fun deleteSelectedNotes() {

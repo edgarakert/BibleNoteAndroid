@@ -8,6 +8,8 @@
     <string name="notes_select">Select Notes</string>
     <string name="notes_selection_delete_title">Delete Notes</string>
     <string name="note_delete_message">This cannot be undone.</string>
+    <string name="notes_pin">Pin</string>
+    <string name="notes_unpin">Unpin</string>
 
     <!-- Search -->
     <string name="search_placeholder">Search</string>

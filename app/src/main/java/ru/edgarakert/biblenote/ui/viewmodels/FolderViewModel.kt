@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -41,6 +42,16 @@ class FolderViewModel(
     val notes: StateFlow<List<Note>> = repository.observeNotesInFolder(folderId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    // Разделение закреплённых/обычных — в коде, а не в SQL: порядок внутри каждой
+    // группы остаётся updatedAt DESC (см. NoteDao.observeNotesInFolder).
+    val pinnedNotes: StateFlow<List<Note>> = notes
+        .map { list -> list.filter { it.isPinned } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val unpinnedNotes: StateFlow<List<Note>> = notes
+        .map { list -> list.filterNot { it.isPinned } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     val subfolders: StateFlow<List<FolderWithCount>> =
         repository.observeSubfoldersWithCount(folderId)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -57,6 +68,10 @@ class FolderViewModel(
 
     fun deleteNote(note: Note) {
         viewModelScope.launch { repository.deleteNote(note) }
+    }
+
+    fun togglePin(note: Note) {
+        viewModelScope.launch { repository.setNotePinned(note.id, !note.isPinned) }
     }
 
     fun deleteSelectedNotes() {
