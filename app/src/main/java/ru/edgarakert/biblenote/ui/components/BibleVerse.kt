@@ -20,6 +20,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import ru.edgarakert.biblenote.R
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.edgarakert.biblenote.data.bible.HighlightColor
@@ -73,7 +76,13 @@ fun BibleVerse(
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surface)
                     .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f), CircleShape)
-                    .clickable(onClick = onNoteBadgeClick)
+                    // onClickLabel: без него screen reader озвучивает только число и молчит
+                    // о том, что бейдж открывает список ссылающихся заметок.
+                    .clickable(
+                        onClickLabel = stringResource(R.string.verse_notes_title),
+                        role = Role.Button,
+                        onClick = onNoteBadgeClick
+                    )
                     .padding(horizontal = 4.dp, vertical = 7.dp)
             ) {
                 Icon(

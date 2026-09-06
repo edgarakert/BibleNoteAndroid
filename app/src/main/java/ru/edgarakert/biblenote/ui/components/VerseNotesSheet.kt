@@ -102,9 +102,14 @@ private fun VerseNoteRow(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-        if (note.content.isNotEmpty()) {
+        // Заметки, созданные из читалки, начинаются со ссылки и пустой строки, поэтому
+        // сырой content дал бы вторую строку превью пустой. Схлопываем пустые строки.
+        val preview = note.content.lineSequence()
+            .filter { it.isNotBlank() }
+            .joinToString("\n")
+        if (preview.isNotEmpty()) {
             Text(
-                text = note.content,
+                text = preview,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2,

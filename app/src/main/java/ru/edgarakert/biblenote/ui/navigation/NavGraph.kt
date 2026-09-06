@@ -26,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -135,7 +136,17 @@ fun AppNavHost(initialNotesPath: List<NotesPathEntry> = emptyList()) {
     // консистентны. Риск R3: заметка/папка могла быть удалена (свайпом, из меню, или
     // автоудалена как пустая при выходе из редактора) — на первом неразрешимом элементе
     // восстановление останавливается, сохраняя уже восстановленный префикс.
+    // rememberSaveable, а не флаг в remember: LaunchedEffect(Unit) перезапускается при
+    // каждом пересоздании Activity (поворот экрана), а navController к этому моменту уже
+    // восстановил свой back stack сам — повторный посев клал бы поверх него дубликаты
+    // тех же экранов. Внешне это выглядело как «поворот закрыл шторку стиха»: шторка
+    // оставалась жива на восстановленной записи, но её накрывала свежая пустая.
+    var didSeedNotesPath by rememberSaveable { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
+        if (didSeedNotesPath) return@LaunchedEffect
+        didSeedNotesPath = true
+
         for (entry in initialNotesPath) {
             val exists = when (entry) {
                 is NotesPathEntry.Folder -> noteRepository.observeFolderById(entry.id).first() != null

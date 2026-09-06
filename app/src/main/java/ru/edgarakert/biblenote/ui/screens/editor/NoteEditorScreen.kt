@@ -33,6 +33,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -69,12 +71,22 @@ fun NoteEditorScreen(
 
     var showMenu by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
-    var tappedReference by remember { mutableStateOf<BibleReference?>(null) }
+    // rememberSaveable, а не remember: иначе поворот экрана молча закрывал открытую
+    // шторку стиха — как и savedCursorPosition ниже, это состояние должно пережить
+    // пересоздание Activity.
+    var tappedReference by rememberSaveable(stateSaver = BibleReferenceSaver) {
+        mutableStateOf<BibleReference?>(null)
+    }
     // Диапазон, который правка из шторки должна заменить: инициализируется живыми
     // индексами тапнутой ссылки, а после каждой правки смещается на длину замены.
-    var activeRange by remember { mutableStateOf<IntRange?>(null) }
+    var activeRange by rememberSaveable(stateSaver = IntRangeSaver) {
+        mutableStateOf<IntRange?>(null)
+    }
+    // pendingEdit намеренно НЕ сохраняется: у BibleEditText счётчик уже применённых
+    // токенов живёт в обычном remember и после поворота сбрасывается, так что
+    // восстановленная правка применилась бы во второй раз и продублировала замену.
     var pendingEdit by remember { mutableStateOf<PendingEdit?>(null) }
-    var editToken by remember { mutableLongStateOf(0L) }
+    var editToken by rememberSaveable { mutableLongStateOf(0L) }
     var savedCursorPosition by rememberSaveable { mutableIntStateOf(-1) }
 
     LaunchedEffect(viewModel) {
@@ -268,3 +280,34 @@ fun NoteEditorScreen(
         )
     }
 }
+
+
+/** Сохраняет ссылку между пересозданиями Activity: все поля — примитивы и список чисел. */
+private val BibleReferenceSaver: Saver<BibleReference?, Any> = listSaver(
+    save = { ref ->
+        if (ref == null) emptyList() else listOf(
+            ref.bookId, ref.chapter, ref.verseStart ?: -1, ref.verseEnd ?: -1,
+            ref.verseList, ref.displayText, ref.startIndex, ref.endIndex
+        )
+    },
+    restore = { saved ->
+        if (saved.isEmpty()) null else {
+            @Suppress("UNCHECKED_CAST")
+            BibleReference(
+                bookId = saved[0] as Int,
+                chapter = saved[1] as Int,
+                verseStart = (saved[2] as Int).takeIf { it >= 0 },
+                verseEnd = (saved[3] as Int).takeIf { it >= 0 },
+                verseList = saved[4] as List<Int>,
+                displayText = saved[5] as String,
+                startIndex = saved[6] as Int,
+                endIndex = saved[7] as Int
+            )
+        }
+    }
+)
+
+private val IntRangeSaver: Saver<IntRange?, Any> = listSaver(
+    save = { range -> if (range == null) emptyList() else listOf(range.first, range.last) },
+    restore = { saved -> if (saved.isEmpty()) null else saved[0]..saved[1] }
+)
