@@ -29,6 +29,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuOpen
+import androidx.compose.material.icons.automirrored.filled.NoteAdd
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
@@ -64,10 +65,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 import ru.edgarakert.biblenote.R
 import ru.edgarakert.biblenote.data.bible.HighlightColor
+import ru.edgarakert.biblenote.data.bible.VerseSnippetBuilder
 import ru.edgarakert.biblenote.ui.components.BibleVerse
+import ru.edgarakert.biblenote.ui.components.SaveVersesToNoteSheet
 import ru.edgarakert.biblenote.ui.components.VerseNotesSheet
 import ru.edgarakert.biblenote.ui.viewmodels.BibleReaderViewModel
 
@@ -90,8 +94,19 @@ fun BibleReaderScreen(
     val context = LocalContext.current
     var showingPicker by remember { mutableStateOf(false) }
     var verseNotesFor by remember { mutableStateOf<Int?>(null) }
+    var savingVerses by remember { mutableStateOf<List<VerseSnippetBuilder.Verse>?>(null) }
+    var savedNote by remember { mutableStateOf<Pair<Long, String>?>(null) }
+    var toastToken by remember { mutableStateOf(0L) }
     val activeHighlight = remember(uiState.selectedVerseNumbers, uiState.highlights) {
         sharedHighlight(uiState.selectedVerseNumbers, uiState.highlights)
+    }
+
+    // Тост «Добавлено в …» скрывается сам через 3 секунды; toastToken меняется на каждое
+    // сохранение, так что повторное сохранение во время ещё видимого тоста продлевает показ.
+    LaunchedEffect(toastToken) {
+        if (toastToken == 0L) return@LaunchedEffect
+        delay(3_000)
+        savedNote = null
     }
 
     BackHandler(enabled = showingPicker) { showingPicker = false }
@@ -205,7 +220,40 @@ fun BibleReaderScreen(
                             viewModel.clearSelection()
                         },
                         onHighlight = viewModel::applyHighlight,
-                        onRemoveHighlight = viewModel::removeHighlights
+                        onRemoveHighlight = viewModel::removeHighlights,
+                        onSaveToNote = {
+                            val selected = uiState.verses
+                                .filter { it.first in uiState.selectedVerseNumbers }
+                                .sortedBy { it.first }
+                            if (selected.isNotEmpty()) {
+                                savingVerses = selected.map { VerseSnippetBuilder.Verse(it.first, it.second) }
+                            }
+                        }
+                    )
+                }
+            }
+
+            // Отдельный Box поверх нижних панелей: тост показывается вместе с ChapterNavBar
+            // (выделение уже снято к моменту сохранения) и не должен с ним перекрываться —
+            // padding поднимает его над зоной стрелок навигации по главам.
+            val toastNote = savedNote
+            AnimatedVisibility(
+                visible = toastNote != null,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(bottom = 88.dp),
+                enter = fadeIn() + slideInVertically { it },
+                exit = fadeOut() + slideOutVertically { it }
+            ) {
+                if (toastNote != null) {
+                    SavedNoteToast(
+                        noteTitle = toastNote.second.ifEmpty { stringResource(R.string.notes_untitled) },
+                        onOpen = {
+                            savedNote = null
+                            onOpenNote(toastNote.first)
+                        },
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
@@ -224,6 +272,22 @@ fun BibleReaderScreen(
                 onOpenNote(noteId)
             },
             onDismiss = { verseNotesFor = null }
+        )
+    }
+
+    val versesToSave = savingVerses
+    if (versesToSave != null) {
+        SaveVersesToNoteSheet(
+            bookName = uiState.bookName,
+            chapter = uiState.chapter,
+            verses = versesToSave,
+            onDismiss = { savingVerses = null },
+            onSaved = { noteId, noteTitle ->
+                savingVerses = null
+                viewModel.clearSelection()
+                savedNote = noteId to noteTitle
+                toastToken = System.currentTimeMillis()
+            }
         )
     }
 }
@@ -336,6 +400,7 @@ private fun VerseActionBar(
     sharedHighlight: HighlightColor?,
     onDismiss: () -> Unit,
     onCopy: () -> Unit,
+    onSaveToNote: () -> Unit,
     onHighlight: (HighlightColor) -> Unit,
     onRemoveHighlight: () -> Unit
 ) {
@@ -377,6 +442,13 @@ private fun VerseActionBar(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.weight(1f))
+                IconButton(onClick = onSaveToNote) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.NoteAdd,
+                        contentDescription = stringResource(R.string.verse_action_save_to_note),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
                 IconButton(onClick = onCopy) {
                     Icon(
                         imageVector = Icons.Default.ContentCopy,
@@ -391,6 +463,40 @@ private fun VerseActionBar(
                 onHighlight = onHighlight,
                 onRemoveHighlight = onRemoveHighlight
             )
+        }
+    }
+}
+
+/** Карточка «Добавлено в …» с кнопкой «Открыть», показывается на 3 секунды после сохранения. */
+@Composable
+private fun SavedNoteToast(
+    noteTitle: String,
+    onOpen: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 6.dp,
+        modifier = modifier.padding(horizontal = 20.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.verse_save_added_to, noteTitle),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            TextButton(onClick = onOpen) {
+                Text(
+                    text = stringResource(R.string.verse_save_open),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
         }
     }
 }
