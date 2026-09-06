@@ -48,6 +48,7 @@
     <string name="verse_not_found">Verse not found</string>
     <string name="verse_open_chapter">Open chapter</string>
     <string name="verse_notes_title">Notes on this verse</string>
+    <string name="verse_select_hint">Tap a verse — the link in the note updates</string>
 
     <!-- Bible reader -->
     <string name="bible_picker_title">Choose Book</string>

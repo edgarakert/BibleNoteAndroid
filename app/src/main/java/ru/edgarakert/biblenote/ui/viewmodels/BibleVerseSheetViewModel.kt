@@ -21,8 +21,10 @@ class BibleVerseSheetViewModel(
 ) : ViewModel() {
     data class UiState(
         val title: String = "",
+        val bookName: String = "",
         val verses: List<Pair<Int, String>> = emptyList(),
         val highlights: Map<Int, HighlightColor> = emptyMap(),
+        val selectedVerses: Set<Int> = emptySet(),
         val enabledTranslations: List<String> = emptyList(),
         val selectedTranslation: String = "synodal",
         val verseScale: Float = 1.0f,
@@ -32,9 +34,15 @@ class BibleVerseSheetViewModel(
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
+    /** Стих, на котором открывается шторка: первый из указанных в ссылке. */
+    val scrollTarget: Int? get() = _uiState.value.selectedVerses.minOrNull()
+
     private var loadJob: Job? = null
 
     init {
+        // Ссылка на всю главу открывается с пустым выбором — coveredVerses для неё пуст.
+        _uiState.update { it.copy(selectedVerses = reference.coveredVerses.toSet()) }
+
         loadJob = viewModelScope.launch {
             val enabled = settingsRepository.enabledTranslations.first()
             val default = settingsRepository.defaultTranslation.first()
@@ -47,32 +55,51 @@ class BibleVerseSheetViewModel(
                     verseScale = scale
                 )
             }
-            loadContent(initial)
+            loadChapter(initial)
         }
     }
 
     fun setTranslation(translation: String) {
         _uiState.update { it.copy(selectedTranslation = translation) }
         loadJob?.cancel()
-        loadJob = viewModelScope.launch { loadContent(translation) }
+        loadJob = viewModelScope.launch { loadChapter(translation) }
     }
 
-    private suspend fun loadContent(translation: String) {
+    /**
+     * Тап по стиху немедленно переключает его выбор и пересчитывает заголовок от живого
+     * выбора. Возвращает отсортированный список наружу — канал для задачи 13.5, которая
+     * будет переписывать ссылку в тексте заметки; сама запись в текст здесь не делается.
+     */
+    fun toggleVerse(verseNumber: Int): List<Int> {
+        val next = _uiState.value.selectedVerses.toMutableSet().apply {
+            if (!add(verseNumber)) remove(verseNumber)
+        }
+        _uiState.update { it.copy(selectedVerses = next, title = buildTitle(it.bookName, next)) }
+        return next.sorted()
+    }
+
+    /** Грузит главу целиком (не только стихи из ссылки) стихи + подсветки одним джойном. */
+    private suspend fun loadChapter(translation: String) {
         _uiState.update { it.copy(isLoading = true) }
+        val rows = bibleService.fetchVersesWithHighlights(reference.bookId, reference.chapter, translation)
         val bookName = bibleService.fetchBookName(reference.bookId, translation)
             ?: "Book ${reference.bookId}"
-        val verses = bibleService.fetchVerses(reference, translation)
-        val highlights = bibleService.fetchHighlights(reference.bookId, reference.chapter)
-        val title = buildTitle(bookName)
-        _uiState.update {
-            it.copy(title = title, verses = verses, highlights = highlights, isLoading = false)
+        _uiState.update { state ->
+            state.copy(
+                bookName = bookName,
+                verses = rows.map { it.first to it.second },
+                highlights = rows.mapNotNull { row -> row.third?.let { row.first to it } }.toMap(),
+                title = buildTitle(bookName, state.selectedVerses),
+                isLoading = false
+            )
         }
     }
 
-    private fun buildTitle(bookName: String): String {
-        val suffix = reference.verseDisplaySuffix
-        return if (suffix.isEmpty()) "$bookName ${reference.chapter}"
-               else "$bookName ${reference.chapter}:$suffix"
+    /** Заголовок отражает живой выбор, а не исходную ссылку. En dash — только для показа. */
+    private fun buildTitle(bookName: String, selected: Set<Int>): String {
+        val spec = BibleReference.formatVerseSpec(selected.toList(), rangeSeparator = "–")
+        return if (spec.isEmpty()) "$bookName ${reference.chapter}"
+        else "$bookName ${reference.chapter}:$spec"
     }
 
     override fun onCleared() {
