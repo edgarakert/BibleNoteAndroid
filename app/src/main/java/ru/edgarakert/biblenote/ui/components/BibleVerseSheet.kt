@@ -3,6 +3,7 @@ package ru.edgarakert.biblenote.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -203,9 +204,16 @@ fun BibleVerseSheet(
                                     .alpha(if (isDimmed) 0.55f else 1f)
                                     .then(
                                         if (isEditable) {
-                                            Modifier.clickable {
-                                                onVersesChanged.invoke(viewModel.toggleVerse(num))
-                                            }
+                                            // toggleable, а не clickable: выделение стиха
+                                            // показано только полосой слева, которую screen
+                                            // reader не видит, поэтому состояние «выбрано»
+                                            // нужно сообщить семантикой.
+                                            Modifier.toggleable(
+                                                value = isSelected,
+                                                onValueChange = {
+                                                    onVersesChanged.invoke(viewModel.toggleVerse(num))
+                                                }
+                                            )
                                         } else {
                                             Modifier
                                         }

@@ -203,7 +203,17 @@ fun NoteEditorScreen(
                 initialCursorPosition = savedCursorPosition,
                 onCursorPositionChanged = { savedCursorPosition = it },
                 pendingEdit = pendingEdit,
-                onPendingEditApplied = { pendingEdit = null },
+                onPendingEditApplied = { _, applied ->
+                    pendingEdit = null
+                    // Правка не легла (текст изменился под нами, диапазон больше не тот) —
+                    // закрываем шторку. Продолжать нельзя: activeRange уже сдвинут в расчёте
+                    // на успех и теперь мимо. Пользователь тапнет по ссылке заново и получит
+                    // свежий живой диапазон.
+                    if (!applied) {
+                        tappedReference = null
+                        activeRange = null
+                    }
+                },
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
