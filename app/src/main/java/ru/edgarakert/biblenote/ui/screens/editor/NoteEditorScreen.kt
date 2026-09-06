@@ -30,6 +30,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -51,6 +52,7 @@ import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.bible.BibleReferenceParser
 import ru.edgarakert.biblenote.ui.components.BibleEditText
 import ru.edgarakert.biblenote.ui.components.BibleVerseSheet
+import ru.edgarakert.biblenote.ui.components.PendingEdit
 import ru.edgarakert.biblenote.ui.viewmodels.NoteEditorViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,6 +70,11 @@ fun NoteEditorScreen(
     var showMenu by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var tappedReference by remember { mutableStateOf<BibleReference?>(null) }
+    // Диапазон, который правка из шторки должна заменить: инициализируется живыми
+    // индексами тапнутой ссылки, а после каждой правки смещается на длину замены.
+    var activeRange by remember { mutableStateOf<IntRange?>(null) }
+    var pendingEdit by remember { mutableStateOf<PendingEdit?>(null) }
+    var editToken by remember { mutableLongStateOf(0L) }
     var savedCursorPosition by rememberSaveable { mutableIntStateOf(-1) }
 
     LaunchedEffect(viewModel) {
@@ -187,11 +194,16 @@ fun NoteEditorScreen(
             BibleEditText(
                 text = content,
                 onTextChanged = viewModel::setContent,
-                onReferenceTapped = { tappedReference = it },
+                onReferenceTapped = {
+                    tappedReference = it
+                    activeRange = it.startIndex until it.endIndex
+                },
                 parser = parser,
                 placeholder = stringResource(R.string.editor_content_placeholder),
                 initialCursorPosition = savedCursorPosition,
                 onCursorPositionChanged = { savedCursorPosition = it },
+                pendingEdit = pendingEdit,
+                onPendingEditApplied = { pendingEdit = null },
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
@@ -226,10 +238,22 @@ fun NoteEditorScreen(
     tappedReference?.let { ref ->
         BibleVerseSheet(
             reference = ref,
-            onDismiss = { tappedReference = null },
-            onOpenChapter = { ref ->
+            onDismiss = {
                 tappedReference = null
-                onOpenChapter(ref)
+                activeRange = null
+            },
+            onOpenChapter = { r ->
+                tappedReference = null
+                activeRange = null
+                onOpenChapter(r)
+            },
+            onVersesChanged = { verses ->
+                val range = activeRange ?: (ref.startIndex until ref.endIndex)
+                val newText = BibleReference.replacementText(ref.displayText, verses)
+                editToken += 1
+                pendingEdit = PendingEdit(editToken, range.first, range.last + 1, newText)
+                // Длина замены меняется с каждым тапом — следующая правка целится в новый диапазон.
+                activeRange = range.first until (range.first + newText.length)
             }
         )
     }

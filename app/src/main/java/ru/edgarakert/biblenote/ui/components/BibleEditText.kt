@@ -16,6 +16,7 @@ import android.widget.EditText
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
@@ -23,6 +24,9 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.viewinterop.AndroidView
 import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.bible.BibleReferenceParser
+
+/** Одноразовая правка текста извне редактора. token отсекает повторное применение. */
+data class PendingEdit(val token: Long, val start: Int, val end: Int, val text: String)
 
 @SuppressLint("ClickableViewAccessibility")
 @Composable
@@ -35,6 +39,8 @@ fun BibleEditText(
     placeholder: String = "",
     initialCursorPosition: Int = -1,
     onCursorPositionChanged: (Int) -> Unit = {},
+    pendingEdit: PendingEdit? = null,
+    onPendingEditApplied: (Long) -> Unit = {},
 ) {
     val amberArgb = MaterialTheme.colorScheme.primary.toArgb()
     val inkArgb = MaterialTheme.colorScheme.onSurface.toArgb()
@@ -48,6 +54,9 @@ fun BibleEditText(
     val pendingHighlight = remember { arrayOfNulls<Runnable>(1) }
     val currentAmberArgb = remember { intArrayOf(amberArgb) }
     val currentInkArgb = remember { intArrayOf(inkArgb) }
+    // Токен последней применённой внешней правки — отсекает повторное применение
+    // при рекомпозиции, пока вызывающая сторона ещё не успела сбросить pendingEdit в null.
+    val lastAppliedToken = remember { mutableLongStateOf(-1L) }
 
     DisposableEffect(Unit) {
         onDispose { pendingHighlight[0]?.let { handler.removeCallbacks(it) } }
@@ -112,7 +121,21 @@ fun BibleEditText(
                         }
 
                         if (hit) {
-                            onReferenceTappedState.value(spans[0].reference)
+                            val span = spans[0]
+                            val liveStart = spannable.getSpanStart(span)
+                            val liveEnd = spannable.getSpanEnd(span)
+                            if (liveStart < 0 || liveEnd > spannable.length) {
+                                return@setOnTouchListener false
+                            }
+                            // Диапазон и текст берём из живого Editable, а не из момента
+                            // разбора: пока пользователь печатал, спан мог сдвинуться.
+                            onReferenceTappedState.value(
+                                span.reference.copy(
+                                    startIndex = liveStart,
+                                    endIndex = liveEnd,
+                                    displayText = spannable.subSequence(liveStart, liveEnd).toString()
+                                )
+                            )
                             view.performClick()
                             true
                         } else {
@@ -155,6 +178,24 @@ fun BibleEditText(
             if (colorsChanged) {
                 view.setTextColor(inkArgb)
                 view.setHintTextColor(hintArgb)
+            }
+
+            val edit = pendingEdit
+            if (edit != null && edit.token != lastAppliedToken.longValue) {
+                val editable = view.text
+                if (editable != null && edit.start >= 0 && edit.end <= editable.length && edit.start <= edit.end) {
+                    view.isProgrammatic = true
+                    // replace, а не пересборка Spannable: правка попадает в стек отмены
+                    // и не сбрасывает позицию курсора.
+                    editable.replace(edit.start, edit.end, edit.text)
+                    view.isProgrammatic = false
+
+                    applyHighlighting(view, parser, amberArgb, inkArgb)
+                    onTextChangedState.value(editable.toString())
+                }
+                lastAppliedToken.longValue = edit.token
+                onPendingEditApplied(edit.token)
+                return@AndroidView
             }
 
             if (view.text?.toString() != text) {
