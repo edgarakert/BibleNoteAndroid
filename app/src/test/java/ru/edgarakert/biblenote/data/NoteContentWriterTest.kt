@@ -41,6 +41,20 @@ class NoteContentWriterTest {
     }
 
     @Test
+    fun `appending to a whitespace-only note does not start it with a blank line`() {
+        val note = Note(id = 1, title = "", content = "   ")
+        val result = NoteContentWriter.append("Иоанна 3:16", note, now = 5000L)
+        assertEquals("Иоанна 3:16", result.content)
+    }
+
+    @Test
+    fun `appending does not accumulate trailing newlines`() {
+        val note = Note(id = 1, title = "", content = "Старая мысль\n\n")
+        val result = NoteContentWriter.append("Иоанна 3:16", note, now = 5000L)
+        assertEquals("Старая мысль\n\nИоанна 3:16", result.content)
+    }
+
+    @Test
     fun `makeNote stores the title and the snippet`() {
         val note = NoteContentWriter.makeNote("Иоанна 3:16\n\n16 текст", "Иоанна 3:16", folderId = null, now = 7000L)
         assertEquals("Иоанна 3:16", note.title)

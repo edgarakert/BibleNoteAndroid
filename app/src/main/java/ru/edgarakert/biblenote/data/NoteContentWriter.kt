@@ -12,9 +12,14 @@ object NoteContentWriter {
     fun append(snippet: String, note: Note, now: Long = System.currentTimeMillis()): Note {
         if (snippet.isBlank()) return note
 
-        val separator = if (note.content.isEmpty()) "" else "\n\n"
+        // isBlank, а не isEmpty, симметрично проверке сниппета выше: заметка из одних
+        // пробелов — это пустая заметка, и приписывать к ней разделитель значит начать
+        // содержимое с пустой строки. trimEnd заодно не даёт накопить хвостовые переводы
+        // строк при повторных дописываниях.
+        val base = note.content.trimEnd()
+        val separator = if (base.isBlank()) "" else "\n\n"
         return note.copy(
-            content = note.content + separator + snippet,
+            content = if (base.isBlank()) snippet else base + separator + snippet,
             updatedAt = now
         )
     }
