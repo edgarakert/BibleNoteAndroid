@@ -165,6 +165,7 @@
     <string name="prayer_list_filter_all">All</string>
     <string name="prayer_list_entrust_button">Entrust to God</string>
     <string name="prayer_list_empty_state">No requests here yet</string>
+    <string name="prayer_actions">Request actions</string>
     <string name="prayer_delete">Delete Request</string>
     <string name="prayer_detail_pray_today_button">Prayed Today</string>
     <string name="prayer_detail_answered_button">God Answered</string>

@@ -50,12 +50,14 @@ import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 import ru.edgarakert.biblenote.R
 import ru.edgarakert.biblenote.data.NoteRepository
+import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.settings.NotesPathEntry
 import ru.edgarakert.biblenote.data.settings.SettingsRepository
 import ru.edgarakert.biblenote.ui.screens.bible.BibleReaderScreen
 import ru.edgarakert.biblenote.ui.screens.editor.NoteEditorScreen
 import ru.edgarakert.biblenote.ui.screens.notes.FolderScreen
 import ru.edgarakert.biblenote.ui.screens.notes.NotesListScreen
+import ru.edgarakert.biblenote.ui.screens.prayer.PrayerDetailScreen
 import ru.edgarakert.biblenote.ui.screens.prayer.PrayerEditorScreen
 import ru.edgarakert.biblenote.ui.screens.prayer.PrayerListScreen
 import ru.edgarakert.biblenote.ui.screens.prayer.PrayerTodayScreen
@@ -323,21 +325,39 @@ fun AppNavHost(initialNotesPath: List<NotesPathEntry> = emptyList()) {
                 }
             }
 
-            // "prayers", "prayers/editor/{requestId}" и "prayers/list" уже здесь. Остальные —
-            // AnsweredPrayersScreen/PrayerReminderSettingsScreen/PrayerDetailScreen — появятся в
-            // задачах 14.10/14.12/14.13 и добавят свои маршруты сами (поправка к плану 14.7: план
+            // "prayers", "prayers/editor/{requestId}", "prayers/list" и "prayers/detail/{id}" уже
+            // здесь. Остальные — AnsweredPrayersScreen/PrayerReminderSettingsScreen — появятся в
+            // задачах 14.12/14.13 и добавят свои маршруты сами (поправка к плану 14.7: план
             // регистрировал все шесть маршрутов сразу, но экраны ещё не существовали к тому
             // моменту).
             navigation(route = TopLevelRoute.PRAYERS.graphRoute, startDestination = "prayers") {
+                val onOpenDetail: (Long) -> Unit = { requestId ->
+                    navController.navigate("prayers/detail/$requestId")
+                }
+                // Как и onOpenChapter из редактора заметок: переход на вкладку «Библия» с
+                // сохранением/сбросом состояния графов ровно тем же способом (см. onOpenChapter
+                // в composable("editor/{noteId}") выше) — карточка просьбы открывает главу так
+                // же, как это делает редактор заметки.
+                val onOpenChapterFromPrayer: (BibleReference) -> Unit = { ref ->
+                    navController.navigate("bible_at/${ref.bookId}/${ref.chapter}") {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = false
+                    }
+                }
                 composable("prayers") {
                     PrayerTodayScreen(
                         onOpenList = { navController.navigate("prayers/list") },
-                        onCreateRequest = { navController.navigate("prayers/editor/-1") }
+                        onCreateRequest = { navController.navigate("prayers/editor/-1") },
+                        onOpenDetail = onOpenDetail
                     )
                 }
                 composable("prayers/list") {
                     PrayerListScreen(
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.popBackStack() },
+                        onOpenDetail = onOpenDetail
                     )
                 }
                 composable(
@@ -349,6 +369,19 @@ fun AppNavHost(initialNotesPath: List<NotesPathEntry> = emptyList()) {
                     PrayerEditorScreen(
                         requestId = requestId,
                         onBack = { navController.popBackStack() }
+                    )
+                }
+                composable(
+                    route = "prayers/detail/{requestId}",
+                    arguments = listOf(navArgument("requestId") { type = NavType.LongType })
+                ) { backStackEntry ->
+                    val requestId =
+                        backStackEntry.arguments?.getLong("requestId") ?: return@composable
+                    PrayerDetailScreen(
+                        requestId = requestId,
+                        onBack = { navController.popBackStack() },
+                        onEdit = { id -> navController.navigate("prayers/editor/$id") },
+                        onOpenChapter = onOpenChapterFromPrayer
                     )
                 }
             }

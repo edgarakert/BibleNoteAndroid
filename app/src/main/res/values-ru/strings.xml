@@ -169,6 +169,7 @@
     <string name="prayer_list_filter_all">Все</string>
     <string name="prayer_list_entrust_button">Доверить Богу</string>
     <string name="prayer_list_empty_state">Здесь пока пусто</string>
+    <string name="prayer_actions">Действия с просьбой</string>
     <string name="prayer_delete">Удалить просьбу</string>
     <string name="prayer_detail_pray_today_button">Помолился сегодня</string>
     <string name="prayer_detail_answered_button">Бог ответил</string>

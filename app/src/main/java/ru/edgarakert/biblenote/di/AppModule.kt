@@ -14,6 +14,7 @@ import ru.edgarakert.biblenote.data.NoteRepository
 import ru.edgarakert.biblenote.data.PrayerRepository
 import ru.edgarakert.biblenote.ui.viewmodels.NoteEditorViewModel
 import ru.edgarakert.biblenote.ui.viewmodels.NotesViewModel
+import ru.edgarakert.biblenote.ui.viewmodels.PrayerDetailViewModel
 import ru.edgarakert.biblenote.ui.viewmodels.PrayerEditorViewModel
 import ru.edgarakert.biblenote.ui.viewmodels.PrayerListViewModel
 import ru.edgarakert.biblenote.ui.viewmodels.PrayerTodayViewModel
@@ -103,6 +104,14 @@ val appModule = module {
 
     viewModel { params ->
         PrayerEditorViewModel(
+            requestId = params.get<Long>(),
+            repository = get<PrayerRepository>(),
+            parser = get<BibleReferenceParser>()
+        )
+    }
+
+    viewModel { params ->
+        PrayerDetailViewModel(
             requestId = params.get<Long>(),
             repository = get<PrayerRepository>(),
             parser = get<BibleReferenceParser>()

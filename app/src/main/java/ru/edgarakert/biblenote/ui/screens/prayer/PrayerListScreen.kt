@@ -295,7 +295,7 @@ private fun PrayerListRow(
                 .combinedClickable(
                     onClick = { onOpenDetail?.invoke(request.id) },
                     onLongClick = { menuOpen = true },
-                    onLongClickLabel = stringResource(R.string.notes_actions)
+                    onLongClickLabel = stringResource(R.string.prayer_actions)
                 )
         ) {
             PrayerCard(request = request, hasPrayedToday = false)
