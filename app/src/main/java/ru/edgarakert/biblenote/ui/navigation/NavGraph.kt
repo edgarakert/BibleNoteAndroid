@@ -57,6 +57,7 @@ import ru.edgarakert.biblenote.ui.screens.bible.BibleReaderScreen
 import ru.edgarakert.biblenote.ui.screens.editor.NoteEditorScreen
 import ru.edgarakert.biblenote.ui.screens.notes.FolderScreen
 import ru.edgarakert.biblenote.ui.screens.notes.NotesListScreen
+import ru.edgarakert.biblenote.ui.screens.prayer.AnsweredPrayersScreen
 import ru.edgarakert.biblenote.ui.screens.prayer.PrayerDetailScreen
 import ru.edgarakert.biblenote.ui.screens.prayer.PrayerEditorScreen
 import ru.edgarakert.biblenote.ui.screens.prayer.PrayerListScreen
@@ -325,9 +326,9 @@ fun AppNavHost(initialNotesPath: List<NotesPathEntry> = emptyList()) {
                 }
             }
 
-            // "prayers", "prayers/editor/{requestId}", "prayers/list" и "prayers/detail/{id}" уже
-            // здесь. Остальные — AnsweredPrayersScreen/PrayerReminderSettingsScreen — появятся в
-            // задачах 14.12/14.13 и добавят свои маршруты сами (поправка к плану 14.7: план
+            // "prayers", "prayers/editor/{requestId}", "prayers/list", "prayers/detail/{id}" и
+            // "prayers/answered" уже здесь. PrayerReminderSettingsScreen появится в задаче 14.13
+            // и добавит свой маршрут сам (поправка к плану 14.7: план
             // регистрировал все шесть маршрутов сразу, но экраны ещё не существовали к тому
             // моменту).
             navigation(route = TopLevelRoute.PRAYERS.graphRoute, startDestination = "prayers") {
@@ -350,7 +351,14 @@ fun AppNavHost(initialNotesPath: List<NotesPathEntry> = emptyList()) {
                 composable("prayers") {
                     PrayerTodayScreen(
                         onOpenList = { navController.navigate("prayers/list") },
+                        onOpenAnswered = { navController.navigate("prayers/answered") },
                         onCreateRequest = { navController.navigate("prayers/editor/-1") },
+                        onOpenDetail = onOpenDetail
+                    )
+                }
+                composable("prayers/answered") {
+                    AnsweredPrayersScreen(
+                        onBack = { navController.popBackStack() },
                         onOpenDetail = onOpenDetail
                     )
                 }
