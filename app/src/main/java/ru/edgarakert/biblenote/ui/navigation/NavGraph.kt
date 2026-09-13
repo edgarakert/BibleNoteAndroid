@@ -57,6 +57,7 @@ import ru.edgarakert.biblenote.ui.screens.editor.NoteEditorScreen
 import ru.edgarakert.biblenote.ui.screens.notes.FolderScreen
 import ru.edgarakert.biblenote.ui.screens.notes.NotesListScreen
 import ru.edgarakert.biblenote.ui.screens.prayer.PrayerEditorScreen
+import ru.edgarakert.biblenote.ui.screens.prayer.PrayerListScreen
 import ru.edgarakert.biblenote.ui.screens.prayer.PrayerTodayScreen
 import ru.edgarakert.biblenote.ui.screens.settings.AboutScreen
 import ru.edgarakert.biblenote.ui.screens.settings.BibleThemeSettingsScreen
@@ -322,14 +323,21 @@ fun AppNavHost(initialNotesPath: List<NotesPathEntry> = emptyList()) {
                 }
             }
 
-            // "prayers" и "prayers/editor/{requestId}" — PrayerListScreen/AnsweredPrayersScreen/
-            // PrayerReminderSettingsScreen/PrayerDetailScreen появятся в задачах 14.9/14.10/14.12/
-            // 14.13 и добавят свои маршруты сами (поправка к плану 14.7: план регистрировал все
-            // шесть маршрутов сразу, но пять экранов ещё не существовали к тому моменту).
+            // "prayers", "prayers/editor/{requestId}" и "prayers/list" уже здесь. Остальные —
+            // AnsweredPrayersScreen/PrayerReminderSettingsScreen/PrayerDetailScreen — появятся в
+            // задачах 14.10/14.12/14.13 и добавят свои маршруты сами (поправка к плану 14.7: план
+            // регистрировал все шесть маршрутов сразу, но экраны ещё не существовали к тому
+            // моменту).
             navigation(route = TopLevelRoute.PRAYERS.graphRoute, startDestination = "prayers") {
                 composable("prayers") {
                     PrayerTodayScreen(
+                        onOpenList = { navController.navigate("prayers/list") },
                         onCreateRequest = { navController.navigate("prayers/editor/-1") }
+                    )
+                }
+                composable("prayers/list") {
+                    PrayerListScreen(
+                        onBack = { navController.popBackStack() }
                     )
                 }
                 composable(
