@@ -16,6 +16,7 @@ import ru.edgarakert.biblenote.ui.viewmodels.NoteEditorViewModel
 import ru.edgarakert.biblenote.ui.viewmodels.NotesViewModel
 import ru.edgarakert.biblenote.ui.viewmodels.AnsweredPrayersViewModel
 import ru.edgarakert.biblenote.ui.viewmodels.PrayerDetailViewModel
+import ru.edgarakert.biblenote.ui.viewmodels.PrayerReminderViewModel
 import ru.edgarakert.biblenote.ui.viewmodels.PrayerEditorViewModel
 import ru.edgarakert.biblenote.ui.viewmodels.PrayerListViewModel
 import ru.edgarakert.biblenote.ui.viewmodels.PrayerTodayViewModel
@@ -104,6 +105,13 @@ val appModule = module {
     viewModel { PrayerListViewModel(repository = get<PrayerRepository>()) }
 
     viewModel { AnsweredPrayersViewModel(repository = get<PrayerRepository>()) }
+
+    viewModel {
+        PrayerReminderViewModel(
+            appContext = androidContext(),
+            settings = get<SettingsRepository>()
+        )
+    }
 
     viewModel { params ->
         PrayerEditorViewModel(

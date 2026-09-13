@@ -187,6 +187,9 @@
     <string name="prayer_answered_duration_prefix">Молились</string>
     <string name="prayer_reminder_settings_title">Напоминание</string>
     <string name="prayer_reminder_enable_toggle">Ежедневное напоминание</string>
+    <string name="prayer_reminder_notifications_off">Уведомления для приложения выключены в настройках системы</string>
+    <string name="prayer_reminder_open_settings">Открыть настройки</string>
+    <string name="prayer_reminder_time_confirm">Готово</string>
     <string name="prayer_reminder_time_label">Время</string>
     <string name="tab_prayers">Молитвы</string>
     <plurals name="prayer_days">

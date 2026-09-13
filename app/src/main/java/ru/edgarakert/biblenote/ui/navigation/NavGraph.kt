@@ -59,6 +59,7 @@ import ru.edgarakert.biblenote.ui.screens.notes.FolderScreen
 import ru.edgarakert.biblenote.ui.screens.notes.NotesListScreen
 import ru.edgarakert.biblenote.ui.screens.prayer.AnsweredPrayersScreen
 import ru.edgarakert.biblenote.ui.screens.prayer.PrayerDetailScreen
+import ru.edgarakert.biblenote.ui.screens.prayer.PrayerReminderSettingsScreen
 import ru.edgarakert.biblenote.ui.screens.prayer.PrayerEditorScreen
 import ru.edgarakert.biblenote.ui.screens.prayer.PrayerListScreen
 import ru.edgarakert.biblenote.ui.screens.prayer.PrayerTodayScreen
@@ -327,8 +328,7 @@ fun AppNavHost(initialNotesPath: List<NotesPathEntry> = emptyList()) {
             }
 
             // "prayers", "prayers/editor/{requestId}", "prayers/list", "prayers/detail/{id}" и
-            // "prayers/answered" уже здесь. PrayerReminderSettingsScreen появится в задаче 14.13
-            // и добавит свой маршрут сам (поправка к плану 14.7: план
+            // "prayers/answered" и "prayers/reminder" — весь граф вкладки (поправка к плану 14.7: план
             // регистрировал все шесть маршрутов сразу, но экраны ещё не существовали к тому
             // моменту).
             navigation(route = TopLevelRoute.PRAYERS.graphRoute, startDestination = "prayers") {
@@ -352,9 +352,13 @@ fun AppNavHost(initialNotesPath: List<NotesPathEntry> = emptyList()) {
                     PrayerTodayScreen(
                         onOpenList = { navController.navigate("prayers/list") },
                         onOpenAnswered = { navController.navigate("prayers/answered") },
+                        onOpenReminder = { navController.navigate("prayers/reminder") },
                         onCreateRequest = { navController.navigate("prayers/editor/-1") },
                         onOpenDetail = onOpenDetail
                     )
+                }
+                composable("prayers/reminder") {
+                    PrayerReminderSettingsScreen(onBack = { navController.popBackStack() })
                 }
                 composable("prayers/answered") {
                     AnsweredPrayersScreen(

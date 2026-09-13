@@ -183,6 +183,9 @@
     <string name="prayer_answered_duration_prefix">Prayed for</string>
     <string name="prayer_reminder_settings_title">Reminder</string>
     <string name="prayer_reminder_enable_toggle">Daily Reminder</string>
+    <string name="prayer_reminder_notifications_off">Notifications for this app are turned off in system settings</string>
+    <string name="prayer_reminder_open_settings">Open settings</string>
+    <string name="prayer_reminder_time_confirm">Done</string>
     <string name="prayer_reminder_time_label">Time</string>
     <string name="tab_prayers">Prayers</string>
     <plurals name="prayer_days">
