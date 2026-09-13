@@ -2,6 +2,27 @@
 
 ## [Unreleased]
 
+### Добавлено (Фаза 14 — Молитвенный журнал)
+
+- Сущности `PrayerRequest`/`PrayerEntry` и автомиграция БД заметок 2→3 (задача 14.1, первая
+  задача фазы, слой хранения). `prayer_requests` — просьба: `title`/`body` (без `trim` для body,
+  чтобы не съедать абзацы), `category` (`PrayerCategory`) и `status` (`PrayerStatus`: `ACTIVE`,
+  `ANSWERED`, `ENTRUSTED` — «доверить Богу», не «отменено»/«просрочено»; `ARCHIVED` объявлен для
+  паритета схемы с iOS, но ничем не выставляется), `createdAt`/`answeredAt`/`answerText`,
+  `verseRefs: List<String>` (сырые ссылки на стихи, парсятся `BibleReferenceParser` при показе),
+  `lastPrayedAt` и `prayedDaysCount` (число РАЗНЫХ дней, когда нажали «помолился», — не серия
+  подряд: продукт сознательно не считает стрики). `prayer_entries` — датированная дописка,
+  `ForeignKey(CASCADE)` на `prayer_requests.id` — удаление просьбы каскадно удаляет её дописки
+  (контракт из iOS-теста `deletingRequest_cascadesToEntries`); Room включает
+  `PRAGMA foreign_keys = ON` в `onOpen` каждого соединения, так что каскад работает без ручной
+  настройки. `PrayerConverters` хранит `verseRefs` как строки, объединённые `\n` (в ссылке на
+  стих перевод строки невозможен), enum'ы — как `TEXT` по имени константы. Поля iOS `sortOrder` и
+  `reminderRule` сознательно не перенесены — в MVP их ничего не читает, пустые колонки без
+  потребителя — это долг, а не паритет; добавятся отдельной миграцией, если понадобятся.
+  `AutoMigration(from = 2, to = 3)` только создаёт `prayer_requests`, `prayer_entries` и индекс
+  `index_prayer_entries_requestId` — `notes`/`folders` не затрагивает. `prayerDao()` в
+  `AppDatabase` намеренно не добавлен — `PrayerDao` появится в следующей задаче (14.2).
+
 ### Добавлено (Фаза 13 — Заметки и Библия)
 
 - Сохранение выделенных стихов в заметку из читалки (задача 13.8) — последняя задача фазы,
