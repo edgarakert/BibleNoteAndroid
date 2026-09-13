@@ -138,8 +138,84 @@
     <string name="tab_settings">Настройки</string>
 
     <!-- Напоминание о молитве: всегда общее, без количества просьб -->
-    <string name="prayer_reminder_title">Молитвенный журнал</string>
-    <string name="prayer_reminder_body_generic">Время для молитвы</string>
+    <string name="prayer_reminder_title">Время молитвы</string>
+    <string name="prayer_reminder_body_generic">Уделите время молитве</string>
     <string name="prayer_reminder_channel_name">Напоминание о молитве</string>
     <string name="prayer_reminder_channel_description">Ежедневное напоминание уделить время молитве</string>
+
+    <!-- Молитвенный журнал (фаза 14) -->
+    <string name="prayer_today_title">Сегодня</string>
+    <string name="prayer_today_empty_state">Добавьте первую просьбу</string>
+    <string name="prayer_today_new_button">Новая просьба</string>
+    <string name="prayer_editor_new_title">Новая просьба</string>
+    <string name="prayer_editor_edit_title">Изменить просьбу</string>
+    <string name="prayer_editor_title_placeholder">О чём молитесь?</string>
+    <string name="prayer_editor_body_placeholder">Подробности</string>
+    <string name="prayer_editor_category_label">Категория</string>
+    <string name="prayer_editor_verses_label">Стихи</string>
+    <string name="prayer_editor_verses_placeholder">например Флп 4:6-7</string>
+    <string name="prayer_category_family">Семья</string>
+    <string name="prayer_category_church">Церковь</string>
+    <string name="prayer_category_health">Здоровье</string>
+    <string name="prayer_category_work">Работа</string>
+    <string name="prayer_category_gratitude">Благодарность</string>
+    <string name="prayer_category_personal">Личное</string>
+    <string name="prayer_category_world">Мир</string>
+    <string name="prayer_category_other">Другое</string>
+    <string name="prayer_card_pray_button">Помолился</string>
+    <string name="prayer_list_title">Все просьбы</string>
+    <string name="prayer_list_filter_active">Активные</string>
+    <string name="prayer_list_filter_answered">Отвеченные</string>
+    <string name="prayer_list_filter_all">Все</string>
+    <string name="prayer_list_entrust_button">Доверить Богу</string>
+    <string name="prayer_list_empty_state">Здесь пока пусто</string>
+    <string name="prayer_delete">Удалить просьбу</string>
+    <string name="prayer_detail_pray_today_button">Помолился сегодня</string>
+    <string name="prayer_detail_answered_button">Бог ответил</string>
+    <string name="prayer_detail_entrust_menu">Доверить Богу</string>
+    <string name="prayer_detail_entries_header">Обновления</string>
+    <string name="prayer_detail_add_entry_placeholder">Добавить обновление</string>
+    <string name="prayer_detail_add_entry_button">Добавить</string>
+    <string name="prayer_answer_title">Бог ответил</string>
+    <string name="prayer_answer_placeholder">Как Бог ответил?</string>
+    <string name="prayer_answer_save">Сохранить</string>
+    <string name="prayer_answer_date_label">Дата</string>
+    <string name="prayer_answered_title">Отвеченные молитвы</string>
+    <string name="prayer_answered_count">Записано ответов: %1$d</string>
+    <string name="prayer_answered_empty_state">Здесь появятся ответы на молитвы</string>
+    <string name="prayer_answered_duration_prefix">Молились</string>
+    <string name="prayer_reminder_settings_title">Напоминание</string>
+    <string name="prayer_reminder_enable_toggle">Ежедневное напоминание</string>
+    <string name="prayer_reminder_time_label">Время</string>
+    <string name="tab_prayers">Молитвы</string>
+    <plurals name="prayer_days">
+        <item quantity="one">молитесь об этом %1$d день</item>
+        <item quantity="few">молитесь об этом %1$d дня</item>
+        <item quantity="many">молитесь об этом %1$d дней</item>
+        <item quantity="other">молитесь об этом %1$d дня</item>
+    </plurals>
+    <plurals name="prayer_duration_years">
+        <item quantity="one">%1$d год</item>
+        <item quantity="few">%1$d года</item>
+        <item quantity="many">%1$d лет</item>
+        <item quantity="other">%1$d года</item>
+    </plurals>
+    <plurals name="prayer_duration_months">
+        <item quantity="one">%1$d месяц</item>
+        <item quantity="few">%1$d месяца</item>
+        <item quantity="many">%1$d месяцев</item>
+        <item quantity="other">%1$d месяца</item>
+    </plurals>
+    <plurals name="prayer_duration_weeks">
+        <item quantity="one">%1$d неделю</item>
+        <item quantity="few">%1$d недели</item>
+        <item quantity="many">%1$d недель</item>
+        <item quantity="other">%1$d недели</item>
+    </plurals>
+    <plurals name="prayer_duration_days">
+        <item quantity="one">%1$d день</item>
+        <item quantity="few">%1$d дня</item>
+        <item quantity="many">%1$d дней</item>
+        <item quantity="other">%1$d дня</item>
+    </plurals>
 </resources>

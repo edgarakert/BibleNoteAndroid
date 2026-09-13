@@ -134,8 +134,74 @@
     <string name="tab_settings">Settings</string>
 
     <!-- Prayer reminder notification: always generic, never a count, never urgency -->
-    <string name="prayer_reminder_title">Prayer journal</string>
-    <string name="prayer_reminder_body_generic">A moment for prayer</string>
+    <string name="prayer_reminder_title">Time to Pray</string>
+    <string name="prayer_reminder_body_generic">Take a moment to pray</string>
     <string name="prayer_reminder_channel_name">Prayer reminder</string>
     <string name="prayer_reminder_channel_description">A daily reminder to spend a moment in prayer</string>
+
+    <!-- Молитвенный журнал (фаза 14) -->
+    <string name="prayer_today_title">Today</string>
+    <string name="prayer_today_empty_state">Add your first prayer request</string>
+    <string name="prayer_today_new_button">New Request</string>
+    <string name="prayer_editor_new_title">New Request</string>
+    <string name="prayer_editor_edit_title">Edit Request</string>
+    <string name="prayer_editor_title_placeholder">What are you praying for?</string>
+    <string name="prayer_editor_body_placeholder">Details</string>
+    <string name="prayer_editor_category_label">Category</string>
+    <string name="prayer_editor_verses_label">Verses</string>
+    <string name="prayer_editor_verses_placeholder">e.g. Phil 4:6-7</string>
+    <string name="prayer_category_family">Family</string>
+    <string name="prayer_category_church">Church</string>
+    <string name="prayer_category_health">Health</string>
+    <string name="prayer_category_work">Work</string>
+    <string name="prayer_category_gratitude">Gratitude</string>
+    <string name="prayer_category_personal">Personal</string>
+    <string name="prayer_category_world">World</string>
+    <string name="prayer_category_other">Other</string>
+    <string name="prayer_card_pray_button">Prayed</string>
+    <string name="prayer_list_title">All Requests</string>
+    <string name="prayer_list_filter_active">Active</string>
+    <string name="prayer_list_filter_answered">Answered</string>
+    <string name="prayer_list_filter_all">All</string>
+    <string name="prayer_list_entrust_button">Entrust to God</string>
+    <string name="prayer_list_empty_state">No requests here yet</string>
+    <string name="prayer_delete">Delete Request</string>
+    <string name="prayer_detail_pray_today_button">Prayed Today</string>
+    <string name="prayer_detail_answered_button">God Answered</string>
+    <string name="prayer_detail_entrust_menu">Entrust to God</string>
+    <string name="prayer_detail_entries_header">Updates</string>
+    <string name="prayer_detail_add_entry_placeholder">Add an update</string>
+    <string name="prayer_detail_add_entry_button">Add</string>
+    <string name="prayer_answer_title">God Answered</string>
+    <string name="prayer_answer_placeholder">How did God answer?</string>
+    <string name="prayer_answer_save">Save</string>
+    <string name="prayer_answer_date_label">Date</string>
+    <string name="prayer_answered_title">Answered Prayers</string>
+    <string name="prayer_answered_count">Answers recorded: %1$d</string>
+    <string name="prayer_answered_empty_state">Answered prayers will appear here</string>
+    <string name="prayer_answered_duration_prefix">Prayed for</string>
+    <string name="prayer_reminder_settings_title">Reminder</string>
+    <string name="prayer_reminder_enable_toggle">Daily Reminder</string>
+    <string name="prayer_reminder_time_label">Time</string>
+    <string name="tab_prayers">Prayers</string>
+    <plurals name="prayer_days">
+        <item quantity="one">praying for %1$d day</item>
+        <item quantity="other">praying for %1$d days</item>
+    </plurals>
+    <plurals name="prayer_duration_years">
+        <item quantity="one">%1$d year</item>
+        <item quantity="other">%1$d years</item>
+    </plurals>
+    <plurals name="prayer_duration_months">
+        <item quantity="one">%1$d month</item>
+        <item quantity="other">%1$d months</item>
+    </plurals>
+    <plurals name="prayer_duration_weeks">
+        <item quantity="one">%1$d week</item>
+        <item quantity="other">%1$d weeks</item>
+    </plurals>
+    <plurals name="prayer_duration_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
 </resources>
