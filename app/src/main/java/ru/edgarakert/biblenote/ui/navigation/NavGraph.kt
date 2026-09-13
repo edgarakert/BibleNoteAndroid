@@ -12,8 +12,10 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.VolunteerActivism
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -54,6 +56,7 @@ import ru.edgarakert.biblenote.ui.screens.bible.BibleReaderScreen
 import ru.edgarakert.biblenote.ui.screens.editor.NoteEditorScreen
 import ru.edgarakert.biblenote.ui.screens.notes.FolderScreen
 import ru.edgarakert.biblenote.ui.screens.notes.NotesListScreen
+import ru.edgarakert.biblenote.ui.screens.prayer.PrayerTodayScreen
 import ru.edgarakert.biblenote.ui.screens.settings.AboutScreen
 import ru.edgarakert.biblenote.ui.screens.settings.BibleThemeSettingsScreen
 import ru.edgarakert.biblenote.ui.screens.settings.SettingsScreen
@@ -76,6 +79,12 @@ private enum class TopLevelRoute(
         labelRes = R.string.tab_bible,
         outlinedIcon = Icons.AutoMirrored.Outlined.MenuBook,
         filledIcon = Icons.AutoMirrored.Filled.MenuBook
+    ),
+    PRAYERS(
+        graphRoute = "prayers_graph",
+        labelRes = R.string.tab_prayers,
+        outlinedIcon = Icons.Outlined.VolunteerActivism,
+        filledIcon = Icons.Filled.VolunteerActivism
     ),
     SETTINGS(
         graphRoute = "settings_graph",
@@ -309,6 +318,16 @@ fun AppNavHost(initialNotesPath: List<NotesPathEntry> = emptyList()) {
                         pendingChapter = chapter,
                         onOpenNote = onOpenNoteFromBible
                     )
+                }
+            }
+
+            // Только маршрут "prayers" — PrayerListScreen/AnsweredPrayersScreen/
+            // PrayerReminderSettingsScreen/PrayerDetailScreen/PrayerEditorScreen появятся в
+            // задачах 14.9–14.13 и добавят свои маршруты сами (поправка к плану 14.7: план
+            // регистрировал все шесть маршрутов сразу, но пять экранов ещё не существуют).
+            navigation(route = TopLevelRoute.PRAYERS.graphRoute, startDestination = "prayers") {
+                composable("prayers") {
+                    PrayerTodayScreen()
                 }
             }
 
