@@ -136,4 +136,10 @@
     <string name="tab_notes">Заметки</string>
     <string name="tab_bible">Библия</string>
     <string name="tab_settings">Настройки</string>
+
+    <!-- Напоминание о молитве: всегда общее, без количества просьб -->
+    <string name="prayer_reminder_title">Молитвенный журнал</string>
+    <string name="prayer_reminder_body_generic">Время для молитвы</string>
+    <string name="prayer_reminder_channel_name">Напоминание о молитве</string>
+    <string name="prayer_reminder_channel_description">Ежедневное напоминание уделить время молитве</string>
 </resources>

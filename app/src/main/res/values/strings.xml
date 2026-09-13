@@ -132,4 +132,10 @@
     <string name="tab_notes">Notes</string>
     <string name="tab_bible">Bible</string>
     <string name="tab_settings">Settings</string>
+
+    <!-- Prayer reminder notification: always generic, never a count, never urgency -->
+    <string name="prayer_reminder_title">Prayer journal</string>
+    <string name="prayer_reminder_body_generic">A moment for prayer</string>
+    <string name="prayer_reminder_channel_name">Prayer reminder</string>
+    <string name="prayer_reminder_channel_description">A daily reminder to spend a moment in prayer</string>
 </resources>
