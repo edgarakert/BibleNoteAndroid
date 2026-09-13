@@ -46,6 +46,12 @@ class PrayerReminderReceiver : BroadcastReceiver(), KoinComponent {
         CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
             try {
                 withTimeout(TIMEOUT_MS) {
+                    // Будильник мог уже быть в пути, когда пользователь выключил напоминание:
+                    // cancel() не отзывает доставку, начатую системой. Без этой проверки
+                    // приёмник показал бы уведомление и взвёл будильник на завтра при
+                    // выключенной настройке — настройка и будильник разошлись бы.
+                    if (!settings.prayerReminderEnabled.first()) return@withTimeout
+
                     showNotificationIfPermitted(appContext)
                     // Перевзводим независимо от того, показалось ли уведомление —
                     // разрешение POST_NOTIFICATIONS может быть выдано позже, а будильник
