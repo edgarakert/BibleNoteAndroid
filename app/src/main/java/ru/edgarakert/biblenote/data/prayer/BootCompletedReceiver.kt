@@ -14,8 +14,11 @@ import org.koin.core.component.inject
 import ru.edgarakert.biblenote.data.settings.SettingsRepository
 
 /**
- * AlarmManager-будильники сбрасываются перезагрузкой устройства. Если напоминание
- * включено — перевзводим его; иначе ничего не делаем. Идемпотентно: фиксированный
+ * AlarmManager-будильники сбрасываются перезагрузкой устройства и — на многих устройствах —
+ * обновлением приложения. Перевзвод при холодном старте (BibleNoteApplication) обновление не
+ * покрывает: пока пользователь не откроет приложение, напоминание молчало бы. Поэтому ловим и
+ * MY_PACKAGE_REPLACED — система шлёт его только самому обновлённому приложению.
+ * Если напоминание включено — перевзводим; иначе ничего не делаем. Идемпотентно: фиксированный
  * request code в [PrayerReminderScheduler] просто перезаписывает будильник.
  */
 class BootCompletedReceiver : BroadcastReceiver(), KoinComponent {
@@ -23,7 +26,9 @@ class BootCompletedReceiver : BroadcastReceiver(), KoinComponent {
     private val settings: SettingsRepository by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
+        if (intent.action != Intent.ACTION_BOOT_COMPLETED &&
+            intent.action != Intent.ACTION_MY_PACKAGE_REPLACED
+        ) return
 
         val pendingResult = goAsync()
         val appContext = context.applicationContext
