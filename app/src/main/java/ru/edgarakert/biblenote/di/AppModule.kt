@@ -11,6 +11,7 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import ru.edgarakert.biblenote.data.NoteRepository
+import ru.edgarakert.biblenote.data.PrayerRepository
 import ru.edgarakert.biblenote.ui.viewmodels.NoteEditorViewModel
 import ru.edgarakert.biblenote.ui.viewmodels.NotesViewModel
 import ru.edgarakert.biblenote.data.bible.BibleDatabaseService
@@ -18,6 +19,7 @@ import ru.edgarakert.biblenote.data.bible.BibleReferenceParser
 import ru.edgarakert.biblenote.data.db.AppDatabase
 import ru.edgarakert.biblenote.data.db.FolderDao
 import ru.edgarakert.biblenote.data.db.NoteDao
+import ru.edgarakert.biblenote.data.db.PrayerDao
 import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.settings.SettingsRepository
 import ru.edgarakert.biblenote.ui.viewmodels.BibleReaderViewModel
@@ -39,12 +41,16 @@ val appModule = module {
 
     single<FolderDao> { get<AppDatabase>().folderDao() }
 
+    single<PrayerDao> { get<AppDatabase>().prayerDao() }
+
     single<NoteRepository> {
         NoteRepository(
             noteDao = get<NoteDao>(),
             folderDao = get<FolderDao>()
         )
     }
+
+    single<PrayerRepository> { PrayerRepository(get()) }
 
     // Bible
     single<BibleDatabaseService> {

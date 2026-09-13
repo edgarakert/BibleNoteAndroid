@@ -23,6 +23,28 @@
   `index_prayer_entries_requestId` — `notes`/`folders` не затрагивает. `prayerDao()` в
   `AppDatabase` намеренно не добавлен — `PrayerDao` появится в следующей задаче (14.2).
 
+- `PrayerDao` и `PrayerRepository` (задача 14.2) — `AppDatabase.prayerDao()` добавлен, DI
+  зарегистрирован в `AppModule`. **Отступление от плана, обязательное:** план предписывал
+  `@Insert(onConflict = REPLACE)` для `upsertRequest` по образцу `NoteDao`/`FolderDao` — это
+  сломало бы фичу. REPLACE на уже существующей строке выполняется SQLite как DELETE+INSERT;
+  `prayer_entries.requestId` объявлен с `ON DELETE CASCADE` (задача 14.1), а Room включает
+  `PRAGMA foreign_keys = ON` при каждом открытии соединения — значит REPLACE на `upsertRequest`
+  молча удалил бы ВСЕ дописки просьбы при любом её обновлении: «помолился сегодня», правка
+  заголовка, «отвечено», «доверить Богу». Тест `PrayerDaoTest.updatingARequestKeepsItsEntries`,
+  прогнанный сначала на варианте с REPLACE, воспроизвёл это буквально: `expected:<2> but was:<0>`
+  — обе дописки исчезали. `upsertRequest` и `upsertEntry` переведены на `@Upsert` (Room 2.5+,
+  в проекте Room 2.8.4): `INSERT`, а при конфликте по PK — `UPDATE`, зависимые строки не
+  трогаются. Проверено по исходникам `androidx.room.EntityUpsertAdapter.upsertAndReturnId` (Room
+  2.8.4): при вставке возвращает id новой строки, а при обновлении — **`-1L`**, а не id
+  обновлённой строки. `PrayerRepository.saveRequest`/`saveEntry` подставляют настоящий id
+  (`if (rowId == -1L) request.id else rowId`), иначе код, переходящий на экран просьбы по id
+  после сохранения, получил бы `-1`. `NoteDao`/`FolderDao` не тронуты — REPLACE там безопасен
+  только потому, что на заметки никто не ссылается, а папки через upsert сейчас только
+  создаются; это не повод копировать тот паттерн в код, где на строку есть внешние ссылки с
+  каскадом. Три инструментальных теста в `PrayerDaoTest` (`updatingARequestKeepsItsEntries`,
+  `deletingARequestCascadesToItsEntries`, `upsertReturnsTheRealIdOnUpdate`) и все 3 теста
+  `MigrationTest` — зелёные на эмуляторе.
+
 ### Добавлено (Фаза 13 — Заметки и Библия)
 
 - Сохранение выделенных стихов в заметку из читалки (задача 13.8) — последняя задача фазы,

@@ -22,6 +22,8 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun folderDao(): FolderDao
 
+    abstract fun prayerDao(): PrayerDao
+
     companion object {
         /**
          * Обработчика даунгрейда сознательно нет.
