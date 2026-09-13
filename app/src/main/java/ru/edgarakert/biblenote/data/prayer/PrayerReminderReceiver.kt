@@ -1,5 +1,9 @@
 package ru.edgarakert.biblenote.data.prayer
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.content.ContextCompat
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -57,9 +61,17 @@ class PrayerReminderReceiver : BroadcastReceiver(), KoinComponent {
 
     private fun showNotificationIfPermitted(context: Context) {
         ensureChannel(context)
-        // На Android 13+ areNotificationsEnabled() учитывает и runtime-разрешение
-        // POST_NOTIFICATIONS, и включённость канала — не падаем без разрешения,
-        // просто не показываем уведомление в этот раз.
+        // Без разрешения не падаем — просто не показываем уведомление в этот раз;
+        // перевзвод будильника вызывающий делает в любом случае.
+        // Явная проверка POST_NOTIFICATIONS нужна поверх areNotificationsEnabled():
+        // функционально на Android 13+ второе и так учитывает разрешение, но lint этого
+        // не видит и помечает notify() как MissingPermission (уровень Error).
+        // areNotificationsEnabled() остаётся — он ловит уведомления, выключенные
+        // пользователем в настройках на любых версиях.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) return
         if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
 
         val contentIntent = PendingIntent.getActivity(
