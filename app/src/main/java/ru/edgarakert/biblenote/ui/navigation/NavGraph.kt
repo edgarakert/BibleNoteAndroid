@@ -56,6 +56,7 @@ import ru.edgarakert.biblenote.ui.screens.bible.BibleReaderScreen
 import ru.edgarakert.biblenote.ui.screens.editor.NoteEditorScreen
 import ru.edgarakert.biblenote.ui.screens.notes.FolderScreen
 import ru.edgarakert.biblenote.ui.screens.notes.NotesListScreen
+import ru.edgarakert.biblenote.ui.screens.prayer.PrayerEditorScreen
 import ru.edgarakert.biblenote.ui.screens.prayer.PrayerTodayScreen
 import ru.edgarakert.biblenote.ui.screens.settings.AboutScreen
 import ru.edgarakert.biblenote.ui.screens.settings.BibleThemeSettingsScreen
@@ -321,13 +322,26 @@ fun AppNavHost(initialNotesPath: List<NotesPathEntry> = emptyList()) {
                 }
             }
 
-            // Только маршрут "prayers" — PrayerListScreen/AnsweredPrayersScreen/
-            // PrayerReminderSettingsScreen/PrayerDetailScreen/PrayerEditorScreen появятся в
-            // задачах 14.9–14.13 и добавят свои маршруты сами (поправка к плану 14.7: план
-            // регистрировал все шесть маршрутов сразу, но пять экранов ещё не существуют).
+            // "prayers" и "prayers/editor/{requestId}" — PrayerListScreen/AnsweredPrayersScreen/
+            // PrayerReminderSettingsScreen/PrayerDetailScreen появятся в задачах 14.9/14.10/14.12/
+            // 14.13 и добавят свои маршруты сами (поправка к плану 14.7: план регистрировал все
+            // шесть маршрутов сразу, но пять экранов ещё не существовали к тому моменту).
             navigation(route = TopLevelRoute.PRAYERS.graphRoute, startDestination = "prayers") {
                 composable("prayers") {
-                    PrayerTodayScreen()
+                    PrayerTodayScreen(
+                        onCreateRequest = { navController.navigate("prayers/editor/-1") }
+                    )
+                }
+                composable(
+                    route = "prayers/editor/{requestId}",
+                    arguments = listOf(navArgument("requestId") { type = NavType.LongType })
+                ) { backStackEntry ->
+                    val requestId =
+                        backStackEntry.arguments?.getLong("requestId") ?: return@composable
+                    PrayerEditorScreen(
+                        requestId = requestId,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
             }
 
