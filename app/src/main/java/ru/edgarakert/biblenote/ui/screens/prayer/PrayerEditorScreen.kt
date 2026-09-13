@@ -62,6 +62,7 @@ fun PrayerEditorScreen(
     viewModel: PrayerEditorViewModel = koinViewModel(parameters = { parametersOf(requestId) })
 ) {
     val isLoaded by viewModel.isLoaded.collectAsStateWithLifecycle()
+    val notFound by viewModel.notFound.collectAsStateWithLifecycle()
     val title by viewModel.title.collectAsStateWithLifecycle()
     val body by viewModel.body.collectAsStateWithLifecycle()
     val category by viewModel.category.collectAsStateWithLifecycle()
@@ -70,6 +71,12 @@ fun PrayerEditorScreen(
 
     LaunchedEffect(viewModel) {
         viewModel.saved.collect { onBack() }
+    }
+
+    // Просьбу удалили между тапом на неё и загрузкой редактора (поправка 3 к плану 14.10) —
+    // закрываемся, а не показываем пустую форму, которая при сохранении создала бы новую просьбу.
+    LaunchedEffect(notFound) {
+        if (notFound) onBack()
     }
 
     Scaffold(
@@ -112,7 +119,7 @@ fun PrayerEditorScreen(
             )
         }
     ) { innerPadding ->
-        if (!isLoaded) {
+        if (!isLoaded || notFound) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()

@@ -34,6 +34,16 @@ class PrayerEditorViewModel(
     private val _isLoaded = MutableStateFlow(requestId == -1L)
     val isLoaded: StateFlow<Boolean> = _isLoaded.asStateFlow()
 
+    /**
+     * `true`, когда открыли редактор по [requestId], а `getRequestById` не нашёл такую просьбу —
+     * например, её удалили (из карточки просьбы 14.10 или откуда-то ещё) между тапом на неё и
+     * загрузкой редактора. Без этой проверки экран тихо показывал бы пустую форму под заголовком
+     * «Изменить просьбу», а «Сохранить» создало бы новую просьбу вместо ожидаемого редактирования
+     * (поправка 3 к плану 14.10). Экран должен закрыться, а не показывать эту пустую форму.
+     */
+    private val _notFound = MutableStateFlow(false)
+    val notFound: StateFlow<Boolean> = _notFound.asStateFlow()
+
     private val _title = MutableStateFlow("")
     val title: StateFlow<String> = _title.asStateFlow()
 
@@ -67,6 +77,8 @@ class PrayerEditorViewModel(
                     _category.value = loaded.category
                     _versesInput.value = PrayerVerseRefs.toInput(loaded.verseRefs)
                     _canSave.value = loaded.title.trim().isNotEmpty()
+                } else {
+                    _notFound.value = true
                 }
                 _isLoaded.value = true
             }
