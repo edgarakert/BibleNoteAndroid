@@ -67,6 +67,7 @@ class BibleReaderViewModel(
 
     init {
         observeNoteIndex()
+        observeEnabledTranslations()
         initJob = viewModelScope.launch {
             val enabled = settingsRepository.enabledTranslations.first()
             val default = settingsRepository.defaultTranslation.first()
@@ -208,6 +209,28 @@ class BibleReaderViewModel(
                     verseNotes = index
                     _uiState.update { it.copy(noteCounts = index.mapValues { (_, v) -> v.size }) }
                 }
+        }
+    }
+
+    // Список включённых переводов читается как поток, а не разово при инициализации:
+    // иначе после включения/выключения перевода в настройках читалка не узнаёт об этом,
+    // пока не будет пересоздана. Если текущий перевод выключили, переключаемся на первый
+    // оставшийся и перечитываем главу — иначе меню показывало бы уже недоступный перевод.
+    private fun observeEnabledTranslations() {
+        viewModelScope.launch {
+            settingsRepository.enabledTranslations.collectLatest { enabled ->
+                val current = _uiState.value
+                val translation = when {
+                    enabled.isEmpty() -> current.translation
+                    current.translation in enabled -> current.translation
+                    else -> enabled.first()
+                }
+                _uiState.update { it.copy(enabledTranslations = enabled, translation = translation) }
+                if (isInitialized && translation != current.translation) {
+                    settingsRepository.setLastBibleTranslation(translation)
+                    loadChapter(current.bookId, current.chapter, translation)
+                }
+            }
         }
     }
 

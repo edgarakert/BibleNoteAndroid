@@ -55,6 +55,7 @@ import org.koin.core.parameter.parametersOf
 import ru.edgarakert.biblenote.R
 import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.bible.VerseSnippetBuilder
+import ru.edgarakert.biblenote.data.bible.translationShortName
 import ru.edgarakert.biblenote.ui.viewmodels.BibleVerseSheetViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -131,7 +132,7 @@ fun BibleVerseSheet(
                                 .padding(horizontal = 10.dp, vertical = 6.dp)
                         ) {
                             Text(
-                                text = t.uppercase(),
+                                text = translationShortName(t),
                                 fontSize = 12.sp,
                                 color = if (selected) MaterialTheme.colorScheme.primary
                                         else MaterialTheme.colorScheme.onSurfaceVariant

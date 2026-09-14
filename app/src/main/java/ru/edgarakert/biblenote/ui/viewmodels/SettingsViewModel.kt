@@ -41,7 +41,7 @@ class SettingsViewModel(
         titleResId = R.string.translations_group_russian,
         translations = listOf(
             TranslationInfo("synodal", R.string.translation_synodal_name, R.string.translation_synodal_subtitle),
-            // TranslationInfo("nrt", R.string.translation_nrt_name, R.string.translation_nrt_subtitle)
+            TranslationInfo("nrt", R.string.translation_nrt_name, R.string.translation_nrt_subtitle)
         )
     )
     private val enGroup = TranslationGroup(
