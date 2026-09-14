@@ -70,4 +70,10 @@ class NoteFormattingCodecTest {
         val runs = NoteFormattingCodec.decode("b:0-4;i:100-120")
         assertEquals(listOf(FormatRun(FormatType.BOLD, 0, 4)), NoteFormattingCodec.clampTo(runs, textLength = 10))
     }
+
+    @Test
+    fun `a run that starts inside the text but ends past it is trimmed, not dropped`() {
+        val runs = listOf(FormatRun(FormatType.BOLD, 5, 15))
+        assertEquals(listOf(FormatRun(FormatType.BOLD, 5, 10)), NoteFormattingCodec.clampTo(runs, textLength = 10))
+    }
 }
