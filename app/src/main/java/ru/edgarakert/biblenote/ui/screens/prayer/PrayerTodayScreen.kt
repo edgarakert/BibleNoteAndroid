@@ -13,7 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.VolunteerActivism
@@ -164,17 +164,21 @@ private fun PrayerTodayTopBar(
                     )
                 }
             }
+        },
+        actions = {
+            // Слот navigationIcon рассчитан ровно на одну кнопку: когда здесь лежали и список,
+            // и отвеченные, вторая накрывала первую, и «Все просьбы» нельзя было нажать.
             if (onOpenAnswered != null) {
                 IconButton(onClick = onOpenAnswered) {
                     Icon(
-                        Icons.Filled.CheckCircle,
+                        // checkmark.seal в iOS: галочка в печати. CheckCircle читалась как
+                        // «задача выполнена» — не тот смысл для ответов на молитвы.
+                        Icons.Filled.Verified,
                         contentDescription = stringResource(R.string.prayer_answered_title),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
-        },
-        actions = {
             if (onCreateRequest != null) {
                 IconButton(onClick = onCreateRequest) {
                     Icon(
