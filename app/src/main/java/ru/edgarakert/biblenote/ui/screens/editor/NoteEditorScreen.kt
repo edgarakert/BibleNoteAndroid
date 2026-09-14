@@ -52,6 +52,7 @@ import org.koin.core.parameter.parametersOf
 import ru.edgarakert.biblenote.R
 import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.bible.BibleReferenceParser
+import ru.edgarakert.biblenote.data.NoteTextInsertion
 import ru.edgarakert.biblenote.data.bible.VerseSnippetBuilder
 import ru.edgarakert.biblenote.ui.components.BibleEditText
 import ru.edgarakert.biblenote.ui.components.BibleVerseSheet
@@ -281,13 +282,12 @@ fun NoteEditorScreen(
             onInsertVerses = { verses ->
                 val body = VerseSnippetBuilder.versesBody(verses)
                 if (body.isNotEmpty()) {
-                    // Вставляем не сразу за ссылкой, а в конец её строки: иначе текст стиха
-                    // разрезал бы фразу пополам («Быт 2:14 — важная мысль»).
-                    val refEnd = (activeRange?.last?.plus(1) ?: ref.endIndex)
-                        .coerceIn(0, content.length)
-                    val lineEnd = content.indexOf('\n', refEnd).let {
-                        if (it < 0) content.length else it
-                    }
+                    // Позиция вставки — конец строки со ссылкой, см. NoteTextInsertion.
+                    // Повторная вставка кладёт новый блок сразу под ссылку, то есть ВЫШЕ
+                    // вставленного прежде: позиция считается от строки самой ссылки, а её
+                    // предыдущие вставки не сдвигают.
+                    val refEnd = activeRange?.last?.plus(1) ?: ref.endIndex
+                    val lineEnd = NoteTextInsertion.lineEndAfter(content, refEnd)
                     editToken += 1
                     pendingEdit = PendingEdit(editToken, lineEnd, lineEnd, "\n\n" + body)
                 }

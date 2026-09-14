@@ -1,7 +1,5 @@
 package ru.edgarakert.biblenote.ui.components
 
-import ru.edgarakert.biblenote.data.bible.VerseSnippetBuilder
-import androidx.compose.material.icons.automirrored.filled.NoteAdd
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,6 +21,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.NoteAdd
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -55,6 +54,7 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import ru.edgarakert.biblenote.R
 import ru.edgarakert.biblenote.data.bible.BibleReference
+import ru.edgarakert.biblenote.data.bible.VerseSnippetBuilder
 import ru.edgarakert.biblenote.ui.viewmodels.BibleVerseSheetViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -274,14 +274,16 @@ fun BibleVerseSheet(
                 // Вставка текста выделенных стихов в заметку — сверх паритета с iOS, где шторка
                 // умеет только открыть главу. Кнопки нет, пока нечего вставлять: у ссылки на
                 // главу целиком выбор пуст, и вставился бы весь текст главы.
-                if (onInsertVerses != null && uiState.selectedVerses.isNotEmpty()) {
+                // Фильтруем заранее, а не в обработчике: номера из ссылки может не оказаться в
+                // загруженной главе (разная нумерация в переводах), и кнопка при непустом выборе
+                // оказалась бы «мёртвой» — нажатие без результата.
+                val insertableVerses = uiState.verses
+                    .filter { it.first in uiState.selectedVerses }
+                    .map { VerseSnippetBuilder.Verse(it.first, it.second) }
+
+                if (onInsertVerses != null && insertableVerses.isNotEmpty()) {
                     TextButton(
-                        onClick = {
-                            val selected = uiState.verses
-                                .filter { it.first in uiState.selectedVerses }
-                                .map { VerseSnippetBuilder.Verse(it.first, it.second) }
-                            onInsertVerses(selected)
-                        },
+                        onClick = { onInsertVerses(insertableVerses) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp)
