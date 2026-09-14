@@ -52,6 +52,7 @@ import org.koin.core.parameter.parametersOf
 import ru.edgarakert.biblenote.R
 import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.bible.BibleReferenceParser
+import ru.edgarakert.biblenote.data.bible.VerseSnippetBuilder
 import ru.edgarakert.biblenote.ui.components.BibleEditText
 import ru.edgarakert.biblenote.ui.components.BibleVerseSheet
 import ru.edgarakert.biblenote.ui.components.PendingEdit
@@ -276,6 +277,22 @@ fun NoteEditorScreen(
                 pendingEdit = PendingEdit(editToken, range.first, range.last + 1, newText)
                 // Длина замены меняется с каждым тапом — следующая правка целится в новый диапазон.
                 activeRange = range.first until (range.first + newText.length)
+            },
+            onInsertVerses = { verses ->
+                val body = VerseSnippetBuilder.versesBody(verses)
+                if (body.isNotEmpty()) {
+                    // Вставляем не сразу за ссылкой, а в конец её строки: иначе текст стиха
+                    // разрезал бы фразу пополам («Быт 2:14 — важная мысль»).
+                    val refEnd = (activeRange?.last?.plus(1) ?: ref.endIndex)
+                        .coerceIn(0, content.length)
+                    val lineEnd = content.indexOf('\n', refEnd).let {
+                        if (it < 0) content.length else it
+                    }
+                    editToken += 1
+                    pendingEdit = PendingEdit(editToken, lineEnd, lineEnd, "\n\n" + body)
+                }
+                tappedReference = null
+                activeRange = null
             }
         )
     }

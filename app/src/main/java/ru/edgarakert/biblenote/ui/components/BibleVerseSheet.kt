@@ -1,5 +1,7 @@
 package ru.edgarakert.biblenote.ui.components
 
+import ru.edgarakert.biblenote.data.bible.VerseSnippetBuilder
+import androidx.compose.material.icons.automirrored.filled.NoteAdd
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -62,6 +64,7 @@ fun BibleVerseSheet(
     onDismiss: () -> Unit,
     onOpenChapter: (BibleReference) -> Unit,
     onVersesChanged: ((List<Int>) -> Unit)? = null,
+    onInsertVerses: ((List<VerseSnippetBuilder.Verse>) -> Unit)? = null,
     viewModel: BibleVerseSheetViewModel = koinViewModel(
         key = reference.id,
         parameters = { parametersOf(reference) }
@@ -265,6 +268,37 @@ fun BibleVerseSheet(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                    }
+                }
+
+                // Вставка текста выделенных стихов в заметку — сверх паритета с iOS, где шторка
+                // умеет только открыть главу. Кнопки нет, пока нечего вставлять: у ссылки на
+                // главу целиком выбор пуст, и вставился бы весь текст главы.
+                if (onInsertVerses != null && uiState.selectedVerses.isNotEmpty()) {
+                    TextButton(
+                        onClick = {
+                            val selected = uiState.verses
+                                .filter { it.first in uiState.selectedVerses }
+                                .map { VerseSnippetBuilder.Verse(it.first, it.second) }
+                            onInsertVerses(selected)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .padding(top = 4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.NoteAdd,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = stringResource(R.string.verse_insert_text),
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 14.sp
+                        )
                     }
                 }
 
