@@ -38,13 +38,9 @@ fun FormattingToolbar(
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxWidth()) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(0.5.dp)
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
-        )
-
+        // Row закрашивает всю свою высоту сплошным фоном, поэтому разделитель рисуется
+        // ПОСЛЕ неё в том же Box — иначе Row перекрывает его собой (оба по умолчанию
+        // выравниваются по TopStart и делят одну и ту же верхнюю область).
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -70,6 +66,13 @@ fun FormattingToolbar(
                 onClick = onSize
             )
         }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(0.5.dp)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+        )
     }
 }
 
