@@ -67,6 +67,11 @@ fun BibleEditText(
     val lastAppliedToken = remember { mutableLongStateOf(-1L) }
     // Тот же приём для formatCommand — тулбар сбрасывает его в null асинхронно.
     val lastAppliedFormatToken = remember { mutableLongStateOf(-1L) }
+    // title/content/formatting — три независимых StateFlow во ViewModel; formatting может
+    // прийти отдельной рекомпозицией без изменения text (например, если открыть заметку до
+    // того, как отработает декодирование formatting). Без этого applyFormatting вызывалась бы
+    // только вместе со сменой текста и рисковала молча пропустить применение форматирования.
+    val lastAppliedFormatting = remember { arrayOf<List<FormatRun>?>(null) }
 
     DisposableEffect(Unit) {
         onDispose { pendingHighlight[0]?.let { handler.removeCallbacks(it) } }
@@ -269,11 +274,17 @@ fun BibleEditText(
                     }
                     view.setSelection(target)
                     applyFormatting(view, formatting)
+                    lastAppliedFormatting[0] = formatting
                     applyHighlighting(view, parser, amberArgb, inkArgb)
                 } finally {
                     view.isProgrammatic = false
                 }
                 handler.post { if (view.isAttachedToWindow) view.requestFocus() }
+            } else if (formatting != lastAppliedFormatting[0]) {
+                // Форматирование не трогает ForegroundColorSpan/BibleClickSpan, поэтому
+                // повторный вызов applyHighlighting здесь не нужен.
+                applyFormatting(view, formatting)
+                lastAppliedFormatting[0] = formatting
             } else if (colorsChanged) {
                 applyHighlighting(view, parser, amberArgb, inkArgb)
             }
