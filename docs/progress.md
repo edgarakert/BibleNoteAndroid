@@ -306,3 +306,8 @@
 **Чтобы не повторилось.** Номер версии 2 занят схемой фазы 12. Ветку `feature/add-formatting` нельзя мержить как есть: её схему нужно переносить на версию 4 поверх нашей цепочки — либо делать rich text заново по плану фазы 16, а ветку удалить. Предупреждение добавлено в шапку плана фазы 16.
 
 **Следующий шаг:** фаза 15 — полировка и оставшийся долг.
+
+## Фаза 16 — Rich text
+
+### 2026-09-14
+- [x] **16.1** Колонка форматирования в `Note` + автомиграция 3→4. Ветка `feature/insert-verse-text`. `Note.formatting: String?` (nullable, без `defaultValue` — не нужен для nullable-колонки) добавлена последним полем, чтобы не задеть ~13 существующих мест конструирования `Note(...)`. `AppDatabase` version 3→4, `AutoMigration(from = 3, to = 4)` по образцу двух предыдущих. Тест `migrate3To4_addsFormattingColumnAsNullForLegacyNotes` в `MigrationTest.kt` — до миграции у старой заметки `formatting` нет и не может быть, после миграции колонка `NULL`. Тест сначала падал (не с «no such column», как ожидал план, а с `FileNotFoundException: Missing file: .../4.json` — версия базы ещё не была поднята, поэтому `runMigrationsAndValidate(dbName, 4, ...)` не находил схему; после бампа версии и генерации `4.json` через `kspDebugKotlin` тест прошёл). Прогнано `connectedDebugAndroidTest` на двух устройствах (физический SM-A515F и эмулятор Pixel 9 Pro Fold) — все 4 теста миграций зелёные; `testDebugUnitTest` без регрессий. Схема `4.json` закоммичена. Ревью субагентом (kotlin-reviewer) — без замечаний.
