@@ -5,13 +5,10 @@ import android.content.Context
 import android.graphics.Typeface
 import android.os.Handler
 import android.os.Looper
-import android.text.Editable
 import android.text.Spannable
 import android.text.TextPaint
 import android.text.style.ClickableSpan
 import android.text.style.ForegroundColorSpan
-import android.text.style.RelativeSizeSpan
-import android.text.style.StyleSpan
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -29,13 +26,9 @@ import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.bible.BibleReferenceParser
 import ru.edgarakert.biblenote.data.db.FormatRun
 import ru.edgarakert.biblenote.data.db.FormatType
-import ru.edgarakert.biblenote.data.db.NoteFormattingCodec
 
 /** Одноразовая правка текста извне редактора. token отсекает повторное применение. */
 data class PendingEdit(val token: Long, val start: Int, val end: Int, val text: String)
-
-/** Команда тулбара: переключить стиль. token отсекает повторное применение — тот же приём, что у PendingEdit. */
-data class FormatCommand(val token: Long, val type: FormatType)
 
 @SuppressLint("ClickableViewAccessibility")
 @Composable
@@ -72,6 +65,8 @@ fun BibleEditText(
     // Токен последней применённой внешней правки — отсекает повторное применение
     // при рекомпозиции, пока вызывающая сторона ещё не успела сбросить pendingEdit в null.
     val lastAppliedToken = remember { mutableLongStateOf(-1L) }
+    // Тот же приём для formatCommand — тулбар сбрасывает его в null асинхронно.
+    val lastAppliedFormatToken = remember { mutableLongStateOf(-1L) }
 
     DisposableEffect(Unit) {
         onDispose { pendingHighlight[0]?.let { handler.removeCallbacks(it) } }
@@ -235,6 +230,33 @@ fun BibleEditText(
                 return@AndroidView
             }
 
+            val command = formatCommand
+            if (command != null && command.token != lastAppliedFormatToken.longValue) {
+                val editable = view.text
+                if (editable != null) {
+                    val hadSelection = view.selectionStart != view.selectionEnd
+                    val newActiveFormats = applyFormatCommand(
+                        editable,
+                        view.selectionStart,
+                        view.selectionEnd,
+                        view.pendingTypingFormats,
+                        command.type
+                    )
+                    // Реальное выделение меняет спаны Editable напрямую — TextWatcher на это
+                    // не реагирует (span-изменения не запускают afterTextChanged), поэтому
+                    // текст/диапазоны наружу нужно отдать здесь же, иначе форматирование не
+                    // переживёт следующее сохранение. Каретка без выделения текст не меняет —
+                    // там достаточно свежей подсветки кнопок.
+                    if (hadSelection) {
+                        onContentChangedState.value(editable.toString(), extractFormatting(editable))
+                    }
+                    onActiveFormatsChangedState.value(newActiveFormats)
+                }
+                lastAppliedFormatToken.longValue = command.token
+                onFormatCommandApplied(command.token)
+                return@AndroidView
+            }
+
             if (view.text?.toString() != text) {
                 view.isProgrammatic = true
                 try {
@@ -293,164 +315,6 @@ private fun applyHighlighting(
     }
 
     editText.setSelection(selStart, selEnd)
-}
-
-/** Накладывает диапазоны форматирования на живой Editable. Вызывается при загрузке текста, до applyHighlighting. */
-private fun applyFormatting(editText: EditText, runs: List<FormatRun>) {
-    val editable = editText.text ?: return
-
-    // Снимаем только свои стилевые спаны, чтобы не задеть подсветку ссылок.
-    editable.getSpans(0, editable.length, StyleSpan::class.java).forEach { editable.removeSpan(it) }
-    editable.getSpans(0, editable.length, RelativeSizeSpan::class.java).forEach { editable.removeSpan(it) }
-
-    for (run in NoteFormattingCodec.clampTo(runs, editable.length)) {
-        val span: Any = when (run.type) {
-            FormatType.BOLD -> StyleSpan(Typeface.BOLD)
-            FormatType.ITALIC -> StyleSpan(Typeface.ITALIC)
-            FormatType.SIZE -> RelativeSizeSpan(run.scale)
-        }
-        // SPAN_EXCLUSIVE_INCLUSIVE: текст, дописанный вплотную к концу стилизованного участка,
-        // продолжает нести стиль — так ведут себя привычные редакторы.
-        editable.setSpan(span, run.start, run.end, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
-    }
-}
-
-/** Читает текущие диапазоны форматирования из живого Editable. Спаны система уже сдвинула сама. */
-private fun extractFormatting(editable: Editable): List<FormatRun> {
-    val runs = mutableListOf<FormatRun>()
-
-    editable.getSpans(0, editable.length, StyleSpan::class.java).forEach { span ->
-        val type = when (span.style) {
-            Typeface.BOLD -> FormatType.BOLD
-            Typeface.ITALIC -> FormatType.ITALIC
-            else -> return@forEach
-        }
-        runs += FormatRun(type, editable.getSpanStart(span), editable.getSpanEnd(span))
-    }
-
-    editable.getSpans(0, editable.length, RelativeSizeSpan::class.java).forEach { span ->
-        runs += FormatRun(
-            FormatType.SIZE,
-            editable.getSpanStart(span),
-            editable.getSpanEnd(span),
-            span.sizeChange
-        )
-    }
-
-    return runs.filter { it.end > it.start }
-}
-
-/**
- * Применяет один стиль к диапазону [from, to) живого Editable.
- *
- * Общий хелпер для «режима ввода» (задача 16.3) и ручного переключения стилем по кнопке
- * тулбара (задача 16.4, toggleStyle/applyFormatCommand) — оставлен не-приватным, чтобы
- * тулбар мог его переиспользовать без дублирования.
- *
- * NOTE: коэффициент для SIZE здесь — временный плейсхолдер 1.3f. Задача 16.4 вводит
- * именованную константу LARGE_TEXT_SCALE рядом с логикой тулбара и может уточнить эту строку.
- */
-internal fun applyStyle(editable: Editable, from: Int, to: Int, type: FormatType) {
-    val span: Any = when (type) {
-        FormatType.BOLD -> StyleSpan(Typeface.BOLD)
-        FormatType.ITALIC -> StyleSpan(Typeface.ITALIC)
-        FormatType.SIZE -> RelativeSizeSpan(1.3f)
-    }
-    // SPAN_EXCLUSIVE_INCLUSIVE: следующий введённый символ вплотную к концу диапазона
-    // тоже подхватывает стиль без повторного вызова.
-    editable.setSpan(span, from, to, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
-}
-
-/**
- * Пересчитывает «режим ввода» из контекста: стиль символа непосредственно перед [position]
- * (или после, если [position] — начало текста). Используется при схлопывании выделения
- * в каретку (тап, стрелки), чтобы режим ввода не «протекал» из прежней позиции курсора —
- * аналог normalizeTypingAttributes в iOS.
- */
-internal fun MutableSet<FormatType>.syncFromContext(editable: Editable, position: Int) {
-    clear()
-    if (editable.isEmpty()) return
-
-    // Символ перед кареткой — тот, что попадает в [checkAt, checkAt + 1). У начала текста
-    // смотрим на первый символ вместо несуществующего "перед позицией 0".
-    val checkAt = if (position == 0) 0 else position - 1
-
-    editable.getSpans(checkAt, checkAt + 1, StyleSpan::class.java).forEach { span ->
-        when (span.style) {
-            Typeface.BOLD -> add(FormatType.BOLD)
-            Typeface.ITALIC -> add(FormatType.ITALIC)
-        }
-    }
-    if (editable.getSpans(checkAt, checkAt + 1, RelativeSizeSpan::class.java).isNotEmpty()) {
-        add(FormatType.SIZE)
-    }
-}
-
-/**
- * Стили, «активные» прямо сейчас — для подсветки кнопок тулбара амбером.
- *
- * Схлопнутое выделение (каретка): активность равна режиму ввода [pendingTypingFormats] как есть —
- * на пустом месте у символов стиля нет, важно только то, чем будет напечатан следующий символ.
- *
- * Реальное выделение: тип активен, только если спаны этого типа покрывают ВЕСЬ диапазон
- * [selStart, selEnd) без разрывов — иначе неоднозначно, что показывать на кнопке и что
- * переключит следующее нажатие.
- */
-internal fun activeFormatsAt(
-    editable: Editable,
-    selStart: Int,
-    selEnd: Int,
-    pendingTypingFormats: Set<FormatType>
-): Set<FormatType> {
-    if (selStart == selEnd) return pendingTypingFormats
-
-    val from = minOf(selStart, selEnd)
-    val to = maxOf(selStart, selEnd)
-    if (from >= to) return emptySet()
-
-    val result = mutableSetOf<FormatType>()
-
-    if (rangeFullyCoveredByStyle(editable, from, to, Typeface.BOLD)) result += FormatType.BOLD
-    if (rangeFullyCoveredByStyle(editable, from, to, Typeface.ITALIC)) result += FormatType.ITALIC
-    if (rangeFullyCoveredBySize(editable, from, to)) result += FormatType.SIZE
-
-    return result
-}
-
-private fun rangeFullyCoveredByStyle(editable: Editable, from: Int, to: Int, style: Int): Boolean {
-    val spans = editable.getSpans(from, to, StyleSpan::class.java).filter { it.style == style }
-    return coversRangeFully(editable, spans, from, to)
-}
-
-private fun rangeFullyCoveredBySize(editable: Editable, from: Int, to: Int): Boolean {
-    val spans = editable.getSpans(from, to, RelativeSizeSpan::class.java).toList()
-    return coversRangeFully(editable, spans, from, to)
-}
-
-/**
- * true, если [from, to) целиком покрыт объединением интервалов [spans] — без разрывов.
- * Обрабатывает несколько смежных/перекрывающихся спанов одного типа, не только случай одного спана.
- */
-private fun <T : Any> coversRangeFully(editable: Editable, spans: List<T>, from: Int, to: Int): Boolean {
-    if (spans.isEmpty()) return false
-
-    val intervals = spans
-        .map { span ->
-            val start = editable.getSpanStart(span).coerceAtLeast(from)
-            val end = editable.getSpanEnd(span).coerceAtMost(to)
-            start to end
-        }
-        .filter { it.second > it.first }
-        .sortedBy { it.first }
-
-    if (intervals.isEmpty()) return false
-
-    var coveredUpTo = from
-    for ((start, end) in intervals) {
-        if (start > coveredUpTo) return false
-        coveredUpTo = maxOf(coveredUpTo, end)
-    }
-    return coveredUpTo >= to
 }
 
 @SuppressLint("AppCompatCustomView")
