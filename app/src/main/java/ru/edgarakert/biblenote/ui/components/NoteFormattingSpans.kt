@@ -236,7 +236,11 @@ internal fun activeFormatsAt(
     selEnd: Int,
     pendingTypingFormats: Set<FormatType>
 ): Set<FormatType> {
-    if (selStart == selEnd) return pendingTypingFormats
+    // Копия, а не сам pendingTypingFormats: это долгоживущее изменяемое поле поля ввода,
+    // syncFromContext переиспользует и очищает его при каждой смене каретки — без копии
+    // наблюдатель (например, StateFlow тулбара) получил бы ссылку, которая молча
+    // мутирует позже, и мог бы не заметить изменение при сравнении по ссылке.
+    if (selStart == selEnd) return pendingTypingFormats.toSet()
 
     val from = minOf(selStart, selEnd)
     val to = maxOf(selStart, selEnd)
