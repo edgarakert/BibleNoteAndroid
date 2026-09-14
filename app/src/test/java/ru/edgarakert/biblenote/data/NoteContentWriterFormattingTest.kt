@@ -46,4 +46,16 @@ class NoteContentWriterFormattingTest {
         val note = Note(id = 1, title = "", content = "Старая мысль", formatting = "b:0-6")
         assertEquals(note, NoteContentWriter.append("", note, now = 5000L))
     }
+
+    @Test
+    fun `a formatting range trimmed away by trailing whitespace is clamped, not left dangling`() {
+        // "Старая мысль" — 12 символов; хвостовые пробелы обрежет trimEnd, поэтому диапазон,
+        // доходивший до самого конца (включая эти пробелы), должен подрезаться вместе с текстом,
+        // а не остаться ссылаться на позиции внутри дописанного разделителя.
+        val note = Note(id = 1, title = "", content = "Старая мысль  ", formatting = "b:0-14")
+        val result = NoteContentWriter.append("Иоанна 3:16", note, now = 5000L)
+
+        assertEquals("Старая мысль\n\nИоанна 3:16", result.content)
+        assertEquals("b:0-12", result.formatting)
+    }
 }
