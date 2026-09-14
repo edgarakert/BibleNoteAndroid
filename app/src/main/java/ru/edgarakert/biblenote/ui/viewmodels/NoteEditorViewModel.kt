@@ -16,7 +16,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import ru.edgarakert.biblenote.data.NoteRepository
+import ru.edgarakert.biblenote.data.db.FormatRun
 import ru.edgarakert.biblenote.data.db.Note
+import ru.edgarakert.biblenote.data.db.NoteFormattingCodec
 
 @OptIn(FlowPreview::class)
 class NoteEditorViewModel(
@@ -30,6 +32,9 @@ class NoteEditorViewModel(
     private val _content = MutableStateFlow("")
     val content: StateFlow<String> = _content.asStateFlow()
 
+    private val _formatting = MutableStateFlow<List<FormatRun>>(emptyList())
+    val formatting: StateFlow<List<FormatRun>> = _formatting.asStateFlow()
+
     private val _navigateBack = MutableSharedFlow<Unit>()
     val navigateBack: SharedFlow<Unit> = _navigateBack.asSharedFlow()
 
@@ -42,13 +47,14 @@ class NoteEditorViewModel(
             currentNote?.let {
                 _title.value = it.title
                 _content.value = it.content
+                _formatting.value = NoteFormattingCodec.decode(it.formatting)
             }
         }
         viewModelScope.launch {
-            combine(_title, _content) { t, c -> t to c }
+            combine(_title, _content, _formatting) { t, c, f -> Triple(t, c, f) }
                 .debounce(500)
-                .collect { (t, c) ->
-                    if (isDirty) saveInternal(t, c)
+                .collect { (t, c, f) ->
+                    if (isDirty) saveInternal(t, c, f)
                 }
         }
     }
@@ -58,8 +64,9 @@ class NoteEditorViewModel(
         isDirty = true
     }
 
-    fun setContent(value: String) {
-        _content.value = value
+    fun setContent(text: String, runs: List<FormatRun>) {
+        _content.value = text
+        _formatting.value = runs
         isDirty = true
     }
 
@@ -82,6 +89,7 @@ class NoteEditorViewModel(
         val note = currentNote ?: return
         val t = _title.value
         val c = _content.value
+        val f = _formatting.value
         // viewModelScope is cancelled at this point; use a short-lived scope that cancels itself
         val saveScope = CoroutineScope(SupervisorJob())
         saveScope.launch {
@@ -89,7 +97,14 @@ class NoteEditorViewModel(
                 if (t.isBlank() && c.isBlank()) {
                     repository.deleteNote(note)
                 } else if (isDirty) {
-                    repository.saveNote(note.copy(title = t, content = c, updatedAt = System.currentTimeMillis()))
+                    repository.saveNote(
+                        note.copy(
+                            title = t,
+                            content = c,
+                            formatting = NoteFormattingCodec.encode(f),
+                            updatedAt = System.currentTimeMillis()
+                        )
+                    )
                 }
             } finally {
                 saveScope.cancel()
@@ -97,9 +112,14 @@ class NoteEditorViewModel(
         }
     }
 
-    private suspend fun saveInternal(title: String, content: String) {
+    private suspend fun saveInternal(title: String, content: String, formatting: List<FormatRun>) {
         val note = currentNote ?: return
-        val updated = note.copy(title = title, content = content, updatedAt = System.currentTimeMillis())
+        val updated = note.copy(
+            title = title,
+            content = content,
+            formatting = NoteFormattingCodec.encode(formatting),
+            updatedAt = System.currentTimeMillis()
+        )
         repository.saveNote(updated)
         currentNote = updated
         isDirty = false

@@ -34,6 +34,9 @@
     <string name="editor_content_placeholder">Напишите что-нибудь…</string>
     <string name="editor_back">Назад</string>
     <string name="editor_menu">Опции</string>
+    <string name="editor_format_bold">Жирный</string>
+    <string name="editor_format_italic">Курсив</string>
+    <string name="editor_format_size">Размер текста</string>
     <string name="note_delete">Удалить заметку</string>
 
     <!-- Common -->

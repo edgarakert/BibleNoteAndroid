@@ -34,6 +34,9 @@
     <string name="editor_content_placeholder">Write something…</string>
     <string name="editor_back">Back</string>
     <string name="editor_menu">Options</string>
+    <string name="editor_format_bold">Bold</string>
+    <string name="editor_format_italic">Italic</string>
+    <string name="editor_format_size">Text size</string>
     <string name="note_delete">Delete Note</string>
 
     <!-- Common -->
