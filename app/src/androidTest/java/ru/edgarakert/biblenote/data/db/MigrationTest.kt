@@ -93,4 +93,24 @@ class MigrationTest {
             assertTrue(c.moveToFirst()); assertEquals(0, c.getInt(0))
         }
     }
+
+    @Test
+    fun migrate3To4_addsFormattingColumnAsNullForLegacyNotes() {
+        helper.createDatabase(dbName, 3).apply {
+            execSQL(
+                "INSERT INTO notes (id, title, content, folderId, createdAt, updatedAt, isPinned) " +
+                    "VALUES (1, 'Старая заметка', 'Быт 1:1', NULL, 1000, 2000, 0)"
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(dbName, 4, true)
+
+        db.query("SELECT content, formatting FROM notes WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("Быт 1:1", cursor.getString(0))
+            // null = заметка из времён до rich text, форматирования у неё нет
+            assertTrue(cursor.isNull(1))
+        }
+    }
 }

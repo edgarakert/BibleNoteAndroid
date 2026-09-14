@@ -24,5 +24,10 @@ data class Note(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     @ColumnInfo(defaultValue = "0")
-    val isPinned: Boolean = false
+    val isPinned: Boolean = false,
+    /**
+     * Диапазоны форматирования, сериализованные NoteFormattingCodec.
+     * null — заметка создана до появления rich text: форматирования нет, текст плоский.
+     */
+    val formatting: String? = null
 )
