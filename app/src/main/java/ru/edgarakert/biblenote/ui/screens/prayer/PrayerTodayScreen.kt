@@ -1,5 +1,6 @@
 package ru.edgarakert.biblenote.ui.screens.prayer
 
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -155,30 +156,33 @@ private fun PrayerTodayTopBar(
             )
         },
         navigationIcon = {
-            if (onOpenList != null) {
-                IconButton(onClick = onOpenList) {
-                    Icon(
-                        Icons.Filled.List,
-                        contentDescription = stringResource(R.string.prayer_list_title),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+            // Обе кнопки — в Row: содержимое слота navigationIcon кладётся в Box, и две
+            // кнопки просто наложились бы друг на друга (так «Все просьбы» и оказались
+            // ненажимаемыми). Порядок как в плане фазы: список, затем отвеченные.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (onOpenList != null) {
+                    IconButton(onClick = onOpenList) {
+                        Icon(
+                            Icons.Filled.List,
+                            contentDescription = stringResource(R.string.prayer_list_title),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                if (onOpenAnswered != null) {
+                    IconButton(onClick = onOpenAnswered) {
+                        Icon(
+                            // checkmark.seal в iOS: галочка в печати. CheckCircle читалась
+                            // как «задача выполнена» — не тот смысл для ответов на молитвы.
+                            Icons.Filled.Verified,
+                            contentDescription = stringResource(R.string.prayer_answered_title),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
         },
         actions = {
-            // Слот navigationIcon рассчитан ровно на одну кнопку: когда здесь лежали и список,
-            // и отвеченные, вторая накрывала первую, и «Все просьбы» нельзя было нажать.
-            if (onOpenAnswered != null) {
-                IconButton(onClick = onOpenAnswered) {
-                    Icon(
-                        // checkmark.seal в iOS: галочка в печати. CheckCircle читалась как
-                        // «задача выполнена» — не тот смысл для ответов на молитвы.
-                        Icons.Filled.Verified,
-                        contentDescription = stringResource(R.string.prayer_answered_title),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
             if (onCreateRequest != null) {
                 IconButton(onClick = onCreateRequest) {
                     Icon(
