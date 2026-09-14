@@ -327,8 +327,18 @@ private class CursorTrackingEditText(context: Context) : EditText(context) {
      * Чисто рантайм-состояние поля ввода, как isProgrammatic — не сохраняется и не сериализуется. */
     val pendingTypingFormats = mutableSetOf<FormatType>()
 
+    // EditText's Java constructor synchronously calls setText(), which invokes this overridden
+    // onSelectionChanged BEFORE Kotlin runs this subclass's own property initializers above —
+    // pendingTypingFormats is still null at that point, crashing with an NPE. `constructed`
+    // exploits the same trick that already made isProgrammatic/selectionListener safe by
+    // accident: the JVM zero-initializes a field to its declared-false default before any
+    // initializer runs, so during that one early call `constructed` reads false even though
+    // its own initializer says `true`, letting us bail out before touching pendingTypingFormats.
+    private val constructed = true
+
     override fun onSelectionChanged(selStart: Int, selEnd: Int) {
         super.onSelectionChanged(selStart, selEnd)
+        if (!constructed) return
         if (isProgrammatic) return
         selectionListener?.invoke(selEnd)
 
