@@ -40,4 +40,10 @@ class NoteContentWriterFormattingTest {
         val decoded = NoteFormattingCodec.decode(result.formatting)
         assertEquals(decoded, NoteFormattingCodec.clampTo(decoded, result.content.length))
     }
+
+    @Test
+    fun `appending an empty snippet to a formatted note leaves it untouched`() {
+        val note = Note(id = 1, title = "", content = "Старая мысль", formatting = "b:0-6")
+        assertEquals(note, NoteContentWriter.append("", note, now = 5000L))
+    }
 }
