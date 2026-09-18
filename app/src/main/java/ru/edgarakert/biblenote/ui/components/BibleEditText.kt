@@ -43,6 +43,7 @@ fun BibleEditText(
     initialCursorPosition: Int = -1,
     onCursorPositionChanged: (Int) -> Unit = {},
     onActiveFormatsChanged: (Set<FormatType>) -> Unit = {},
+    onFocusChanged: (Boolean) -> Unit = {},
     formatCommand: FormatCommand? = null,
     onFormatCommandApplied: (token: Long) -> Unit = {},
     pendingEdit: PendingEdit? = null,
@@ -57,6 +58,7 @@ fun BibleEditText(
     val onReferenceTappedState = rememberUpdatedState(onReferenceTapped)
     val onCursorPositionChangedState = rememberUpdatedState(onCursorPositionChanged)
     val onActiveFormatsChangedState = rememberUpdatedState(onActiveFormatsChanged)
+    val onFocusChangedState = rememberUpdatedState(onFocusChanged)
 
     val handler = remember { Handler(Looper.getMainLooper()) }
     val pendingHighlight = remember { arrayOfNulls<Runnable>(1) }
@@ -95,6 +97,7 @@ fun BibleEditText(
 
                 selectionListener = { pos -> onCursorPositionChangedState.value(pos) }
                 activeFormatsListener = { formats -> onActiveFormatsChangedState.value(formats) }
+                setOnFocusChangeListener { _, hasFocus -> onFocusChangedState.value(hasFocus) }
 
                 setOnTouchListener { view, event ->
                     if (event.action != MotionEvent.ACTION_UP) return@setOnTouchListener false

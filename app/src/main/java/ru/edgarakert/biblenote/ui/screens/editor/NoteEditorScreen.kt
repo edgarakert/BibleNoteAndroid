@@ -104,6 +104,10 @@ fun NoteEditorScreen(
     // pendingEdit/activeRange уже локальны для этого экрана (задача 16.4).
     var activeFormats by remember { mutableStateOf<Set<FormatType>>(emptySet()) }
     var pendingFormatCommand by remember { mutableStateOf<FormatCommand?>(null) }
+    // Панель показывается только пока поле заметки в фокусе — нажатие кнопки не забирает
+    // фокус у поля (проверено на устройстве: клавиатура не закрывается при тапе по тулбару),
+    // поэтому панель не мигает при собственных нажатиях.
+    var isContentFocused by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
         viewModel.navigateBack.collect { onBack() }
@@ -235,6 +239,7 @@ fun NoteEditorScreen(
                 initialCursorPosition = savedCursorPosition,
                 onCursorPositionChanged = { savedCursorPosition = it },
                 onActiveFormatsChanged = { activeFormats = it },
+                onFocusChanged = { isContentFocused = it },
                 formatCommand = pendingFormatCommand,
                 onFormatCommandApplied = { pendingFormatCommand = null },
                 pendingEdit = pendingEdit,
@@ -255,23 +260,25 @@ fun NoteEditorScreen(
                     .background(MaterialTheme.colorScheme.background)
             )
 
-            FormattingToolbar(
-                isBoldActive = FormatType.BOLD in activeFormats,
-                isItalicActive = FormatType.ITALIC in activeFormats,
-                isSizeActive = FormatType.SIZE in activeFormats,
-                onBold = {
-                    editToken += 1
-                    pendingFormatCommand = FormatCommand(editToken, FormatType.BOLD)
-                },
-                onItalic = {
-                    editToken += 1
-                    pendingFormatCommand = FormatCommand(editToken, FormatType.ITALIC)
-                },
-                onSize = {
-                    editToken += 1
-                    pendingFormatCommand = FormatCommand(editToken, FormatType.SIZE)
-                }
-            )
+            if (isContentFocused) {
+                FormattingToolbar(
+                    isBoldActive = FormatType.BOLD in activeFormats,
+                    isItalicActive = FormatType.ITALIC in activeFormats,
+                    isSizeActive = FormatType.SIZE in activeFormats,
+                    onBold = {
+                        editToken += 1
+                        pendingFormatCommand = FormatCommand(editToken, FormatType.BOLD)
+                    },
+                    onItalic = {
+                        editToken += 1
+                        pendingFormatCommand = FormatCommand(editToken, FormatType.ITALIC)
+                    },
+                    onSize = {
+                        editToken += 1
+                        pendingFormatCommand = FormatCommand(editToken, FormatType.SIZE)
+                    }
+                )
+            }
         }
     }
 
