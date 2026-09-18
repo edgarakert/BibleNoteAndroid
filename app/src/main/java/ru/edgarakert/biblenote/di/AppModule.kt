@@ -23,6 +23,7 @@ import ru.edgarakert.biblenote.data.settings.SettingsRepository
 import ru.edgarakert.biblenote.ui.viewmodels.BibleReaderViewModel
 import ru.edgarakert.biblenote.ui.viewmodels.BibleVerseSheetViewModel
 import ru.edgarakert.biblenote.ui.viewmodels.FolderViewModel
+import ru.edgarakert.biblenote.ui.viewmodels.SaveVersesToNoteViewModel
 import ru.edgarakert.biblenote.ui.viewmodels.SettingsViewModel
 
 private val Context.settingsDataStore by preferencesDataStore(name = "biblenote_settings")
@@ -63,7 +64,9 @@ val appModule = module {
     viewModel {
         BibleReaderViewModel(
             bibleService = get<BibleDatabaseService>(),
-            settingsRepository = get<SettingsRepository>()
+            settingsRepository = get<SettingsRepository>(),
+            parser = get<BibleReferenceParser>(),
+            repository = get<NoteRepository>()
         )
     }
     viewModel { NotesViewModel(repository = get<NoteRepository>()) }
@@ -88,6 +91,15 @@ val appModule = module {
     viewModel { params ->
         FolderViewModel(
             folderId = params.get<Long>(),
+            repository = get<NoteRepository>()
+        )
+    }
+
+    viewModel { params ->
+        SaveVersesToNoteViewModel(
+            bookName = params.get<String>(),
+            chapter = params.get<Int>(),
+            verseNumbers = params.get<List<Int>>(),
             repository = get<NoteRepository>()
         )
     }

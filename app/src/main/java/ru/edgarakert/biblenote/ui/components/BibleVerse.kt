@@ -1,15 +1,28 @@
 package ru.edgarakert.biblenote.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import ru.edgarakert.biblenote.R
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.edgarakert.biblenote.data.bible.HighlightColor
@@ -22,6 +35,8 @@ fun BibleVerse(
     verseScale: Float,
     modifier: Modifier = Modifier,
     isSelected: Boolean = false,
+    noteCount: Int = 0,
+    onNoteBadgeClick: (() -> Unit)? = null,
 ) {
     val textSizeSp = (17f * verseScale).sp
     val numSizeSp = ((17f * verseScale) - 2f).coerceAtLeast(10f).sp
@@ -50,7 +65,38 @@ fun BibleVerse(
             lineHeight = textSizeSp * 1.15f,
             modifier = Modifier
                 .weight(1f)
-                .padding(end = 24.dp)
+                .padding(end = if (noteCount > 0) 0.dp else 24.dp)
         )
+        if (noteCount > 0 && onNoteBadgeClick != null) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(3.dp),
+                modifier = Modifier
+                    .padding(end = 8.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f), CircleShape)
+                    // onClickLabel: без него screen reader озвучивает только число и молчит
+                    // о том, что бейдж открывает список ссылающихся заметок.
+                    .clickable(
+                        onClickLabel = stringResource(R.string.verse_notes_title),
+                        role = Role.Button,
+                        onClick = onNoteBadgeClick
+                    )
+                    .padding(horizontal = 4.dp, vertical = 7.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Description,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size((10f * verseScale).dp)
+                )
+                Text(
+                    text = "$noteCount",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = (11f * verseScale).sp
+                )
+            }
+        }
     }
 }

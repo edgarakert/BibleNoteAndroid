@@ -30,8 +30,11 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -51,6 +54,7 @@ import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.bible.BibleReferenceParser
 import ru.edgarakert.biblenote.ui.components.BibleEditText
 import ru.edgarakert.biblenote.ui.components.BibleVerseSheet
+import ru.edgarakert.biblenote.ui.components.PendingEdit
 import ru.edgarakert.biblenote.ui.viewmodels.NoteEditorViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,7 +71,22 @@ fun NoteEditorScreen(
 
     var showMenu by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
-    var tappedReference by remember { mutableStateOf<BibleReference?>(null) }
+    // rememberSaveable, а не remember: иначе поворот экрана молча закрывал открытую
+    // шторку стиха — как и savedCursorPosition ниже, это состояние должно пережить
+    // пересоздание Activity.
+    var tappedReference by rememberSaveable(stateSaver = BibleReferenceSaver) {
+        mutableStateOf<BibleReference?>(null)
+    }
+    // Диапазон, который правка из шторки должна заменить: инициализируется живыми
+    // индексами тапнутой ссылки, а после каждой правки смещается на длину замены.
+    var activeRange by rememberSaveable(stateSaver = IntRangeSaver) {
+        mutableStateOf<IntRange?>(null)
+    }
+    // pendingEdit намеренно НЕ сохраняется: у BibleEditText счётчик уже применённых
+    // токенов живёт в обычном remember и после поворота сбрасывается, так что
+    // восстановленная правка применилась бы во второй раз и продублировала замену.
+    var pendingEdit by remember { mutableStateOf<PendingEdit?>(null) }
+    var editToken by rememberSaveable { mutableLongStateOf(0L) }
     var savedCursorPosition by rememberSaveable { mutableIntStateOf(-1) }
 
     LaunchedEffect(viewModel) {
@@ -187,11 +206,26 @@ fun NoteEditorScreen(
             BibleEditText(
                 text = content,
                 onTextChanged = viewModel::setContent,
-                onReferenceTapped = { tappedReference = it },
+                onReferenceTapped = {
+                    tappedReference = it
+                    activeRange = it.startIndex until it.endIndex
+                },
                 parser = parser,
                 placeholder = stringResource(R.string.editor_content_placeholder),
                 initialCursorPosition = savedCursorPosition,
                 onCursorPositionChanged = { savedCursorPosition = it },
+                pendingEdit = pendingEdit,
+                onPendingEditApplied = { _, applied ->
+                    pendingEdit = null
+                    // Правка не легла (текст изменился под нами, диапазон больше не тот) —
+                    // закрываем шторку. Продолжать нельзя: activeRange уже сдвинут в расчёте
+                    // на успех и теперь мимо. Пользователь тапнет по ссылке заново и получит
+                    // свежий живой диапазон.
+                    if (!applied) {
+                        tappedReference = null
+                        activeRange = null
+                    }
+                },
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
@@ -226,11 +260,54 @@ fun NoteEditorScreen(
     tappedReference?.let { ref ->
         BibleVerseSheet(
             reference = ref,
-            onDismiss = { tappedReference = null },
-            onOpenChapter = { ref ->
+            onDismiss = {
                 tappedReference = null
-                onOpenChapter(ref)
+                activeRange = null
+            },
+            onOpenChapter = { r ->
+                tappedReference = null
+                activeRange = null
+                onOpenChapter(r)
+            },
+            onVersesChanged = { verses ->
+                val range = activeRange ?: (ref.startIndex until ref.endIndex)
+                val newText = BibleReference.replacementText(ref.displayText, verses)
+                editToken += 1
+                pendingEdit = PendingEdit(editToken, range.first, range.last + 1, newText)
+                // Длина замены меняется с каждым тапом — следующая правка целится в новый диапазон.
+                activeRange = range.first until (range.first + newText.length)
             }
         )
     }
 }
+
+
+/** Сохраняет ссылку между пересозданиями Activity: все поля — примитивы и список чисел. */
+private val BibleReferenceSaver: Saver<BibleReference?, Any> = listSaver(
+    save = { ref ->
+        if (ref == null) emptyList() else listOf(
+            ref.bookId, ref.chapter, ref.verseStart ?: -1, ref.verseEnd ?: -1,
+            ref.verseList, ref.displayText, ref.startIndex, ref.endIndex
+        )
+    },
+    restore = { saved ->
+        if (saved.isEmpty()) null else {
+            @Suppress("UNCHECKED_CAST")
+            BibleReference(
+                bookId = saved[0] as Int,
+                chapter = saved[1] as Int,
+                verseStart = (saved[2] as Int).takeIf { it >= 0 },
+                verseEnd = (saved[3] as Int).takeIf { it >= 0 },
+                verseList = saved[4] as List<Int>,
+                displayText = saved[5] as String,
+                startIndex = saved[6] as Int,
+                endIndex = saved[7] as Int
+            )
+        }
+    }
+)
+
+private val IntRangeSaver: Saver<IntRange?, Any> = listSaver(
+    save = { range -> if (range == null) emptyList() else listOf(range.first, range.last) },
+    restore = { saved -> if (saved.isEmpty()) null else saved[0]..saved[1] }
+)

@@ -26,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -135,7 +136,17 @@ fun AppNavHost(initialNotesPath: List<NotesPathEntry> = emptyList()) {
     // консистентны. Риск R3: заметка/папка могла быть удалена (свайпом, из меню, или
     // автоудалена как пустая при выходе из редактора) — на первом неразрешимом элементе
     // восстановление останавливается, сохраняя уже восстановленный префикс.
+    // rememberSaveable, а не флаг в remember: LaunchedEffect(Unit) перезапускается при
+    // каждом пересоздании Activity (поворот экрана), а navController к этому моменту уже
+    // восстановил свой back stack сам — повторный посев клал бы поверх него дубликаты
+    // тех же экранов. Внешне это выглядело как «поворот закрыл шторку стиха»: шторка
+    // оставалась жива на восстановленной записи, но её накрывала свежая пустая.
+    var didSeedNotesPath by rememberSaveable { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
+        if (didSeedNotesPath) return@LaunchedEffect
+        didSeedNotesPath = true
+
         for (entry in initialNotesPath) {
             val exists = when (entry) {
                 is NotesPathEntry.Folder -> noteRepository.observeFolderById(entry.id).first() != null
@@ -263,8 +274,26 @@ fun AppNavHost(initialNotesPath: List<NotesPathEntry> = emptyList()) {
             }
 
             navigation(route = TopLevelRoute.BIBLE.graphRoute, startDestination = "bible") {
+                // Заметка, открытая из шторки стиха, приземляется на вкладке «Заметки», в
+                // редакторе поверх свежего корня "notes" — ровно то, что делает popUpTo(start
+                // Destination){saveState=true} + restoreState=false: он отбрасывает сохранённое
+                // состояние графа "Заметки" и строит его заново от старта. Поэтому notesPath
+                // сбрасывается до пустого и туда кладётся только эта заметка — так persisted
+                // notesLastPath не разойдётся с реальным back stack, если процесс убьют сразу
+                // после перехода.
+                val onOpenNoteFromBible: (Long) -> Unit = { noteId ->
+                    popNotesPathTo(0)
+                    pushNotesPath(NotesPathEntry.Note(noteId))
+                    navController.navigate("editor/$noteId") {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = false
+                    }
+                }
                 composable("bible") {
-                    BibleReaderScreen()
+                    BibleReaderScreen(onOpenNote = onOpenNoteFromBible)
                 }
                 composable(
                     route = "bible_at/{bookId}/{chapter}",
@@ -275,7 +304,11 @@ fun AppNavHost(initialNotesPath: List<NotesPathEntry> = emptyList()) {
                 ) { backStackEntry ->
                     val bookId = backStackEntry.arguments?.getInt("bookId") ?: return@composable
                     val chapter = backStackEntry.arguments?.getInt("chapter") ?: return@composable
-                    BibleReaderScreen(pendingBookId = bookId, pendingChapter = chapter)
+                    BibleReaderScreen(
+                        pendingBookId = bookId,
+                        pendingChapter = chapter,
+                        onOpenNote = onOpenNoteFromBible
+                    )
                 }
             }
 

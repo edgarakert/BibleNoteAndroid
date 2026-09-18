@@ -47,6 +47,16 @@
     <!-- Verse sheet -->
     <string name="verse_not_found">Verse not found</string>
     <string name="verse_open_chapter">Open chapter</string>
+    <string name="verse_notes_title">Notes on this verse</string>
+    <string name="verse_select_hint">Tap a verse — the link in the note updates</string>
+    <string name="verse_action_save_to_note">Add to Note</string>
+    <string name="verse_save_title">Verses to Note</string>
+    <string name="verse_save_text">Note text</string>
+    <string name="verse_save_added_to">Added to \"%1$s\"</string>
+    <string name="verse_save_open">Open</string>
+    <string name="share_save_to">Save to</string>
+    <string name="share_folders_section">Folders</string>
+    <string name="share_new_note_in">New Note in \"%1$s\"</string>
 
     <!-- Bible reader -->
     <string name="bible_picker_title">Choose Book</string>

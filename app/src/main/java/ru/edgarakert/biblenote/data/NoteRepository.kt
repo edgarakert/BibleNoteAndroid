@@ -17,6 +17,8 @@ class NoteRepository(
 
     fun searchNotes(query: String): Flow<List<Note>> = noteDao.search(query)
 
+    fun observeAllNotes(): Flow<List<Note>> = noteDao.observeAllNotes()
+
     fun observeRootFoldersWithCount(): Flow<List<FolderWithCount>> = folderDao.observeRootFoldersWithCount()
 
     suspend fun getNoteById(id: Long): Note? = noteDao.getById(id)
