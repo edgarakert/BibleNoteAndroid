@@ -27,6 +27,8 @@ class NoteRepository(
 
     suspend fun deleteNotesByIds(ids: Set<Long>) = noteDao.deleteByIds(ids.toList())
 
+    suspend fun setNotePinned(id: Long, pinned: Boolean) = noteDao.setPinned(id, pinned)
+
     suspend fun saveFolder(folder: Folder): Long = folderDao.upsert(folder)
 
     suspend fun deleteFolder(folder: Folder) = folderDao.delete(folder)

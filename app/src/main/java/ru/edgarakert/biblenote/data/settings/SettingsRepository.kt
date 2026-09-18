@@ -26,6 +26,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         private val KEY_LAST_BOOK_ID = intPreferencesKey("bible.lastBookId")
         private val KEY_LAST_CHAPTER = intPreferencesKey("bible.lastChapter")
         private val KEY_LAST_BIBLE_TRANSLATION = stringPreferencesKey("bible.lastTranslation")
+        private val KEY_NOTES_LAST_PATH = stringPreferencesKey("notes.lastPath")
     }
 
     val defaultTranslation: Flow<String> = dataStore.data.map { prefs ->
@@ -63,6 +64,9 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         prefs[KEY_LAST_BIBLE_TRANSLATION] ?: ""
     }
 
+    val notesLastPath: Flow<List<NotesPathEntry>> = dataStore.data
+        .map { NotesPathCodec.decode(it[KEY_NOTES_LAST_PATH] ?: "") }
+
     suspend fun setDefaultTranslation(translation: String) {
         dataStore.edit { it[KEY_TRANSLATION] = translation }
     }
@@ -93,5 +97,9 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
 
     suspend fun setLastBibleTranslation(translation: String) {
         dataStore.edit { it[KEY_LAST_BIBLE_TRANSLATION] = translation }
+    }
+
+    suspend fun setNotesLastPath(path: List<NotesPathEntry>) {
+        dataStore.edit { it[KEY_NOTES_LAST_PATH] = NotesPathCodec.encode(path) }
     }
 }

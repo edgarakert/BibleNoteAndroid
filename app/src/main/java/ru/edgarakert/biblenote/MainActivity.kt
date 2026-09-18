@@ -15,6 +15,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import org.koin.android.ext.android.inject
 import ru.edgarakert.biblenote.data.settings.SettingsRepository
 import ru.edgarakert.biblenote.ui.navigation.AppNavHost
@@ -28,11 +30,26 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Синхронно, до setContent: иначе первый кадр рисуется по умолчаниям, а настоящие
+        // значения приезжают из DataStore уже после него — пользователь видит вспышку
+        // корневого списка заметок, экрана онбординга и чужой темы. Единственное
+        // блокирующее чтение за весь запуск; дальше всё остаётся реактивным, просто
+        // стартует с фактических значений вместо захардкоженных.
+        val initialSettings = runBlocking {
+            Triple(
+                settingsRepository.notesLastPath.first(),
+                settingsRepository.onboardingCompleted.first(),
+                settingsRepository.appearanceMode.first()
+            )
+        }
+        val (restoredNotesPath, initialOnboardingCompleted, initialAppearanceMode) = initialSettings
+
         setContent {
             val appearanceMode by settingsRepository.appearanceMode
-                .collectAsStateWithLifecycle(SettingsRepository.AppearanceMode.SYSTEM)
+                .collectAsStateWithLifecycle(initialAppearanceMode)
             val onboardingCompleted by settingsRepository.onboardingCompleted
-                .collectAsStateWithLifecycle(false)
+                .collectAsStateWithLifecycle(initialOnboardingCompleted)
 
             val darkTheme = when (appearanceMode) {
                 SettingsRepository.AppearanceMode.LIGHT -> false
@@ -55,7 +72,7 @@ class MainActivity : ComponentActivity() {
                 if (!onboardingCompleted) {
                     OnboardingFlow()
                 } else {
-                    AppNavHost()
+                    AppNavHost(initialNotesPath = restoredNotesPath)
                 }
             }
         }

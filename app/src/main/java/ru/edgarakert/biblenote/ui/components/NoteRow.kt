@@ -3,6 +3,7 @@ package ru.edgarakert.biblenote.ui.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.RadioButtonUnchecked
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -69,14 +71,27 @@ fun NoteRow(
                 .padding(horizontal = 15.dp, vertical = 14.dp)
                 .fillMaxWidth()
         ) {
-            Text(
-                text = note.title.ifEmpty { stringResource(R.string.notes_untitled) },
-                style = MaterialTheme.typography.titleLarge.copy(fontSize = 17.sp),
-                color = if (note.title.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant
-                        else MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                if (note.isPinned) {
+                    Icon(
+                        imageVector = Icons.Filled.PushPin,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(11.dp)
+                    )
+                }
+                Text(
+                    text = note.title.ifEmpty { stringResource(R.string.notes_untitled) },
+                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 17.sp),
+                    color = if (note.title.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant
+                            else MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
 
             if (note.content.isNotEmpty()) {
                 Spacer(Modifier.height(6.dp))

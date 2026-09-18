@@ -32,4 +32,8 @@ interface NoteDao {
 
     @Query("UPDATE notes SET folderId = :folderId WHERE id IN (:ids)")
     suspend fun updateFolderIds(ids: List<Long>, folderId: Long?)
+
+    /** Точечное обновление: закрепление не трогает updatedAt, чтобы не менять порядок по свежести. */
+    @Query("UPDATE notes SET isPinned = :pinned WHERE id = :id")
+    suspend fun setPinned(id: Long, pinned: Boolean)
 }

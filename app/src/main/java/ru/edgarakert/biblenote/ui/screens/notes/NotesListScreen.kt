@@ -1,11 +1,8 @@
 package ru.edgarakert.biblenote.ui.screens.notes
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -37,15 +33,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -67,8 +60,8 @@ import ru.edgarakert.biblenote.data.db.FolderWithCount
 import ru.edgarakert.biblenote.data.db.Note
 import ru.edgarakert.biblenote.ui.components.FolderRow
 import ru.edgarakert.biblenote.ui.components.MoveFolderSheet
-import ru.edgarakert.biblenote.ui.components.NoteRow
 import ru.edgarakert.biblenote.ui.components.SelectionActionBar
+import ru.edgarakert.biblenote.ui.components.noteListSection
 import ru.edgarakert.biblenote.ui.viewmodels.NotesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,11 +76,14 @@ fun NotesListScreen(
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
     val rootFolders by viewModel.rootFolders.collectAsStateWithLifecycle()
     val rootNotes by viewModel.rootNotes.collectAsStateWithLifecycle()
+    val pinnedNotes by viewModel.pinnedNotes.collectAsStateWithLifecycle()
+    val unpinnedNotes by viewModel.unpinnedNotes.collectAsStateWithLifecycle()
     val searchResults by viewModel.searchResults.collectAsStateWithLifecycle()
     val allFolders by viewModel.allFolders.collectAsStateWithLifecycle()
 
     var isSearchActive by remember { mutableStateOf(false) }
     var showMoveSheet by remember { mutableStateOf(false) }
+    var pendingMoveNote by remember { mutableStateOf<Note?>(null) }
     var showNewFolderDialog by remember { mutableStateOf(false) }
     var newFolderName by remember { mutableStateOf("") }
     var folderToRename by remember { mutableStateOf<FolderWithCount?>(null) }
@@ -168,7 +164,6 @@ fun NotesListScreen(
                 )
 
                 else -> {
-                    val displayNotes = if (isSearching) searchResults else rootNotes
                     LazyColumn(
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(5.dp),
@@ -187,16 +182,43 @@ fun NotesListScreen(
                                 )
                             }
                         }
-                        items(displayNotes, key = { "note_${it.id}" }) { note ->
-                            NoteListItem(
-                                note = note,
+
+                        val onNoteClick = { note: Note ->
+                            if (isSelectMode) viewModel.toggleSelection(note.id)
+                            else onNavigateToNote(note.id)
+                        }
+
+                        if (isSearching) {
+                            noteListSection(
+                                notes = searchResults,
+                                keyPrefix = "search",
                                 isSelectMode = isSelectMode,
-                                isSelected = note.id in selectedIds,
-                                onClick = {
-                                    if (isSelectMode) viewModel.toggleSelection(note.id)
-                                    else onNavigateToNote(note.id)
-                                },
-                                onDelete = { viewModel.deleteNote(note) }
+                                selectedIds = selectedIds,
+                                onNoteClick = onNoteClick,
+                                onTogglePin = viewModel::togglePin,
+                                onMoveNote = { pendingMoveNote = it },
+                                onDeleteNote = viewModel::deleteNote
+                            )
+                        } else {
+                            noteListSection(
+                                notes = pinnedNotes,
+                                keyPrefix = "pinned",
+                                isSelectMode = isSelectMode,
+                                selectedIds = selectedIds,
+                                onNoteClick = onNoteClick,
+                                onTogglePin = viewModel::togglePin,
+                                onMoveNote = { pendingMoveNote = it },
+                                onDeleteNote = viewModel::deleteNote
+                            )
+                            noteListSection(
+                                notes = unpinnedNotes,
+                                keyPrefix = "note",
+                                isSelectMode = isSelectMode,
+                                selectedIds = selectedIds,
+                                onNoteClick = onNoteClick,
+                                onTogglePin = viewModel::togglePin,
+                                onMoveNote = { pendingMoveNote = it },
+                                onDeleteNote = viewModel::deleteNote
                             )
                         }
                     }
@@ -329,6 +351,15 @@ fun NotesListScreen(
             onCreateFolderAndMove = { name -> viewModel.createFolderAndMoveSelected(name); showMoveSheet = false }
         )
     }
+
+    pendingMoveNote?.let { note ->
+        MoveFolderSheet(
+            allFolders = allFolders,
+            onDismiss = { pendingMoveNote = null },
+            onMove = { targetId -> viewModel.moveNote(note.id, targetId); pendingMoveNote = null },
+            onCreateFolderAndMove = { name -> viewModel.createFolderAndMoveNote(name, note.id); pendingMoveNote = null }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -434,70 +465,6 @@ private fun SearchTopBar(
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
     )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun NoteListItem(
-    note: Note,
-    isSelectMode: Boolean,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    onDelete: () -> Unit
-) {
-    if (isSelectMode) {
-        NoteRow(
-            note = note,
-            isSelectMode = true,
-            isSelected = isSelected,
-            modifier = Modifier.clickable { onClick() }
-        )
-        return
-    }
-
-    val deleteTriggered = remember { mutableStateOf(false) }
-    val dismissState = rememberSwipeToDismissBoxState()
-
-    LaunchedEffect(dismissState.currentValue) {
-        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart && !deleteTriggered.value) {
-            deleteTriggered.value = true
-            onDelete()
-        }
-    }
-
-    SwipeToDismissBox(
-        state = dismissState,
-        enableDismissFromStartToEnd = false,
-        backgroundContent = {
-            val bgColor by animateColorAsState(
-                targetValue = when (dismissState.targetValue) {
-                    SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
-                    else -> Color.Transparent
-                },
-                label = "swipe_bg"
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(bgColor, RoundedCornerShape(12.dp))
-                    .padding(end = 20.dp),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) {
-                    Icon(
-                        Icons.Filled.Delete,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                }
-            }
-        }
-    ) {
-        NoteRow(
-            note = note,
-            modifier = Modifier.clickable { onClick() }
-        )
-    }
 }
 
 @Composable

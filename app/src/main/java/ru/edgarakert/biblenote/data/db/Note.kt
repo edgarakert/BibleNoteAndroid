@@ -1,5 +1,6 @@
 package ru.edgarakert.biblenote.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -21,5 +22,7 @@ data class Note(
     val content: String = "",
     val folderId: Long? = null,
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
+    val updatedAt: Long = System.currentTimeMillis(),
+    @ColumnInfo(defaultValue = "0")
+    val isPinned: Boolean = false
 )

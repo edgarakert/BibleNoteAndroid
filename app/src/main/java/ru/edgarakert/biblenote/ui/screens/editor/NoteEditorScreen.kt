@@ -142,7 +142,7 @@ fun NoteEditorScreen(
                 onValueChange = viewModel::setTitle,
                 textStyle = TextStyle(
                     fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     fontSize = 22.sp,
                     color = MaterialTheme.colorScheme.onSurface
                 ),
@@ -151,6 +151,9 @@ fun NoteEditorScreen(
                     imeAction = ImeAction.Next
                 ),
                 singleLine = false,
+                // Заголовок растёт до четырёх строк, дальше поле скроллится внутри себя,
+                // а не выдавливает содержимое заметки с экрана.
+                maxLines = 4,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
@@ -162,7 +165,7 @@ fun NoteEditorScreen(
                                 text = stringResource(R.string.editor_title_placeholder),
                                 style = TextStyle(
                                     fontFamily = FontFamily.Serif,
-                                    fontWeight = FontWeight.Bold,
+                                    fontWeight = FontWeight.SemiBold,
                                     fontSize = 22.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                                 )

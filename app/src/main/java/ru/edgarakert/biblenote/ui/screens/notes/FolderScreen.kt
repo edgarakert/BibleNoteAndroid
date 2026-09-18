@@ -1,11 +1,8 @@
 package ru.edgarakert.biblenote.ui.screens.notes
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -36,13 +32,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -51,7 +44,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -66,8 +58,8 @@ import ru.edgarakert.biblenote.data.db.FolderWithCount
 import ru.edgarakert.biblenote.data.db.Note
 import ru.edgarakert.biblenote.ui.components.FolderRow
 import ru.edgarakert.biblenote.ui.components.MoveFolderSheet
-import ru.edgarakert.biblenote.ui.components.NoteRow
 import ru.edgarakert.biblenote.ui.components.SelectionActionBar
+import ru.edgarakert.biblenote.ui.components.noteListSection
 import ru.edgarakert.biblenote.ui.viewmodels.FolderViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,6 +73,8 @@ fun FolderScreen(
 ) {
     val folder by viewModel.folder.collectAsStateWithLifecycle()
     val notes by viewModel.notes.collectAsStateWithLifecycle()
+    val pinnedNotes by viewModel.pinnedNotes.collectAsStateWithLifecycle()
+    val unpinnedNotes by viewModel.unpinnedNotes.collectAsStateWithLifecycle()
     val subfolders by viewModel.subfolders.collectAsStateWithLifecycle()
     val allFolders by viewModel.allFolders.collectAsStateWithLifecycle()
     val isSelectMode by viewModel.isSelectMode.collectAsStateWithLifecycle()
@@ -89,6 +83,7 @@ fun FolderScreen(
     val isSubfolder = folder?.parentId != null
 
     var showMoveSheet by remember { mutableStateOf(false) }
+    var pendingMoveNote by remember { mutableStateOf<Note?>(null) }
     var showNewSubfolderDialog by remember { mutableStateOf(false) }
     var newSubfolderName by remember { mutableStateOf("") }
     var showDeleteSelfDialog by remember { mutableStateOf(false) }
@@ -163,18 +158,31 @@ fun FolderScreen(
                             )
                         }
                     }
-                    items(notes, key = { it.id }) { note ->
-                        FolderNoteListItem(
-                            note = note,
-                            isSelectMode = isSelectMode,
-                            isSelected = note.id in selectedIds,
-                            onClick = {
-                                if (isSelectMode) viewModel.toggleSelection(note.id)
-                                else onNavigateToNote(note.id)
-                            },
-                            onDelete = { viewModel.deleteNote(note) }
-                        )
+                    val onNoteClick = { note: Note ->
+                        if (isSelectMode) viewModel.toggleSelection(note.id)
+                        else onNavigateToNote(note.id)
                     }
+
+                    noteListSection(
+                        notes = pinnedNotes,
+                        keyPrefix = "pinned",
+                        isSelectMode = isSelectMode,
+                        selectedIds = selectedIds,
+                        onNoteClick = onNoteClick,
+                        onTogglePin = viewModel::togglePin,
+                        onMoveNote = { pendingMoveNote = it },
+                        onDeleteNote = viewModel::deleteNote
+                    )
+                    noteListSection(
+                        notes = unpinnedNotes,
+                        keyPrefix = "note",
+                        isSelectMode = isSelectMode,
+                        selectedIds = selectedIds,
+                        onNoteClick = onNoteClick,
+                        onTogglePin = viewModel::togglePin,
+                        onMoveNote = { pendingMoveNote = it },
+                        onDeleteNote = viewModel::deleteNote
+                    )
                 }
             }
         }
@@ -186,6 +194,15 @@ fun FolderScreen(
             onDismiss = { showMoveSheet = false },
             onMove = { targetId -> viewModel.moveSelectedNotes(targetId); showMoveSheet = false },
             onCreateFolderAndMove = { name -> viewModel.createFolderAndMoveSelected(name); showMoveSheet = false }
+        )
+    }
+
+    pendingMoveNote?.let { note ->
+        MoveFolderSheet(
+            allFolders = allFolders,
+            onDismiss = { pendingMoveNote = null },
+            onMove = { targetId -> viewModel.moveNote(note.id, targetId); pendingMoveNote = null },
+            onCreateFolderAndMove = { name -> viewModel.createFolderAndMoveNote(name, note.id); pendingMoveNote = null }
         )
     }
 
@@ -449,70 +466,6 @@ private fun FolderTopBar(
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
     )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun FolderNoteListItem(
-    note: Note,
-    isSelectMode: Boolean,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    onDelete: () -> Unit
-) {
-    if (isSelectMode) {
-        NoteRow(
-            note = note,
-            isSelectMode = true,
-            isSelected = isSelected,
-            modifier = Modifier.clickable { onClick() }
-        )
-        return
-    }
-
-    val deleteTriggered = remember { mutableStateOf(false) }
-    val dismissState = rememberSwipeToDismissBoxState()
-
-    LaunchedEffect(dismissState.currentValue) {
-        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart && !deleteTriggered.value) {
-            deleteTriggered.value = true
-            onDelete()
-        }
-    }
-
-    SwipeToDismissBox(
-        state = dismissState,
-        enableDismissFromStartToEnd = false,
-        backgroundContent = {
-            val bgColor by animateColorAsState(
-                targetValue = when (dismissState.targetValue) {
-                    SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
-                    else -> Color.Transparent
-                },
-                label = "swipe_bg"
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(bgColor, RoundedCornerShape(12.dp))
-                    .padding(end = 20.dp),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) {
-                    Icon(
-                        Icons.Filled.Delete,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                }
-            }
-        }
-    ) {
-        NoteRow(
-            note = note,
-            modifier = Modifier.clickable { onClick() }
-        )
-    }
 }
 
 @Composable

@@ -64,8 +64,15 @@ class NoteEditorViewModel(
     }
 
     fun deleteNote() {
+        val note = currentNote ?: return
         viewModelScope.launch {
-            currentNote?.let { repository.deleteNote(it) }
+            repository.deleteNote(note)
+            // Без этого сброса удалённая заметка воскресает: и onCleared(), и ещё не
+            // отработавший debounce-коллектор увидели бы isDirty и пересохранили строку
+            // через upsert с тем же id. Оба пути гасятся здесь — saveInternal тоже
+            // выходит по currentNote ?: return.
+            currentNote = null
+            isDirty = false
             _navigateBack.emit(Unit)
         }
     }

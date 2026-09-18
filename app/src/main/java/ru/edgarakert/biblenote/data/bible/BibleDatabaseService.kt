@@ -17,6 +17,28 @@ class BibleDatabaseService(
         private const val DB_NAME = "bible.sqlite"
         private const val VERSION_PREF_KEY = "bible.db.version"
         private const val PREFS_NAME = "biblenote_prefs"
+
+        /**
+         * Порядок чтения Нового Завета в русской синодальной (православной/славянской) традиции:
+         * соборные послания (Иак…Иуд) идут после Деяний, до посланий Павла.
+         * Английские переводы сохраняют западный канонический порядок (по book_id).
+         */
+        private val SYNODAL_NT_ORDER = listOf(
+            40, 41, 42, 43, 44,                                     // Матфея–Деяния
+            59, 60, 61, 62, 63, 64, 65,                             // Иакова, 1–2 Петра, 1–3 Иоанна, Иуды
+            45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,     // Римлянам–Филимону
+            58,                                                      // Евреям
+            66                                                       // Откровение
+        )
+
+        /** Меняет только порядок показа: book_id и ссылки не затрагиваются. */
+        fun applyBookOrder(books: List<Book>, translation: String): List<Book> {
+            if (translation != "synodal") return books
+            val byId = books.associateBy { it.id }
+            val oldTestament = books.filter { it.id <= 39 }
+            val newTestament = SYNODAL_NT_ORDER.mapNotNull { byId[it] }
+            return oldTestament + newTestament
+        }
     }
 
     private data class HighlightRow(
@@ -124,13 +146,14 @@ class BibleDatabaseService(
         val cursor = db.rawQuery(
             "SELECT id, name_ru, name_en, abbreviation FROM books ORDER BY id", null
         )
-        cursor.use {
+        val books = cursor.use {
             buildList {
                 while (it.moveToNext()) {
                     add(Book(it.getInt(0), it.getString(1), it.getString(2), it.getString(3)))
                 }
             }
         }
+        applyBookOrder(books, translation)
     }
 
     suspend fun fetchBookName(bookId: Int, translation: String): String? = withContext(ioDispatcher) {
