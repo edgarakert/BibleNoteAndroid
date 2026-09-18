@@ -27,6 +27,11 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         private val KEY_LAST_CHAPTER = intPreferencesKey("bible.lastChapter")
         private val KEY_LAST_BIBLE_TRANSLATION = stringPreferencesKey("bible.lastTranslation")
         private val KEY_NOTES_LAST_PATH = stringPreferencesKey("notes.lastPath")
+        private val KEY_PRAYER_REMINDER_ENABLED = booleanPreferencesKey("prayer.reminder.enabled")
+        private val KEY_PRAYER_REMINDER_MINUTES = intPreferencesKey("prayer.reminder.minutesSinceMidnight")
+
+        /** 09:00 — то же значение по умолчанию, что и в iOS. */
+        const val DEFAULT_PRAYER_REMINDER_MINUTES = 540
     }
 
     val defaultTranslation: Flow<String> = dataStore.data.map { prefs ->
@@ -67,6 +72,14 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     val notesLastPath: Flow<List<NotesPathEntry>> = dataStore.data
         .map { NotesPathCodec.decode(it[KEY_NOTES_LAST_PATH] ?: "") }
 
+    val prayerReminderEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[KEY_PRAYER_REMINDER_ENABLED] ?: false
+    }
+
+    val prayerReminderMinutes: Flow<Int> = dataStore.data.map { prefs ->
+        prefs[KEY_PRAYER_REMINDER_MINUTES] ?: DEFAULT_PRAYER_REMINDER_MINUTES
+    }
+
     suspend fun setDefaultTranslation(translation: String) {
         dataStore.edit { it[KEY_TRANSLATION] = translation }
     }
@@ -101,5 +114,13 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
 
     suspend fun setNotesLastPath(path: List<NotesPathEntry>) {
         dataStore.edit { it[KEY_NOTES_LAST_PATH] = NotesPathCodec.encode(path) }
+    }
+
+    suspend fun setPrayerReminderEnabled(enabled: Boolean) {
+        dataStore.edit { it[KEY_PRAYER_REMINDER_ENABLED] = enabled }
+    }
+
+    suspend fun setPrayerReminderMinutes(minutesSinceMidnight: Int) {
+        dataStore.edit { it[KEY_PRAYER_REMINDER_MINUTES] = minutesSinceMidnight }
     }
 }

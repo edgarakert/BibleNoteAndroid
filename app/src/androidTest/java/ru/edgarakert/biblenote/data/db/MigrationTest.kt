@@ -70,4 +70,27 @@ class MigrationTest {
             assertEquals(0, cursor.getInt(1))
         }
     }
+
+    @Test
+    fun migrate2To3_addsPrayerTablesAndKeepsNotes() {
+        helper.createDatabase(dbName, 2).apply {
+            execSQL(
+                "INSERT INTO notes (id, title, content, folderId, createdAt, updatedAt, isPinned) " +
+                    "VALUES (1, 'Заметка', 'текст', NULL, 1000, 2000, 0)"
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(dbName, 3, true)
+
+        db.query("SELECT COUNT(*) FROM notes").use { c ->
+            assertTrue(c.moveToFirst()); assertEquals(1, c.getInt(0))
+        }
+        db.query("SELECT COUNT(*) FROM prayer_requests").use { c ->
+            assertTrue(c.moveToFirst()); assertEquals(0, c.getInt(0))
+        }
+        db.query("SELECT COUNT(*) FROM prayer_entries").use { c ->
+            assertTrue(c.moveToFirst()); assertEquals(0, c.getInt(0))
+        }
+    }
 }

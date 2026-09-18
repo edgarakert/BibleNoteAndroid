@@ -11,13 +11,21 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import ru.edgarakert.biblenote.data.NoteRepository
+import ru.edgarakert.biblenote.data.PrayerRepository
 import ru.edgarakert.biblenote.ui.viewmodels.NoteEditorViewModel
 import ru.edgarakert.biblenote.ui.viewmodels.NotesViewModel
+import ru.edgarakert.biblenote.ui.viewmodels.AnsweredPrayersViewModel
+import ru.edgarakert.biblenote.ui.viewmodels.PrayerDetailViewModel
+import ru.edgarakert.biblenote.ui.viewmodels.PrayerReminderViewModel
+import ru.edgarakert.biblenote.ui.viewmodels.PrayerEditorViewModel
+import ru.edgarakert.biblenote.ui.viewmodels.PrayerListViewModel
+import ru.edgarakert.biblenote.ui.viewmodels.PrayerTodayViewModel
 import ru.edgarakert.biblenote.data.bible.BibleDatabaseService
 import ru.edgarakert.biblenote.data.bible.BibleReferenceParser
 import ru.edgarakert.biblenote.data.db.AppDatabase
 import ru.edgarakert.biblenote.data.db.FolderDao
 import ru.edgarakert.biblenote.data.db.NoteDao
+import ru.edgarakert.biblenote.data.db.PrayerDao
 import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.settings.SettingsRepository
 import ru.edgarakert.biblenote.ui.viewmodels.BibleReaderViewModel
@@ -39,12 +47,16 @@ val appModule = module {
 
     single<FolderDao> { get<AppDatabase>().folderDao() }
 
+    single<PrayerDao> { get<AppDatabase>().prayerDao() }
+
     single<NoteRepository> {
         NoteRepository(
             noteDao = get<NoteDao>(),
             folderDao = get<FolderDao>()
         )
     }
+
+    single<PrayerRepository> { PrayerRepository(get()) }
 
     // Bible
     single<BibleDatabaseService> {
@@ -87,6 +99,35 @@ val appModule = module {
     }
 
     viewModel { SettingsViewModel(repository = get<SettingsRepository>()) }
+
+    viewModel { PrayerTodayViewModel(repository = get<PrayerRepository>()) }
+
+    viewModel { PrayerListViewModel(repository = get<PrayerRepository>()) }
+
+    viewModel { AnsweredPrayersViewModel(repository = get<PrayerRepository>()) }
+
+    viewModel {
+        PrayerReminderViewModel(
+            appContext = androidContext(),
+            settings = get<SettingsRepository>()
+        )
+    }
+
+    viewModel { params ->
+        PrayerEditorViewModel(
+            requestId = params.get<Long>(),
+            repository = get<PrayerRepository>(),
+            parser = get<BibleReferenceParser>()
+        )
+    }
+
+    viewModel { params ->
+        PrayerDetailViewModel(
+            requestId = params.get<Long>(),
+            repository = get<PrayerRepository>(),
+            parser = get<BibleReferenceParser>()
+        )
+    }
 
     viewModel { params ->
         FolderViewModel(
