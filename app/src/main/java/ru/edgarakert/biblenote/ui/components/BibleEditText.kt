@@ -279,6 +279,17 @@ fun BibleEditText(
                     applyFormatting(view, formatting)
                     lastAppliedFormatting[0] = formatting
                     applyHighlighting(view, parser, amberArgb, inkArgb)
+                    // setSelection выше не долетает до onSelectionChanged — оно подавлено
+                    // isProgrammatic, поэтому pendingTypingFormats иначе остался бы пустым до
+                    // первого реального события смены выделения. Без этой синхронизации первое
+                    // нажатие кнопки тулбара сразу после открытия заметки переключало бы стиль
+                    // от пустого набора, а не от того, что действительно на каретке.
+                    view.text?.let { editable ->
+                        view.pendingTypingFormats.syncFromContext(editable, target)
+                        onActiveFormatsChangedState.value(
+                            activeFormatsAt(editable, target, target, view.pendingTypingFormats)
+                        )
+                    }
                 } finally {
                     view.isProgrammatic = false
                 }
