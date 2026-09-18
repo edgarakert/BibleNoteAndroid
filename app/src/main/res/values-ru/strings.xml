@@ -101,6 +101,7 @@
     <string name="translations_group_russian">Русские</string>
     <string name="translations_group_english">Английские</string>
     <string name="translation_synodal_name">Синодальный</string>
+    <string name="translation_synodal_short">Синод.</string>
     <string name="translation_synodal_subtitle">Синодальный перевод, 1876</string>
     <string name="translation_nrt_name">НРП</string>
     <string name="translation_nrt_subtitle">Новый русский перевод, 2011</string>

@@ -70,8 +70,8 @@ import org.koin.androidx.compose.koinViewModel
 import ru.edgarakert.biblenote.R
 import ru.edgarakert.biblenote.data.bible.HighlightColor
 import ru.edgarakert.biblenote.data.bible.VerseSnippetBuilder
-import ru.edgarakert.biblenote.data.bible.translationDisplayName
-import ru.edgarakert.biblenote.data.bible.translationShortName
+import ru.edgarakert.biblenote.ui.components.translationDisplayName
+import ru.edgarakert.biblenote.ui.components.translationShortName
 import ru.edgarakert.biblenote.ui.components.BibleVerse
 import ru.edgarakert.biblenote.ui.components.SaveVersesToNoteSheet
 import ru.edgarakert.biblenote.ui.components.VerseNotesSheet

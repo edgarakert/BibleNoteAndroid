@@ -97,6 +97,7 @@
     <string name="translations_group_russian">Russian</string>
     <string name="translations_group_english">English</string>
     <string name="translation_synodal_name">Synodal</string>
+    <string name="translation_synodal_short">Synodal</string>
     <string name="translation_synodal_subtitle">Russian Synodal Translation, 1876</string>
     <string name="translation_nrt_name">NRT</string>
     <string name="translation_nrt_subtitle">New Russian Translation, 2011</string>

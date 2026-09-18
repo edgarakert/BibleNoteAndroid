@@ -55,7 +55,6 @@ import org.koin.core.parameter.parametersOf
 import ru.edgarakert.biblenote.R
 import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.bible.VerseSnippetBuilder
-import ru.edgarakert.biblenote.data.bible.translationShortName
 import ru.edgarakert.biblenote.ui.viewmodels.BibleVerseSheetViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
