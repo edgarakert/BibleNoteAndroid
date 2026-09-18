@@ -34,6 +34,9 @@
     <string name="editor_content_placeholder">Write something…</string>
     <string name="editor_back">Back</string>
     <string name="editor_menu">Options</string>
+    <string name="editor_format_bold">Bold</string>
+    <string name="editor_format_italic">Italic</string>
+    <string name="editor_format_size">Text size</string>
     <string name="note_delete">Delete Note</string>
 
     <!-- Common -->
@@ -46,6 +49,7 @@
 
     <!-- Verse sheet -->
     <string name="verse_not_found">Verse not found</string>
+    <string name="verse_insert_text">Insert verse text</string>
     <string name="verse_open_chapter">Open chapter</string>
     <string name="verse_notes_title">Notes on this verse</string>
     <string name="verse_select_hint">Tap a verse — the link in the note updates</string>
@@ -93,9 +97,10 @@
     <string name="translations_group_russian">Russian</string>
     <string name="translations_group_english">English</string>
     <string name="translation_synodal_name">Synodal</string>
+    <string name="translation_synodal_short">Synodal</string>
     <string name="translation_synodal_subtitle">Russian Synodal Translation, 1876</string>
-    <!-- <string name="translation_nrt_name">NRT</string> -->
-    <!-- <string name="translation_nrt_subtitle">New Russian Translation, 2011</string> -->
+    <string name="translation_nrt_name">NRT</string>
+    <string name="translation_nrt_subtitle">New Russian Translation, 2011</string>
     <string name="translation_kjv_name">KJV</string>
     <string name="translation_kjv_subtitle">King James Version, 1611</string>
     <string name="translation_niv_name">NIV</string>

@@ -148,9 +148,12 @@ Compose `TextField` не поддерживает `Spannable` при вводе.
 ### Шторка стиха: ModalBottomSheet
 При тапе на ссылку — `ModalBottomSheet` с текстом стиха, переключателем перевода и кнопкой «Открыть главу» (переключает на вкладку Библии).
 
+### Форматирование текста: диапазоны отдельной колонкой, не HTML
+Жирный/курсив/размер хранятся не в `content` (он остаётся плоским текстом — на нём завязаны поиск и превью), а в колонке `Note.formatting: String?` — список диапазонов (`NoteFormattingCodec`, `data/db/NoteFormatting.kt`), сериализованный в компактную строку своего формата: `"b:0-10;i:12-20;s1.3:22-30"`. `HtmlCompat.fromHtml`/`Html.toHtml` не подошёл бы — штатный конвертер не читает `font-size` обратно из атрибута `style`, поэтому размер шрифта не пережил бы цикл «сохранили → открыли». `BibleEditText` применяет/извлекает диапазоны как `StyleSpan`/`RelativeSizeSpan` на живом `Editable` (хелперы — `ui/components/NoteFormattingSpans.kt`, отдельно от файла компонента, чтобы не смешивать с логикой подсветки ссылок); `applyHighlighting` трогает только свои `ForegroundColorSpan`/`ClickableSpan`, поэтому ссылка на стих внутри жирного текста остаётся кликабельной. Кнопка форматирования работает и по выделению (снимает при повторном нажатии, с корректным разрезанием спана при частичном снятии), и в «режиме ввода» без выделения — как в iOS: переключил стиль, дальше печатается с ним, пока не нажать ещё раз.
+
 ### Модели Room
 ```
-Note   (id, title, content, folderId?, createdAt, updatedAt)
+Note   (id, title, content, folderId?, formatting?, createdAt, updatedAt)
 Folder (id, name, parentId?, createdAt)
 ```
 

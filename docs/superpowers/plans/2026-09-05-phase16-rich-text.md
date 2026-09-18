@@ -8,7 +8,16 @@
 
 **Tech Stack:** Kotlin 2.3.21, Compose, `AndroidView` + `EditText` + `Spannable` (`StyleSpan`, `RelativeSizeSpan`), Room 2.8.4 + автомиграция, JUnit 4.13.2.
 
+> ⚠️ **Учесть перед началом: в репозитории уже есть незавершённая ветка `feature/add-formatting`** (3 коммита, июнь 2026) с собственной реализацией rich text: колонка `notes.contentHtml`, `RichTextSerializer`, `FormattingToolbar`. Она объявляет **версию базы 2** — тот же номер, что заняла фаза 12 под `isPinned`. Из-за этого сборка с той ветки и наши сборки несовместимы по базе: приложение падает с `Migration didn't properly handle: notes` (случай разобран 2026-09-14, см. `docs/progress.md`). Прежде чем начинать фазу 16, нужно решить: доработать ту ветку, перенеся её схему на версию 4 поверх нашей цепочки, или сделать заново по этому плану, а ветку удалить. Мержить её как есть нельзя.
+
 **Предусловия:** закрыты фазы 12 (автомиграции Room) и 13 (`NoteContentWriter`, правка ссылок из шторки). Фаза 16 идёт **после** паритета с iOS — это решение Q1 из роадмапа.
+
+## Уточнения поведения (2026-09-14)
+
+Два момента ниже подтверждены пользователем и заменяют собой более раннее черновое описание в задачах 16.3/16.4:
+
+1. **Работает и с выделением, и без него (режим ввода), как в iOS.** Выделил текст → нажал кнопку → стиль применился к выделению (повторное нажатие снимает). Без выделения кнопка переключает «режим»: дальнейший ввод печатается с этим стилем, пока не нажать кнопку ещё раз. Это соответствует `typingAttributes` в `BibleTextView.swift` — старое описание «без выделения переключать нечего» в задаче 16.4 неверно и заменено ниже.
+2. **Кнопка размера — бинарный переключатель, а не цикл.** Обычный текст ↔ крупный (`RelativeSizeSpan` с фиксированным коэффициентом `1.3f`, константа `LARGE_TEXT_SCALE`), без промежуточного состояния 1.25×. Повторное нажатие возвращает обычный размер — то же toggle-поведение, что у жирного и курсива, и то же, что делает `toggleFontSize` в iOS (`normalFontSize` ↔ `largeFontSize`, двухпозиционный переключатель, не цикл). Кодек (`NoteFormattingCodec`, задача 16.2) уже хранит произвольный `scale` у `FormatRun`, поэтому изменений в кодеке не требует — меняется только то, какое значение записывает тулбар.
 
 **Порядок:** 16.1 → 16.2 → 16.3 → 16.4 → 16.5 → 16.6
 
@@ -328,16 +337,26 @@ git commit -m "feat: add a codec for note formatting runs"
 - [ ] **Шаг 1: Расширить контракт**
 
 ```kotlin
+/** Команда тулбара: переключить стиль. token отсекает повторное применение — тот же приём, что у PendingEdit. */
+data class FormatCommand(val token: Long, val type: FormatType)
+
 @Composable
 fun BibleEditText(
     text: String,
     formatting: List<FormatRun>,
     onContentChanged: (text: String, runs: List<FormatRun>) -> Unit,
+    onActiveFormatsChanged: (Set<FormatType>) -> Unit = {},
+    formatCommand: FormatCommand? = null,
+    onFormatCommandApplied: (token: Long) -> Unit = {},
     // ... остальные параметры без изменений
 )
 ```
 
-Старый `onTextChanged: (String) -> Unit` заменяется на `onContentChanged`.
+Старый `onTextChanged: (String) -> Unit` заменяется на `onContentChanged`. `onActiveFormatsChanged` — какие стили действуют в точке курсора или на всём выделении прямо сейчас (для подсветки кнопок тулбара амбером); вызывается при каждой смене выделения и сразу после применения `formatCommand`, зеркалируя `updateToolbarState` из iOS. `formatCommand`/`onFormatCommandApplied` — канал, которым `NoteEditorScreen` просит переключить стиль, тем же способом, каким уже работает `pendingEdit`/`onPendingEditApplied` для правки ссылок.
+
+Существующий `onCursorPositionChanged: (Int) -> Unit` не трогаем — он остаётся только для восстановления позиции курсора при повороте экрана (`savedCursorPosition` в `NoteEditorScreen`), это отдельная задача от активности кнопок тулбара.
+
+`CursorTrackingEditText` получает поле `val pendingTypingFormats = mutableSetOf<FormatType>()` — «режим ввода»: набор стилей, которые получит следующий введённый символ, когда выделения нет. Он не сохраняется отдельно и не сериализуется — это чисто рантайм-состояние поля ввода, как `isProgrammatic`.
 
 - [ ] **Шаг 2: Применять диапазоны при загрузке текста**
 
@@ -400,6 +419,55 @@ onContentChangedState.value(editable.toString(), extractFormatting(editable))
 
 То же самое — в ветке применения `PendingEdit` (задача 13.5): после `editable.replace(...)` отдавать наверх и текст, и диапазоны.
 
+- [ ] **Шаг 3б: Режим ввода без выделения**
+
+Без этого шага кнопка работала бы только по выделению — а это как раз то поведение, которое пользователь **не** выбрал (см. «Уточнения поведения» в начале файла).
+
+`onTextChanged` запоминает границы вставки, `afterTextChanged` применяет к ним стили из `pendingTypingFormats`:
+
+```kotlin
+addTextChangedListener(object : android.text.TextWatcher {
+    private var insertStart = -1
+    private var insertCount = 0
+
+    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+        insertStart = start
+        insertCount = count
+    }
+
+    override fun afterTextChanged(s: android.text.Editable?) {
+        if (isProgrammatic) return
+        val editable = s ?: return
+
+        if (insertCount > 0 && pendingTypingFormats.isNotEmpty()) {
+            for (type in pendingTypingFormats) applyStyle(editable, insertStart, insertStart + insertCount, type)
+        }
+
+        onContentChangedState.value(editable.toString(), extractFormatting(editable))
+        // ... остальное (дебаунс applyHighlighting) без изменений
+    }
+})
+```
+
+`applyStyle` — тот же хелпер, что и у ручного переключения стилем (задача 16.4), со `SPAN_EXCLUSIVE_INCLUSIVE`, поэтому следующий введённый символ тоже подхватит стиль без повторного вызова.
+
+`CursorTrackingEditText.onSelectionChanged` при схлопывании выделения в каретку пересчитывает `pendingTypingFormats` из контекста — стиль символа непосредственно перед кареткой (или после, если каретка в начале текста). Это нужно, чтобы при обычном перемещении курсора (тап, стрелки) режим ввода совпадал с тем, что уже написано, как `normalizeTypingAttributes` в iOS, и не «протекал» из предыдущей позиции курсора:
+
+```kotlin
+override fun onSelectionChanged(selStart: Int, selEnd: Int) {
+    super.onSelectionChanged(selStart, selEnd)
+    if (isProgrammatic) return
+    selectionListener?.invoke(selEnd)
+    val editable = text ?: return
+    if (selStart == selEnd) pendingTypingFormats.syncFromContext(editable, selStart)
+    activeFormatsListener?.invoke(activeFormatsAt(editable, selStart, selEnd, pendingTypingFormats))
+}
+```
+
+`syncFromContext`/`activeFormatsAt` — реализуются в задаче 16.4 рядом с `hasStyle`/`toggleStyle`, они разделяют одну и ту же логику чтения спанов из `Editable`.
+
 - [ ] **Шаг 4: Собрать**
 
 Run: `./gradlew compileDebugKotlin`
@@ -419,9 +487,10 @@ git commit -m "feat: apply and extract character formatting in the note editor f
 Три кнопки: жирный, курсив, размер. В iOS это `FormattingToolbar` с иконками `bold`, `italic`, `textformat.size.larger`; активная кнопка подсвечивается янтарным, неактивная — серым.
 
 Поведение:
-- кнопка применяет стиль **к текущему выделению**; если выделения нет — переключает стиль «с этого места» для последующего ввода;
-- подсветка кнопки отражает стиль в позиции курсора и обновляется при смене выделения;
-- размер шрифта **циклический**: обычный → 1.25 → 1.5 → обычный, как одна кнопка в iOS.
+- кнопка применяет стиль **к текущему выделению**, если оно есть; повторное нажатие снимает стиль с выделения;
+- если выделения нет — кнопка переключает «режим ввода»: дальнейший ввод печатается с этим стилем, пока не нажать кнопку ещё раз (см. «Уточнения поведения» в начале файла);
+- подсветка кнопки отражает стиль в точке курсора (с учётом режима ввода) или на всём выделении, обновляется при каждой смене выделения и сразу после нажатия;
+- кнопка размера — **бинарный переключатель** (обычный ↔ крупный, `LARGE_TEXT_SCALE = 1.3f`), не цикл — то же toggle-поведение, что у жирного и курсива.
 
 **Files:**
 - Create: `app/src/main/java/ru/edgarakert/biblenote/ui/components/FormattingToolbar.kt`
@@ -467,37 +536,55 @@ fun FormattingToolbar(
 
 - [ ] **Шаг 3: Реализовать переключение стиля**
 
-Функция работает над `Editable` `EditText`. Снятие стиля с части диапазона требует разрезания существующего спана — иначе повторное нажатие «жирный» на середине жирного куска не снимет его:
+`LARGE_TEXT_SCALE = 1.3f` — константа рядом с `toggleStyle` (не в кодеке: кодек хранит произвольный `scale`, а то, какое конкретно значение пишет тулбар, — дело UI-слоя).
+
+Функция вызывается из `update`-ветки `BibleEditText` при получении нового `formatCommand` и работает над `Editable` `EditText`. Снятие стиля с части диапазона требует разрезания существующего спана — иначе повторное нажатие «жирный» на середине жирного куска не снимет его. Без выделения (каретка) стиль не применяется к тексту напрямую, а переключается в `pendingTypingFormats` — фактическое применение к символам делает `afterTextChanged` из задачи 16.3, шаг 3б:
 
 ```kotlin
-fun toggleStyle(editText: EditText, type: FormatType, scale: Float = 1f) {
+fun applyFormatCommand(editText: CursorTrackingEditText, type: FormatType) {
     val editable = editText.text ?: return
     val start = editText.selectionStart.coerceAtLeast(0)
     val end = editText.selectionEnd.coerceAtLeast(0)
-    if (start == end) return  // без выделения переключать нечего
-
     val from = minOf(start, end)
     val to = maxOf(start, end)
-    val isActive = hasStyle(editable, from, to, type)
 
-    if (isActive) {
-        removeStyle(editable, from, to, type)
-    } else {
-        val span: Any = when (type) {
-            FormatType.BOLD -> StyleSpan(Typeface.BOLD)
-            FormatType.ITALIC -> StyleSpan(Typeface.ITALIC)
-            FormatType.SIZE -> RelativeSizeSpan(scale)
+    if (from != to) {
+        // Есть выделение: переключаем стиль на всём диапазоне.
+        if (hasStyle(editable, from, to, type)) {
+            removeStyle(editable, from, to, type)
+        } else {
+            applyStyle(editable, from, to, type)
         }
-        editable.setSpan(span, from, to, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
+    } else {
+        // Каретка без выделения: переключаем режим ввода для последующих символов.
+        editText.pendingTypingFormats.syncFromContext(editable, from)
+        if (type in editText.pendingTypingFormats) {
+            editText.pendingTypingFormats -= type
+        } else {
+            editText.pendingTypingFormats += type
+        }
     }
+}
+
+fun applyStyle(editable: Editable, from: Int, to: Int, type: FormatType) {
+    val span: Any = when (type) {
+        FormatType.BOLD -> StyleSpan(Typeface.BOLD)
+        FormatType.ITALIC -> StyleSpan(Typeface.ITALIC)
+        FormatType.SIZE -> RelativeSizeSpan(LARGE_TEXT_SCALE)
+    }
+    // SPAN_EXCLUSIVE_INCLUSIVE: текст, дописанный вплотную к концу стилизованного участка,
+    // продолжает нести стиль — так ведут себя привычные редакторы.
+    editable.setSpan(span, from, to, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
 }
 ```
 
-`removeStyle` обязан обрабатывать частичное пересечение: спан, выходящий за снимаемый диапазон, удаляется и заменяется одним или двумя обрезками (слева и справа от снимаемого участка).
+`removeStyle` обязан обрабатывать частичное пересечение: спан, выходящий за снимаемый диапазон, удаляется и заменяется одним или двумя обрезками (слева и справа от снимаемого участка). `hasStyle(editable, from, to, type)` — «активен» значит спан этого типа покрывает **весь** диапазон `[from, to)` без разрывов (иначе неоднозначно, что показывать на кнопке и что переключать).
+
+`pendingTypingFormats.syncFromContext(editable, position)` смотрит на стиль символа непосредственно перед `position` (или после, если `position == 0`) и заменяет содержимое сета на найденные там типы — общая функция, используемая и здесь, и в `onSelectionChanged` (задача 16.3, шаг 3б).
 
 - [ ] **Шаг 4: Подключить к редактору**
 
-`NoteEditorScreen` держит состояние активности кнопок, обновляя его из уже существующего колбэка `onCursorPositionChanged` (он вызывается при каждой смене выделения — этого достаточно и нового механизма не требуется).
+`NoteEditorScreen` не хранит логику стилей сама — она держит только `activeFormats: Set<FormatType>` (из `onActiveFormatsChanged`) для подсветки кнопок и одноразовый `formatCommand: FormatCommand?` (по образцу `pendingEdit`) для передачи нажатия вниз в `BibleEditText`, который сам решает — переключить выделение или режим ввода — и подтверждает применение через `onFormatCommandApplied`, сбрасывая `formatCommand` в `null`, как уже делает `PendingEdit`/`onPendingEditApplied` для правки ссылок.
 
 - [ ] **Шаг 5: Проверить на устройстве**
 
@@ -506,8 +593,11 @@ Run: `./gradlew installDebug`
 Проверить:
 1. Выделить слово → «жирный» → слово стало жирным, кнопка подсвечена; повторное нажатие снимает.
 2. Снять жирный с середины жирного предложения → остаются два жирных куска по краям.
-3. Выйти из заметки и открыть заново → форматирование на месте.
-4. Ссылка на стих внутри жирного текста — по-прежнему янтарная и кликабельная.
+3. Поставить каретку в пустом месте (без выделения) → «жирный» → далее печатаемый текст жирный, кнопка подсвечена; ещё раз «жирный» → печать снова обычная.
+4. Включить режим ввода жирным, затем тапнуть в другое место текста → подсветка кнопки на новом месте соответствует тому, что там уже написано (а не «протекает» из прежней позиции курсора).
+5. «Заголовок» (размер) переключается туда-обратно, без промежуточного состояния.
+6. Выйти из заметки и открыть заново → форматирование на месте.
+7. Ссылка на стих внутри жирного текста — по-прежнему янтарная и кликабельная.
 
 - [ ] **Шаг 6: Коммит**
 

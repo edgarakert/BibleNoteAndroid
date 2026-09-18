@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.NoteAdd
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -53,6 +54,7 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import ru.edgarakert.biblenote.R
 import ru.edgarakert.biblenote.data.bible.BibleReference
+import ru.edgarakert.biblenote.data.bible.VerseSnippetBuilder
 import ru.edgarakert.biblenote.ui.viewmodels.BibleVerseSheetViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,6 +64,7 @@ fun BibleVerseSheet(
     onDismiss: () -> Unit,
     onOpenChapter: (BibleReference) -> Unit,
     onVersesChanged: ((List<Int>) -> Unit)? = null,
+    onInsertVerses: ((List<VerseSnippetBuilder.Verse>) -> Unit)? = null,
     viewModel: BibleVerseSheetViewModel = koinViewModel(
         key = reference.id,
         parameters = { parametersOf(reference) }
@@ -128,7 +131,7 @@ fun BibleVerseSheet(
                                 .padding(horizontal = 10.dp, vertical = 6.dp)
                         ) {
                             Text(
-                                text = t.uppercase(),
+                                text = translationShortName(t),
                                 fontSize = 12.sp,
                                 color = if (selected) MaterialTheme.colorScheme.primary
                                         else MaterialTheme.colorScheme.onSurfaceVariant
@@ -265,6 +268,39 @@ fun BibleVerseSheet(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                    }
+                }
+
+                // Вставка текста выделенных стихов в заметку — сверх паритета с iOS, где шторка
+                // умеет только открыть главу. Кнопки нет, пока нечего вставлять: у ссылки на
+                // главу целиком выбор пуст, и вставился бы весь текст главы.
+                // Фильтруем заранее, а не в обработчике: номера из ссылки может не оказаться в
+                // загруженной главе (разная нумерация в переводах), и кнопка при непустом выборе
+                // оказалась бы «мёртвой» — нажатие без результата.
+                val insertableVerses = uiState.verses
+                    .filter { it.first in uiState.selectedVerses }
+                    .map { VerseSnippetBuilder.Verse(it.first, it.second) }
+
+                if (onInsertVerses != null && insertableVerses.isNotEmpty()) {
+                    TextButton(
+                        onClick = { onInsertVerses(insertableVerses) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .padding(top = 4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.NoteAdd,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = stringResource(R.string.verse_insert_text),
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 14.sp
+                        )
                     }
                 }
 

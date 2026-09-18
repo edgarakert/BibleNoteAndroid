@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -52,8 +53,13 @@ import org.koin.core.parameter.parametersOf
 import ru.edgarakert.biblenote.R
 import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.bible.BibleReferenceParser
+import ru.edgarakert.biblenote.data.NoteTextInsertion
+import ru.edgarakert.biblenote.data.bible.VerseSnippetBuilder
+import ru.edgarakert.biblenote.data.db.FormatType
 import ru.edgarakert.biblenote.ui.components.BibleEditText
 import ru.edgarakert.biblenote.ui.components.BibleVerseSheet
+import ru.edgarakert.biblenote.ui.components.FormatCommand
+import ru.edgarakert.biblenote.ui.components.FormattingToolbar
 import ru.edgarakert.biblenote.ui.components.PendingEdit
 import ru.edgarakert.biblenote.ui.viewmodels.NoteEditorViewModel
 
@@ -67,6 +73,7 @@ fun NoteEditorScreen(
 ) {
     val title by viewModel.title.collectAsStateWithLifecycle()
     val content by viewModel.content.collectAsStateWithLifecycle()
+    val formatting by viewModel.formatting.collectAsStateWithLifecycle()
     val parser = remember { BibleReferenceParser() }
 
     var showMenu by remember { mutableStateOf(false) }
@@ -86,8 +93,21 @@ fun NoteEditorScreen(
     // токенов живёт в обычном remember и после поворота сбрасывается, так что
     // восстановленная правка применилась бы во второй раз и продублировала замену.
     var pendingEdit by remember { mutableStateOf<PendingEdit?>(null) }
+    // Общий счётчик токенов для pendingEdit И pendingFormatCommand: у каждого из двух каналов
+    // в BibleEditText свой независимый "последний применённый" токен (lastAppliedToken и
+    // lastAppliedFormatToken), поэтому делить один монотонный источник уникальности безопасно —
+    // это проще, чем заводить второй rememberSaveable счётчик только ради форматирования.
     var editToken by rememberSaveable { mutableLongStateOf(0L) }
     var savedCursorPosition by rememberSaveable { mutableIntStateOf(-1) }
+
+    // Чисто UI-состояние тулбара форматирования — не во ViewModel, тем же способом, каким
+    // pendingEdit/activeRange уже локальны для этого экрана (задача 16.4).
+    var activeFormats by remember { mutableStateOf<Set<FormatType>>(emptySet()) }
+    var pendingFormatCommand by remember { mutableStateOf<FormatCommand?>(null) }
+    // Панель показывается только пока поле заметки в фокусе — нажатие кнопки не забирает
+    // фокус у поля (проверено на устройстве: клавиатура не закрывается при тапе по тулбару),
+    // поэтому панель не мигает при собственных нажатиях.
+    var isContentFocused by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
         viewModel.navigateBack.collect { onBack() }
@@ -155,6 +175,9 @@ fun NoteEditorScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
+                // Поднимает тулбар форматирования над клавиатурой вместо того, чтобы клавиатура
+                // ложилась поверх него: Scaffold сам не учитывает IME-инсеты в innerPadding.
+                .imePadding()
         ) {
             BasicTextField(
                 value = title,
@@ -205,7 +228,8 @@ fun NoteEditorScreen(
 
             BibleEditText(
                 text = content,
-                onTextChanged = viewModel::setContent,
+                formatting = formatting,
+                onContentChanged = viewModel::setContent,
                 onReferenceTapped = {
                     tappedReference = it
                     activeRange = it.startIndex until it.endIndex
@@ -214,6 +238,10 @@ fun NoteEditorScreen(
                 placeholder = stringResource(R.string.editor_content_placeholder),
                 initialCursorPosition = savedCursorPosition,
                 onCursorPositionChanged = { savedCursorPosition = it },
+                onActiveFormatsChanged = { activeFormats = it },
+                onFocusChanged = { isContentFocused = it },
+                formatCommand = pendingFormatCommand,
+                onFormatCommandApplied = { pendingFormatCommand = null },
                 pendingEdit = pendingEdit,
                 onPendingEditApplied = { _, applied ->
                     pendingEdit = null
@@ -227,9 +255,30 @@ fun NoteEditorScreen(
                     }
                 },
                 modifier = Modifier
-                    .fillMaxSize()
+                    .weight(1f)
+                    .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.background)
             )
+
+            if (isContentFocused) {
+                FormattingToolbar(
+                    isBoldActive = FormatType.BOLD in activeFormats,
+                    isItalicActive = FormatType.ITALIC in activeFormats,
+                    isSizeActive = FormatType.SIZE in activeFormats,
+                    onBold = {
+                        editToken += 1
+                        pendingFormatCommand = FormatCommand(editToken, FormatType.BOLD)
+                    },
+                    onItalic = {
+                        editToken += 1
+                        pendingFormatCommand = FormatCommand(editToken, FormatType.ITALIC)
+                    },
+                    onSize = {
+                        editToken += 1
+                        pendingFormatCommand = FormatCommand(editToken, FormatType.SIZE)
+                    }
+                )
+            }
         }
     }
 
@@ -276,6 +325,21 @@ fun NoteEditorScreen(
                 pendingEdit = PendingEdit(editToken, range.first, range.last + 1, newText)
                 // Длина замены меняется с каждым тапом — следующая правка целится в новый диапазон.
                 activeRange = range.first until (range.first + newText.length)
+            },
+            onInsertVerses = { verses ->
+                val body = VerseSnippetBuilder.versesBody(verses)
+                if (body.isNotEmpty()) {
+                    // Позиция вставки — конец строки со ссылкой, см. NoteTextInsertion.
+                    // Повторная вставка кладёт новый блок сразу под ссылку, то есть ВЫШЕ
+                    // вставленного прежде: позиция считается от строки самой ссылки, а её
+                    // предыдущие вставки не сдвигают.
+                    val refEnd = activeRange?.last?.plus(1) ?: ref.endIndex
+                    val lineEnd = NoteTextInsertion.lineEndAfter(content, refEnd)
+                    editToken += 1
+                    pendingEdit = PendingEdit(editToken, lineEnd, lineEnd, "\n\n" + body)
+                }
+                tappedReference = null
+                activeRange = null
             }
         )
     }

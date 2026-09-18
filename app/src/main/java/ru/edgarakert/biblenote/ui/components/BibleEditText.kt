@@ -24,6 +24,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.viewinterop.AndroidView
 import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.bible.BibleReferenceParser
+import ru.edgarakert.biblenote.data.db.FormatRun
+import ru.edgarakert.biblenote.data.db.FormatType
 
 /** Одноразовая правка текста извне редактора. token отсекает повторное применение. */
 data class PendingEdit(val token: Long, val start: Int, val end: Int, val text: String)
@@ -32,13 +34,18 @@ data class PendingEdit(val token: Long, val start: Int, val end: Int, val text: 
 @Composable
 fun BibleEditText(
     text: String,
-    onTextChanged: (String) -> Unit,
+    formatting: List<FormatRun>,
+    onContentChanged: (text: String, runs: List<FormatRun>) -> Unit,
     onReferenceTapped: (BibleReference) -> Unit,
     parser: BibleReferenceParser,
     modifier: Modifier = Modifier,
     placeholder: String = "",
     initialCursorPosition: Int = -1,
     onCursorPositionChanged: (Int) -> Unit = {},
+    onActiveFormatsChanged: (Set<FormatType>) -> Unit = {},
+    onFocusChanged: (Boolean) -> Unit = {},
+    formatCommand: FormatCommand? = null,
+    onFormatCommandApplied: (token: Long) -> Unit = {},
     pendingEdit: PendingEdit? = null,
     /** Вызывается ровно один раз на токен; applied=false, если границы не подошли к живому тексту. */
     onPendingEditApplied: (token: Long, applied: Boolean) -> Unit = { _, _ -> },
@@ -47,9 +54,11 @@ fun BibleEditText(
     val inkArgb = MaterialTheme.colorScheme.onSurface.toArgb()
     val hintArgb = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f).toArgb()
 
-    val onTextChangedState = rememberUpdatedState(onTextChanged)
+    val onContentChangedState = rememberUpdatedState(onContentChanged)
     val onReferenceTappedState = rememberUpdatedState(onReferenceTapped)
     val onCursorPositionChangedState = rememberUpdatedState(onCursorPositionChanged)
+    val onActiveFormatsChangedState = rememberUpdatedState(onActiveFormatsChanged)
+    val onFocusChangedState = rememberUpdatedState(onFocusChanged)
 
     val handler = remember { Handler(Looper.getMainLooper()) }
     val pendingHighlight = remember { arrayOfNulls<Runnable>(1) }
@@ -58,6 +67,13 @@ fun BibleEditText(
     // Токен последней применённой внешней правки — отсекает повторное применение
     // при рекомпозиции, пока вызывающая сторона ещё не успела сбросить pendingEdit в null.
     val lastAppliedToken = remember { mutableLongStateOf(-1L) }
+    // Тот же приём для formatCommand — тулбар сбрасывает его в null асинхронно.
+    val lastAppliedFormatToken = remember { mutableLongStateOf(-1L) }
+    // title/content/formatting — три независимых StateFlow во ViewModel; formatting может
+    // прийти отдельной рекомпозицией без изменения text (например, если открыть заметку до
+    // того, как отработает декодирование formatting). Без этого applyFormatting вызывалась бы
+    // только вместе со сменой текста и рисковала молча пропустить применение форматирования.
+    val lastAppliedFormatting = remember { arrayOf<List<FormatRun>?>(null) }
 
     DisposableEffect(Unit) {
         onDispose { pendingHighlight[0]?.let { handler.removeCallbacks(it) } }
@@ -80,6 +96,8 @@ fun BibleEditText(
                 setPadding(padH, padV, padH, padV)
 
                 selectionListener = { pos -> onCursorPositionChangedState.value(pos) }
+                activeFormatsListener = { formats -> onActiveFormatsChangedState.value(formats) }
+                setOnFocusChangeListener { _, hasFocus -> onFocusChangedState.value(hasFocus) }
 
                 setOnTouchListener { view, event ->
                     if (event.action != MotionEvent.ACTION_UP) return@setOnTouchListener false
@@ -148,11 +166,30 @@ fun BibleEditText(
                 }
 
                 addTextChangedListener(object : android.text.TextWatcher {
+                    // Границы последней вставки: afterTextChanged применяет к ним
+                    // стили из pendingTypingFormats («режим ввода» без выделения).
+                    private var insertStart = -1
+                    private var insertCount = 0
+
+                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+                    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                        insertStart = start
+                        insertCount = count
+                    }
+
                     override fun afterTextChanged(s: android.text.Editable?) {
                         if (isProgrammatic) return
+                        val editable = s ?: return
 
-                        val newText = s?.toString() ?: ""
-                        onTextChangedState.value(newText)
+                        if (insertCount > 0 && pendingTypingFormats.isNotEmpty()) {
+                            for (type in pendingTypingFormats) {
+                                applyStyle(editable, insertStart, insertStart + insertCount, type)
+                            }
+                        }
+
+                        onContentChangedState.value(editable.toString(), extractFormatting(editable))
+
                         pendingHighlight[0]?.let { handler.removeCallbacks(it) }
                         val runnable = Runnable {
                             applyHighlighting(
@@ -165,9 +202,6 @@ fun BibleEditText(
                         pendingHighlight[0] = runnable
                         handler.postDelayed(runnable, 400)
                     }
-
-                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-                    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
                 })
             }
         },
@@ -194,13 +228,40 @@ fun BibleEditText(
                     view.isProgrammatic = false
 
                     applyHighlighting(view, parser, amberArgb, inkArgb)
-                    onTextChangedState.value(editable.toString())
+                    onContentChangedState.value(editable.toString(), extractFormatting(editable))
                 }
                 lastAppliedToken.longValue = edit.token
                 // Сообщаем и об отказе: вызывающий заранее сдвинул свой диапазон в расчёте
                 // на успех, и без этого сигнала он остался бы рассинхронизирован с текстом
                 // навсегда, молча промахиваясь мимо ссылки на каждом следующем тапе.
                 onPendingEditApplied(edit.token, fits)
+                return@AndroidView
+            }
+
+            val command = formatCommand
+            if (command != null && command.token != lastAppliedFormatToken.longValue) {
+                val editable = view.text
+                if (editable != null) {
+                    val hadSelection = view.selectionStart != view.selectionEnd
+                    val newActiveFormats = applyFormatCommand(
+                        editable,
+                        view.selectionStart,
+                        view.selectionEnd,
+                        view.pendingTypingFormats,
+                        command.type
+                    )
+                    // Реальное выделение меняет спаны Editable напрямую — TextWatcher на это
+                    // не реагирует (span-изменения не запускают afterTextChanged), поэтому
+                    // текст/диапазоны наружу нужно отдать здесь же, иначе форматирование не
+                    // переживёт следующее сохранение. Каретка без выделения текст не меняет —
+                    // там достаточно свежей подсветки кнопок.
+                    if (hadSelection) {
+                        onContentChangedState.value(editable.toString(), extractFormatting(editable))
+                    }
+                    onActiveFormatsChangedState.value(newActiveFormats)
+                }
+                lastAppliedFormatToken.longValue = command.token
+                onFormatCommandApplied(command.token)
                 return@AndroidView
             }
 
@@ -215,11 +276,18 @@ fun BibleEditText(
                         len
                     }
                     view.setSelection(target)
+                    applyFormatting(view, formatting)
+                    lastAppliedFormatting[0] = formatting
                     applyHighlighting(view, parser, amberArgb, inkArgb)
                 } finally {
                     view.isProgrammatic = false
                 }
                 handler.post { if (view.isAttachedToWindow) view.requestFocus() }
+            } else if (formatting != lastAppliedFormatting[0]) {
+                // Форматирование не трогает ForegroundColorSpan/BibleClickSpan, поэтому
+                // повторный вызов applyHighlighting здесь не нужен.
+                applyFormatting(view, formatting)
+                lastAppliedFormatting[0] = formatting
             } else if (colorsChanged) {
                 applyHighlighting(view, parser, amberArgb, inkArgb)
             }
@@ -267,10 +335,30 @@ private fun applyHighlighting(
 private class CursorTrackingEditText(context: Context) : EditText(context) {
     var isProgrammatic = false
     var selectionListener: ((Int) -> Unit)? = null
+    var activeFormatsListener: ((Set<FormatType>) -> Unit)? = null
+
+    /** «Режим ввода»: стили, которые получит следующий введённый символ, когда выделения нет.
+     * Чисто рантайм-состояние поля ввода, как isProgrammatic — не сохраняется и не сериализуется. */
+    val pendingTypingFormats = mutableSetOf<FormatType>()
+
+    // EditText's Java constructor synchronously calls setText(), which invokes this overridden
+    // onSelectionChanged BEFORE Kotlin runs this subclass's own property initializers above —
+    // pendingTypingFormats is still null at that point, crashing with an NPE. `constructed`
+    // exploits the same trick that already made isProgrammatic/selectionListener safe by
+    // accident: the JVM zero-initializes a field to its declared-false default before any
+    // initializer runs, so during that one early call `constructed` reads false even though
+    // its own initializer says `true`, letting us bail out before touching pendingTypingFormats.
+    private val constructed = true
 
     override fun onSelectionChanged(selStart: Int, selEnd: Int) {
         super.onSelectionChanged(selStart, selEnd)
-        if (!isProgrammatic) selectionListener?.invoke(selEnd)
+        if (!constructed) return
+        if (isProgrammatic) return
+        selectionListener?.invoke(selEnd)
+
+        val editable = text ?: return
+        if (selStart == selEnd) pendingTypingFormats.syncFromContext(editable, selStart)
+        activeFormatsListener?.invoke(activeFormatsAt(editable, selStart, selEnd, pendingTypingFormats))
     }
 }
 

@@ -18,13 +18,21 @@ object VerseSnippetBuilder {
         return if (spec.isEmpty()) "$bookName $chapter" else "$bookName $chapter:$spec"
     }
 
+    /**
+     * Только пронумерованные стихи, без строки ссылки — для вставки под ссылку, которая
+     * в тексте заметки уже есть (шторка стиха в редакторе). Дублировать её там незачем.
+     */
+    fun versesBody(verses: List<Verse>): String = verses
+        .sortedBy { it.number }
+        .distinctBy { it.number }
+        .joinToString("\n") { "${it.number} ${it.text.trim()}" }
+
     /** Ссылка отдельной строкой, пустая строка, затем пронумерованные стихи. */
     fun build(bookName: String, chapter: Int, verses: List<Verse>): String {
         val ordered = verses.sortedBy { it.number }.distinctBy { it.number }
         val header = reference(bookName, chapter, ordered.map { it.number })
         if (ordered.isEmpty()) return header
 
-        val body = ordered.joinToString("\n") { "${it.number} ${it.text.trim()}" }
-        return "$header\n\n$body"
+        return "$header\n\n${versesBody(ordered)}"
     }
 }

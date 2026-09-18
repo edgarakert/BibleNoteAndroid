@@ -1,5 +1,6 @@
 package ru.edgarakert.biblenote.ui.screens.prayer
 
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,7 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.VolunteerActivism
@@ -164,17 +165,19 @@ private fun PrayerTodayTopBar(
                     )
                 }
             }
+        },
+        actions = {
             if (onOpenAnswered != null) {
                 IconButton(onClick = onOpenAnswered) {
                     Icon(
-                        Icons.Filled.CheckCircle,
+                        // checkmark.seal в iOS: галочка в печати. CheckCircle читалась
+                        // как «задача выполнена» — не тот смысл для ответов на молитвы.
+                        Icons.Filled.Verified,
                         contentDescription = stringResource(R.string.prayer_answered_title),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
-        },
-        actions = {
             if (onCreateRequest != null) {
                 IconButton(onClick = onCreateRequest) {
                     Icon(

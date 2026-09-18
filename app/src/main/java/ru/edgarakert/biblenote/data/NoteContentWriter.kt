@@ -1,6 +1,7 @@
 package ru.edgarakert.biblenote.data
 
 import ru.edgarakert.biblenote.data.db.Note
+import ru.edgarakert.biblenote.data.db.NoteFormattingCodec
 
 /**
  * Единственное место, где текст попадает в заметку извне редактора.
@@ -18,8 +19,15 @@ object NoteContentWriter {
         // строк при повторных дописываниях.
         val base = note.content.trimEnd()
         val separator = if (base.isBlank()) "" else "\n\n"
+        // trimEnd мог укоротить текст — диапазон форматирования, доходивший до самого конца
+        // (например, жирным было выделено всё до хвостового пробела), иначе остался бы
+        // ссылаться на позиции внутри дописанного разделителя/сниппета, а не на исходный текст.
+        val formatting = note.formatting?.let {
+            NoteFormattingCodec.encode(NoteFormattingCodec.clampTo(NoteFormattingCodec.decode(it), base.length))
+        }
         return note.copy(
             content = if (base.isBlank()) snippet else base + separator + snippet,
+            formatting = formatting,
             updatedAt = now
         )
     }

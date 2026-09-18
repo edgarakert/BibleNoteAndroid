@@ -62,6 +62,46 @@ class VerseSnippetBuilderTest {
         assertEquals("Иоанна 3", VerseSnippetBuilder.build("Иоанна", 3, emptyList()))
     }
 
+    // ── versesBody: текст стихов без строки ссылки ──────────────
+
+    @Test
+    fun `versesBody numbers each verse without a reference line`() {
+        assertEquals(
+            "16 Ибо так возлюбил Бог мир\n17 Ибо не послал Бог Сына",
+            VerseSnippetBuilder.versesBody(
+                listOf(verse(16, "Ибо так возлюбил Бог мир"), verse(17, "Ибо не послал Бог Сына"))
+            )
+        )
+    }
+
+    @Test
+    fun `versesBody orders verses by number`() {
+        assertEquals(
+            "16 первый\n20 второй",
+            VerseSnippetBuilder.versesBody(listOf(verse(20, "второй"), verse(16, "первый")))
+        )
+    }
+
+    @Test
+    fun `versesBody trims surrounding whitespace of verse text`() {
+        assertEquals("16 текст", VerseSnippetBuilder.versesBody(listOf(verse(16, "  текст\n"))))
+    }
+
+    @Test
+    fun `versesBody of an empty list is an empty string`() {
+        assertEquals("", VerseSnippetBuilder.versesBody(emptyList()))
+    }
+
+    @Test
+    fun `build is the reference, a blank line and versesBody`() {
+        val verses = listOf(verse(16, "первый"), verse(17, "второй"))
+        assertEquals(
+            VerseSnippetBuilder.reference("Иоанна", 3, listOf(16, 17)) + "\n\n" +
+                VerseSnippetBuilder.versesBody(verses),
+            VerseSnippetBuilder.build("Иоанна", 3, verses)
+        )
+    }
+
     @Test
     fun `the built snippet re-parses into a tappable reference`() {
         val snippet = VerseSnippetBuilder.build(

@@ -70,6 +70,8 @@ import org.koin.androidx.compose.koinViewModel
 import ru.edgarakert.biblenote.R
 import ru.edgarakert.biblenote.data.bible.HighlightColor
 import ru.edgarakert.biblenote.data.bible.VerseSnippetBuilder
+import ru.edgarakert.biblenote.ui.components.translationDisplayName
+import ru.edgarakert.biblenote.ui.components.translationShortName
 import ru.edgarakert.biblenote.ui.components.BibleVerse
 import ru.edgarakert.biblenote.ui.components.SaveVersesToNoteSheet
 import ru.edgarakert.biblenote.ui.components.VerseNotesSheet
@@ -593,20 +595,4 @@ private fun sharedHighlight(
 private fun copyToClipboard(context: Context, text: String) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     clipboard.setPrimaryClip(ClipData.newPlainText("Bible verse", text))
-}
-
-private fun translationDisplayName(translation: String) = when (translation) {
-    "synodal" -> "Синодальный"
-//    "nrt" -> "NRT"
-    "kjv" -> "KJV"
-    // "niv" -> "NIV"
-    else -> translation.uppercase()
-}
-
-private fun translationShortName(translation: String) = when (translation) {
-    "synodal" -> "Синод."
-    // "nrt" -> "NRT"
-    "kjv" -> "KJV"
-    // "niv" -> "NIV"
-    else -> translation.uppercase()
 }
