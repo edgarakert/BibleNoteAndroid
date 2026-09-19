@@ -176,17 +176,37 @@ fun BibleEditText(
                     override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                         insertStart = start
                         insertCount = count
+                        // Каретка сдвигается при вставке ДО afterTextChanged; пока стили нового
+                        // текста не выставлены, onSelectionChanged не должен пересобирать режим
+                        // ввода из «унаследованного» окружения — иначе он затрёт выбор пользователя.
+                        if (!isProgrammatic && count > 0) isInserting = true
                     }
 
                     override fun afterTextChanged(s: android.text.Editable?) {
                         if (isProgrammatic) return
                         val editable = s ?: return
 
-                        if (insertCount > 0 && pendingTypingFormats.isNotEmpty()) {
-                            for (type in pendingTypingFormats) {
-                                applyStyle(editable, insertStart, insertStart + insertCount, type)
+                        try {
+                            if (insertCount > 0) {
+                                val from = insertStart
+                                val to = insertStart + insertCount
+                                // Спаны растут вправо (SPAN_EXCLUSIVE_INCLUSIVE), поэтому текст,
+                                // набранный вплотную к жирному слову, сам становится жирным.
+                                // Режим ввода должен работать в обе стороны: включённые стили
+                                // добавляем, выключенные — снимаем с только что вставленного.
+                                for (type in FormatType.entries) {
+                                    if (type in pendingTypingFormats) {
+                                        if (!hasStyle(editable, from, to, type)) applyStyle(editable, from, to, type)
+                                    } else {
+                                        removeStyle(editable, from, to, type)
+                                    }
+                                }
                             }
+                        } finally {
+                            isInserting = false
                         }
+                        val caret = selectionStart
+                        activeFormatsListener?.invoke(activeFormatsAt(editable, caret, caret, pendingTypingFormats))
 
                         onContentChangedState.value(editable.toString(), extractFormatting(editable))
 
@@ -345,6 +365,9 @@ private fun applyHighlighting(
 @SuppressLint("AppCompatCustomView")
 private class CursorTrackingEditText(context: Context) : EditText(context) {
     var isProgrammatic = false
+
+    /** true между onTextChanged вставки и концом afterTextChanged, см. TextWatcher. */
+    var isInserting = false
     var selectionListener: ((Int) -> Unit)? = null
     var activeFormatsListener: ((Set<FormatType>) -> Unit)? = null
 
@@ -368,7 +391,8 @@ private class CursorTrackingEditText(context: Context) : EditText(context) {
         selectionListener?.invoke(selEnd)
 
         val editable = text ?: return
-        if (selStart == selEnd) pendingTypingFormats.syncFromContext(editable, selStart)
+        // При наборе символа режим ввода — выбор пользователя, а не «эхо» окружения.
+        if (selStart == selEnd && !isInserting) pendingTypingFormats.syncFromContext(editable, selStart)
         activeFormatsListener?.invoke(activeFormatsAt(editable, selStart, selEnd, pendingTypingFormats))
     }
 }
