@@ -171,7 +171,21 @@ fun BibleEditText(
                     private var insertStart = -1
                     private var insertCount = 0
 
-                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                    // Снимок заменяемого текста и стиля каждого его символа. Клавиатура при наборе
+                    // заменяет слово целиком (composing text): без снимка «новым» считалось бы всё
+                    // слово, и включённый стиль красил бы и старые буквы.
+                    private var oldText = ""
+                    private var oldFormats: List<Set<FormatType>> = emptyList()
+
+                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                        oldText = ""
+                        oldFormats = emptyList()
+                        if (isProgrammatic || count <= 0 || s !is android.text.Editable) return
+                        oldText = s.subSequence(start, start + count).toString()
+                        oldFormats = (start until start + count).map { i ->
+                            FormatType.entries.filter { hasStyle(s, i, i + 1, it) }.toSet()
+                        }
+                    }
 
                     override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                         insertStart = start
@@ -194,11 +208,35 @@ fun BibleEditText(
                                 // набранный вплотную к жирному слову, сам становится жирным.
                                 // Режим ввода должен работать в обе стороны: включённые стили
                                 // добавляем, выключенные — снимаем с только что вставленного.
+                                // Незатронутые символы (общий префикс/суффикс со старым текстом)
+                                // получают обратно свой прежний стиль, режим ввода — только новые.
+                                val newText = editable.subSequence(from, to)
+                                val oldLen = oldText.length
+                                var p = 0
+                                while (p < oldLen && p < insertCount && oldText[p] == newText[p]) p++
+                                var q = 0
+                                while (q < oldLen - p && q < insertCount - p &&
+                                    oldText[oldLen - 1 - q] == newText[insertCount - 1 - q]
+                                ) q++
+                                val typing = pendingTypingFormats.toSet()
+                                val perChar = List(insertCount) { i ->
+                                    when {
+                                        i < p -> oldFormats[i]
+                                        i >= insertCount - q -> oldFormats[oldLen - (insertCount - i)]
+                                        else -> typing
+                                    }
+                                }
                                 for (type in FormatType.entries) {
-                                    if (type in pendingTypingFormats) {
-                                        if (!hasStyle(editable, from, to, type)) applyStyle(editable, from, to, type)
-                                    } else {
-                                        removeStyle(editable, from, to, type)
+                                    removeStyle(editable, from, to, type)
+                                    var runStart = -1
+                                    for (i in 0..insertCount) {
+                                        val on = i < insertCount && type in perChar[i]
+                                        if (on && runStart < 0) {
+                                            runStart = i
+                                        } else if (!on && runStart >= 0) {
+                                            applyStyle(editable, from + runStart, from + i, type)
+                                            runStart = -1
+                                        }
                                     }
                                 }
                             }
