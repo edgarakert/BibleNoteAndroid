@@ -76,4 +76,14 @@ class NoteFormattingCodecTest {
         val runs = listOf(FormatRun(FormatType.BOLD, 5, 15))
         assertEquals(listOf(FormatRun(FormatType.BOLD, 5, 10)), NoteFormattingCodec.clampTo(runs, textLength = 10))
     }
+
+    @Test
+    fun `quote and caption runs survive a round trip`() {
+        val runs = listOf(
+            FormatRun(FormatType.QUOTE, 2, 40),
+            FormatRun(FormatType.CAPTION, 41, 52)
+        )
+        assertEquals("q:2-40;c:41-52", NoteFormattingCodec.encode(runs))
+        assertEquals(runs, NoteFormattingCodec.decode("q:2-40;c:41-52"))
+    }
 }

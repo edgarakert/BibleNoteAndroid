@@ -89,6 +89,9 @@ fun NoteEditorScreen(
     var activeRange by rememberSaveable(stateSaver = IntRangeSaver) {
         mutableStateOf<IntRange?>(null)
     }
+    // Номер открытия шторки — её ключ ViewModel (см. sessionKey у BibleVerseSheet): каждый тап
+    // по ссылке получает свежий выбор стихов, а поворот экрана сохраняет текущий.
+    var sheetSession by rememberSaveable { mutableIntStateOf(0) }
     // pendingEdit намеренно НЕ сохраняется: у BibleEditText счётчик уже применённых
     // токенов живёт в обычном remember и после поворота сбрасывается, так что
     // восстановленная правка применилась бы во второй раз и продублировала замену.
@@ -231,6 +234,7 @@ fun NoteEditorScreen(
                 formatting = formatting,
                 onContentChanged = viewModel::setContent,
                 onReferenceTapped = {
+                    sheetSession += 1
                     tappedReference = it
                     activeRange = it.startIndex until it.endIndex
                 },
@@ -309,6 +313,7 @@ fun NoteEditorScreen(
     tappedReference?.let { ref ->
         BibleVerseSheet(
             reference = ref,
+            sessionKey = "${ref.id}#$sheetSession",
             onDismiss = {
                 tappedReference = null
                 activeRange = null
@@ -326,9 +331,9 @@ fun NoteEditorScreen(
                 // Длина замены меняется с каждым тапом — следующая правка целится в новый диапазон.
                 activeRange = range.first until (range.first + newText.length)
             },
-            onInsertVerses = { verses ->
-                val body = VerseSnippetBuilder.versesBody(verses)
-                if (body.isNotEmpty()) {
+            onInsertVerses = { verses, verseReference ->
+                val quote = VerseSnippetBuilder.quote(verses, verseReference)
+                if (quote.text.isNotEmpty()) {
                     // Позиция вставки — конец строки со ссылкой, см. NoteTextInsertion.
                     // Повторная вставка кладёт новый блок сразу под ссылку, то есть ВЫШЕ
                     // вставленного прежде: позиция считается от строки самой ссылки, а её
@@ -336,7 +341,13 @@ fun NoteEditorScreen(
                     val refEnd = activeRange?.last?.plus(1) ?: ref.endIndex
                     val lineEnd = NoteTextInsertion.lineEndAfter(content, refEnd)
                     editToken += 1
-                    pendingEdit = PendingEdit(editToken, lineEnd, lineEnd, "\n\n" + body)
+                    val separator = "\n\n"
+                    pendingEdit = PendingEdit(
+                        editToken, lineEnd, lineEnd, separator + quote.text,
+                        formatting = quote.formatting.map {
+                            it.copy(start = it.start + separator.length, end = it.end + separator.length)
+                        }
+                    )
                 }
                 tappedReference = null
                 activeRange = null

@@ -64,9 +64,17 @@ fun BibleVerseSheet(
     onDismiss: () -> Unit,
     onOpenChapter: (BibleReference) -> Unit,
     onVersesChanged: ((List<Int>) -> Unit)? = null,
-    onInsertVerses: ((List<VerseSnippetBuilder.Verse>) -> Unit)? = null,
+    /** Выбранные стихи и ссылка на них с полным названием книги («Иоанна 3:16-17»). */
+    onInsertVerses: ((verses: List<VerseSnippetBuilder.Verse>, reference: String) -> Unit)? = null,
+    /**
+     * Ключ ViewModel шторки. ViewModel живёт в хранилище экрана, пока тот открыт, и помнит
+     * выбор стихов. Если шторка правит ссылку в тексте, ключа по одной ссылке мало: правленая
+     * «Бытие 1:1» (ставшая 1:3) оставила бы ViewModel с выбором {3}, и новая «Бытие 1:1»
+     * открылась бы на ней. Такому вызывающему нужен свой ключ на каждое открытие.
+     */
+    sessionKey: String = reference.id,
     viewModel: BibleVerseSheetViewModel = koinViewModel(
-        key = reference.id,
+        key = sessionKey,
         parameters = { parametersOf(reference) }
     )
 ) {
@@ -283,7 +291,16 @@ fun BibleVerseSheet(
 
                 if (onInsertVerses != null && insertableVerses.isNotEmpty()) {
                     TextButton(
-                        onClick = { onInsertVerses(insertableVerses) },
+                        onClick = {
+                            onInsertVerses(
+                                insertableVerses,
+                                VerseSnippetBuilder.reference(
+                                    uiState.bookName,
+                                    reference.chapter,
+                                    insertableVerses.map { it.number }
+                                )
+                            )
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp)

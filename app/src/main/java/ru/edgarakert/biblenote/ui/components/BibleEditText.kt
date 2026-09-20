@@ -12,6 +12,7 @@ import android.text.style.ForegroundColorSpan
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.widget.EditText
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -26,9 +27,23 @@ import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.bible.BibleReferenceParser
 import ru.edgarakert.biblenote.data.db.FormatRun
 import ru.edgarakert.biblenote.data.db.FormatType
+import ru.edgarakert.biblenote.data.db.NoteFormattingCodec
+import kotlin.math.abs
 
-/** Одноразовая правка текста извне редактора. token отсекает повторное применение. */
-data class PendingEdit(val token: Long, val start: Int, val end: Int, val text: String)
+/**
+ * Одноразовая правка текста извне редактора. token отсекает повторное применение.
+ *
+ * [formatting] — стиль вставляемого текста, смещения от начала [text]. null — стили не
+ * трогаются (замена ссылки на месте); список, даже пустой, — вставка получает ровно эти стили
+ * и не наследует стиль соседнего текста, к которому прилипла.
+ */
+data class PendingEdit(
+    val token: Long,
+    val start: Int,
+    val end: Int,
+    val text: String,
+    val formatting: List<FormatRun>? = null,
+)
 
 @SuppressLint("ClickableViewAccessibility")
 @Composable
@@ -53,6 +68,7 @@ fun BibleEditText(
     val amberArgb = MaterialTheme.colorScheme.primary.toArgb()
     val inkArgb = MaterialTheme.colorScheme.onSurface.toArgb()
     val hintArgb = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f).toArgb()
+    val mutedArgb = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
 
     val onContentChangedState = rememberUpdatedState(onContentChanged)
     val onReferenceTappedState = rememberUpdatedState(onReferenceTapped)
@@ -64,6 +80,7 @@ fun BibleEditText(
     val pendingHighlight = remember { arrayOfNulls<Runnable>(1) }
     val currentAmberArgb = remember { intArrayOf(amberArgb) }
     val currentInkArgb = remember { intArrayOf(inkArgb) }
+    val currentMutedArgb = remember { intArrayOf(mutedArgb) }
     // Токен последней применённой внешней правки — отсекает повторное применение
     // при рекомпозиции, пока вызывающая сторона ещё не успела сбросить pendingEdit в null.
     val lastAppliedToken = remember { mutableLongStateOf(-1L) }
@@ -99,53 +116,72 @@ fun BibleEditText(
                 activeFormatsListener = { formats -> onActiveFormatsChangedState.value(formats) }
                 setOnFocusChangeListener { _, hasFocus -> onFocusChangedState.value(hasFocus) }
 
+                // Тап по ссылке отслеживается с ACTION_DOWN: EditText в фокусе сам обрабатывает
+                // DOWN/MOVE (ставит каретку, начинает её перетаскивание при малейшем сдвиге
+                // пальца), и если ловить только ACTION_UP, курсор успевает уехать на ссылку.
+                // DOWN/MOVE по-прежнему отдаём EditText — иначе сломается долгое нажатие
+                // (выделение текста ссылки), — а на UP короткого тапа отменяем жест для
+                // EditText и возвращаем каретку туда, где она была до касания.
+                val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
+                val longPressTimeout = ViewConfiguration.getLongPressTimeout()
+                // Факт «палец опустился на ссылку». Сам спан на UP ищем заново: applyHighlighting
+                // пересоздаёт все BibleClickSpan (в т.ч. по debounce после ввода), и объект,
+                // найденный на DOWN, к моменту UP может быть уже снят с текста.
+                var downOnLink = false
+                var downX = 0f
+                var downY = 0f
+                var downSelStart = -1
+                var downSelEnd = -1
+
                 setOnTouchListener { view, event ->
-                    if (event.action != MotionEvent.ACTION_UP) return@setOnTouchListener false
-
                     val editText = view as EditText
-                    val layout = editText.layout ?: return@setOnTouchListener false
-
-                    val x = event.x - editText.totalPaddingLeft
-                    val y = (event.y - editText.totalPaddingTop).toInt()
-                    val line = layout.getLineForVertical(y)
-
-                    if (y < layout.getLineTop(line) || y > layout.getLineBottom(line)) return@setOnTouchListener false
-
-                    val offset = layout.getOffsetForHorizontal(line, x)
-
-                    val spans = editText.text.getSpans(offset, offset, BibleClickSpan::class.java)
-                    if (spans.isNotEmpty()) {
-                        val spannable = editText.text
-                        val spanStart = spannable.getSpanStart(spans[0])
-                        val spanEnd = spannable.getSpanEnd(spans[0])
-                        val spanStartLine = layout.getLineForOffset(spanStart)
-                        val spanEndLine = layout.getLineForOffset((spanEnd - 1).coerceAtLeast(spanStart))
-                        val spanStartX = layout.getPrimaryHorizontal(spanStart)
-                        val spanEndX = layout.getPrimaryHorizontal(spanEnd)
-
-                        val hit = when (line) {
-                            spanStartLine if line == spanEndLine ->
-                                x in spanStartX..spanEndX
-
-                            spanStartLine ->
-                                x >= spanStartX
-
-                            spanEndLine ->
-                                x <= spanEndX
-
-                            in (spanStartLine + 1) until spanEndLine ->
-                                true
-
-                            else -> false
+                    when (event.actionMasked) {
+                        MotionEvent.ACTION_DOWN -> {
+                            downOnLink = editText.bibleSpanAt(event.x, event.y) != null
+                            downX = event.x
+                            downY = event.y
+                            downSelStart = editText.selectionStart
+                            downSelEnd = editText.selectionEnd
+                            false
                         }
 
-                        if (hit) {
-                            val span = spans[0]
+                        MotionEvent.ACTION_MOVE -> {
+                            if (downOnLink &&
+                                (abs(event.x - downX) > touchSlop || abs(event.y - downY) > touchSlop)
+                            ) {
+                                downOnLink = false
+                            }
+                            false
+                        }
+
+                        MotionEvent.ACTION_UP -> {
+                            val wasOnLink = downOnLink
+                            downOnLink = false
+                            if (!wasOnLink || event.eventTime - event.downTime >= longPressTimeout) {
+                                return@setOnTouchListener false
+                            }
+                            val span = editText.bibleSpanAt(event.x, event.y)
+                                ?: return@setOnTouchListener false
+
+                            val spannable = editText.text
                             val liveStart = spannable.getSpanStart(span)
                             val liveEnd = spannable.getSpanEnd(span)
                             if (liveStart < 0 || liveEnd > spannable.length) {
                                 return@setOnTouchListener false
                             }
+
+                            // Сбрасываем начатый EditText жест (pressed, long-press, перетаскивание
+                            // каретки) и возвращаем каретку, если она успела сдвинуться.
+                            val cancel = MotionEvent.obtain(event).apply { action = MotionEvent.ACTION_CANCEL }
+                            editText.onTouchEvent(cancel)
+                            cancel.recycle()
+                            val length = spannable.length
+                            if (downSelStart in 0..length && downSelEnd in 0..length &&
+                                (editText.selectionStart != downSelStart || editText.selectionEnd != downSelEnd)
+                            ) {
+                                editText.setSelection(downSelStart, downSelEnd)
+                            }
+
                             // Диапазон и текст берём из живого Editable, а не из момента
                             // разбора: пока пользователь печатал, спан мог сдвинуться.
                             onReferenceTappedState.value(
@@ -157,11 +193,15 @@ fun BibleEditText(
                             )
                             view.performClick()
                             true
-                        } else {
+                        }
+
+                        // Второй палец — это уже не тап по ссылке.
+                        MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_POINTER_DOWN -> {
+                            downOnLink = false
                             false
                         }
-                    } else {
-                        false
+
+                        else -> false
                     }
                 }
 
@@ -254,7 +294,8 @@ fun BibleEditText(
                                 this@apply,
                                 parser,
                                 currentAmberArgb[0],
-                                currentInkArgb[0]
+                                currentInkArgb[0],
+                                currentMutedArgb[0]
                             )
                         }
                         pendingHighlight[0] = runnable
@@ -264,9 +305,11 @@ fun BibleEditText(
             }
         },
         update = { view ->
-            val colorsChanged = currentAmberArgb[0] != amberArgb || currentInkArgb[0] != inkArgb
+            val colorsChanged = currentAmberArgb[0] != amberArgb || currentInkArgb[0] != inkArgb ||
+                currentMutedArgb[0] != mutedArgb
             currentAmberArgb[0] = amberArgb
             currentInkArgb[0] = inkArgb
+            currentMutedArgb[0] = mutedArgb
 
             if (colorsChanged) {
                 view.setTextColor(inkArgb)
@@ -282,10 +325,19 @@ fun BibleEditText(
                     view.isProgrammatic = true
                     // replace, а не пересборка Spannable: правка попадает в стек отмены
                     // и не сбрасывает позицию курсора.
-                    editable!!.replace(edit.start, edit.end, edit.text)
+                    editable.replace(edit.start, edit.end, edit.text)
+                    edit.formatting?.let { runs ->
+                        val insertedEnd = edit.start + edit.text.length
+                        // Вставка вплотную к концу стилизованной строки растягивает её спаны
+                        // (SPAN_EXCLUSIVE_INCLUSIVE) — снимаем их, чтобы остались только свои.
+                        for (type in FormatType.entries) removeStyle(editable, edit.start, insertedEnd, type)
+                        for (run in NoteFormattingCodec.clampTo(runs, edit.text.length)) {
+                            applyRun(editable, run, offset = edit.start)
+                        }
+                    }
                     view.isProgrammatic = false
 
-                    applyHighlighting(view, parser, amberArgb, inkArgb)
+                    applyHighlighting(view, parser, amberArgb, inkArgb, mutedArgb)
                     onContentChangedState.value(editable.toString(), extractFormatting(editable))
                 }
                 lastAppliedToken.longValue = edit.token
@@ -336,7 +388,7 @@ fun BibleEditText(
                     view.setSelection(target)
                     applyFormatting(view, formatting)
                     lastAppliedFormatting[0] = formatting
-                    applyHighlighting(view, parser, amberArgb, inkArgb)
+                    applyHighlighting(view, parser, amberArgb, inkArgb, mutedArgb)
                     // setSelection выше не долетает до onSelectionChanged — оно подавлено
                     // isProgrammatic, поэтому pendingTypingFormats иначе остался бы пустым до
                     // первого реального события смены выделения. Без этой синхронизации первое
@@ -353,12 +405,12 @@ fun BibleEditText(
                 }
                 handler.post { if (view.isAttachedToWindow) view.requestFocus() }
             } else if (formatting != lastAppliedFormatting[0]) {
-                // Форматирование не трогает ForegroundColorSpan/BibleClickSpan, поэтому
-                // повторный вызов applyHighlighting здесь не нужен.
                 applyFormatting(view, formatting)
                 lastAppliedFormatting[0] = formatting
+                // Цвет цитаты стиха (QUOTE) рисует подсветка — её нужно пересчитать.
+                applyHighlighting(view, parser, amberArgb, inkArgb, mutedArgb)
             } else if (colorsChanged) {
-                applyHighlighting(view, parser, amberArgb, inkArgb)
+                applyHighlighting(view, parser, amberArgb, inkArgb, mutedArgb)
             }
         },
         modifier = modifier
@@ -369,7 +421,8 @@ private fun applyHighlighting(
     editText: EditText,
     parser: BibleReferenceParser,
     amberArgb: Int,
-    inkArgb: Int
+    inkArgb: Int,
+    mutedArgb: Int
 ) {
     val spannable = editText.text as? Spannable ?: return
     val len = spannable.length
@@ -380,6 +433,16 @@ private fun applyHighlighting(
     for (span in spannable.getSpans(0, len, BibleClickSpan::class.java)) spannable.removeSpan(span)
 
     spannable.setSpan(ForegroundColorSpan(inkArgb), 0, len, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+    // Цитата стиха — поверх чернил, но под янтарём ссылок: спаны рисуются в порядке добавления.
+    for (quote in spannable.getSpans(0, len, VerseQuoteSpan::class.java)) {
+        spannable.setSpan(
+            ForegroundColorSpan(mutedArgb),
+            spannable.getSpanStart(quote),
+            spannable.getSpanEnd(quote),
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+    }
 
     for (ref in parser.parse(spannable.toString())) {
         if (ref.startIndex < 0 || ref.endIndex > len) continue
@@ -433,6 +496,39 @@ private class CursorTrackingEditText(context: Context) : EditText(context) {
         if (selStart == selEnd && !isInserting) pendingTypingFormats.syncFromContext(editable, selStart)
         activeFormatsListener?.invoke(activeFormatsAt(editable, selStart, selEnd, pendingTypingFormats))
     }
+}
+
+/**
+ * Ссылка на стих под точкой касания (координаты — из MotionEvent, относительно view) или null.
+ * Проверяет попадание именно в глифы ссылки, а не просто в ближайшее смещение строки: иначе тап
+ * справа от ссылки в конце строки тоже считался бы тапом по ней.
+ */
+private fun EditText.bibleSpanAt(eventX: Float, eventY: Float): BibleClickSpan? {
+    val layout = layout ?: return null
+    val x = eventX - totalPaddingLeft + scrollX
+    val y = (eventY - totalPaddingTop).toInt() + scrollY
+    val line = layout.getLineForVertical(y)
+    if (y < layout.getLineTop(line) || y > layout.getLineBottom(line)) return null
+
+    val offset = layout.getOffsetForHorizontal(line, x)
+    val spannable = text
+    val span = spannable.getSpans(offset, offset, BibleClickSpan::class.java).firstOrNull() ?: return null
+
+    val spanStart = spannable.getSpanStart(span)
+    val spanEnd = spannable.getSpanEnd(span)
+    val spanStartLine = layout.getLineForOffset(spanStart)
+    val spanEndLine = layout.getLineForOffset((spanEnd - 1).coerceAtLeast(spanStart))
+    val spanStartX = layout.getPrimaryHorizontal(spanStart)
+    val spanEndX = layout.getPrimaryHorizontal(spanEnd)
+
+    val hit = when (line) {
+        spanStartLine if line == spanEndLine -> x in spanStartX..spanEndX
+        spanStartLine -> x >= spanStartX
+        spanEndLine -> x <= spanEndX
+        in (spanStartLine + 1) until spanEndLine -> true
+        else -> false
+    }
+    return if (hit) span else null
 }
 
 internal class BibleClickSpan(val reference: BibleReference) : ClickableSpan() {

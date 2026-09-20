@@ -1,6 +1,8 @@
 package ru.edgarakert.biblenote.data.bible
 
 import org.junit.Assert.assertEquals
+import ru.edgarakert.biblenote.data.db.FormatRun
+import ru.edgarakert.biblenote.data.db.FormatType
 import org.junit.Test
 
 class VerseSnippetBuilderTest {
@@ -112,5 +114,40 @@ class VerseSnippetBuilderTest {
         assertEquals(43, parsed[0].bookId)
         assertEquals(3, parsed[0].chapter)
         assertEquals(listOf(16, 17, 20), parsed[0].coveredVerses)
+    }
+
+    @Test
+    fun `quote puts italic muted verses above a small reference caption`() {
+        val result = VerseSnippetBuilder.quote(
+            listOf(verse(17, "Ибо не послал Бог"), verse(16, "Ибо так возлюбил Бог мир")),
+            "Иоанна 3:16-17"
+        )
+
+        val body = "16 Ибо так возлюбил Бог мир\n17 Ибо не послал Бог"
+        assertEquals("$body\nИоанна 3:16-17", result.text)
+        assertEquals(
+            listOf(
+                FormatRun(FormatType.ITALIC, 0, body.length),
+                FormatRun(FormatType.QUOTE, 0, body.length),
+                FormatRun(FormatType.CAPTION, body.length + 1, result.text.length),
+            ),
+            result.formatting
+        )
+    }
+
+    @Test
+    fun `quote caption stays a tappable reference`() {
+        val result = VerseSnippetBuilder.quote(listOf(verse(16, "Ибо так")), "Иоанна 3:16")
+        val caption = result.formatting.single { it.type == FormatType.CAPTION }
+
+        val parsed = BibleReferenceParser().parse(result.text)
+        assertEquals(1, parsed.size)
+        assertEquals(caption.start, parsed[0].startIndex)
+        assertEquals(caption.end, parsed[0].endIndex)
+    }
+
+    @Test
+    fun `quote of nothing is empty`() {
+        assertEquals(VerseSnippetBuilder.StyledSnippet("", emptyList()), VerseSnippetBuilder.quote(emptyList(), "Иоанна 3"))
     }
 }

@@ -6,6 +6,8 @@ package ru.edgarakert.biblenote.ui.components
 import android.graphics.Typeface
 import android.text.Editable
 import android.text.Spannable
+import android.text.TextPaint
+import android.text.style.MetricAffectingSpan
 import android.text.style.RelativeSizeSpan
 import android.text.style.StyleSpan
 import android.widget.EditText
@@ -19,24 +21,73 @@ data class FormatCommand(val token: Long, val type: FormatType)
 /** Коэффициент увеличенного размера текста — бинарный переключатель, не цикл (см. «Уточнения поведения»). */
 internal const val LARGE_TEXT_SCALE = 1.3f
 
+/** Коэффициент подписи-ссылки под вставленным стихом. */
+internal const val CAPTION_TEXT_SCALE = 0.85f
+
+/**
+ * Маркер текста вставленного стиха (FormatType.QUOTE). Сам ничего не рисует: цвет ставит
+ * applyHighlighting в BibleEditText — она пересоздаёт все ForegroundColorSpan на каждом проходе,
+ * и собственный цветной спан всё равно перекрывался бы её сплошным чернильным.
+ */
+internal class VerseQuoteSpan
+
+/**
+ * Уменьшенный шрифт подписи под стихом (FormatType.CAPTION). Отдельный класс, а не
+ * RelativeSizeSpan: иначе логика кнопки «размер» приняла бы подпись за увеличенный текст.
+ */
+internal class CaptionSizeSpan : MetricAffectingSpan() {
+    override fun updateDrawState(tp: TextPaint) {
+        tp.textSize *= CAPTION_TEXT_SCALE
+    }
+
+    override fun updateMeasureState(tp: TextPaint) {
+        tp.textSize *= CAPTION_TEXT_SCALE
+    }
+}
+
+/** Все спаны форматирования заметки — чтобы снимать их, не задевая подсветку ссылок. */
+private val FORMATTING_SPAN_CLASSES = listOf(
+    StyleSpan::class.java,
+    RelativeSizeSpan::class.java,
+    VerseQuoteSpan::class.java,
+    CaptionSizeSpan::class.java,
+)
+
 /** Накладывает диапазоны форматирования на живой Editable. Вызывается при загрузке текста, до applyHighlighting. */
 internal fun applyFormatting(editText: EditText, runs: List<FormatRun>) {
     val editable = editText.text ?: return
 
     // Снимаем только свои стилевые спаны, чтобы не задеть подсветку ссылок.
-    editable.getSpans(0, editable.length, StyleSpan::class.java).forEach { editable.removeSpan(it) }
-    editable.getSpans(0, editable.length, RelativeSizeSpan::class.java).forEach { editable.removeSpan(it) }
+    for (cls in FORMATTING_SPAN_CLASSES) {
+        editable.getSpans(0, editable.length, cls).forEach { editable.removeSpan(it) }
+    }
 
     for (run in NoteFormattingCodec.clampTo(runs, editable.length)) {
-        val span: Any = when (run.type) {
-            FormatType.BOLD -> StyleSpan(Typeface.BOLD)
-            FormatType.ITALIC -> StyleSpan(Typeface.ITALIC)
-            FormatType.SIZE -> RelativeSizeSpan(run.scale)
-        }
-        // SPAN_EXCLUSIVE_INCLUSIVE: текст, дописанный вплотную к концу стилизованного участка,
-        // продолжает нести стиль — так ведут себя привычные редакторы.
-        editable.setSpan(span, run.start, run.end, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
+        applyRun(editable, run, offset = 0)
     }
+}
+
+/**
+ * Накладывает готовый диапазон [run], сдвинутый на [offset]. В отличие от [applyStyle] берёт
+ * коэффициент SIZE из самого диапазона, а не фиксированный размер кнопки тулбара.
+ */
+internal fun applyRun(editable: Editable, run: FormatRun, offset: Int) {
+    val span: Any = when (run.type) {
+        FormatType.SIZE -> RelativeSizeSpan(run.scale)
+        else -> newSpan(run.type)
+    }
+    // SPAN_EXCLUSIVE_INCLUSIVE: текст, дописанный вплотную к концу стилизованного участка,
+    // продолжает нести стиль — так ведут себя привычные редакторы.
+    editable.setSpan(span, run.start + offset, run.end + offset, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
+}
+
+/** Новый спан для типа [type]; SIZE — с размером кнопки тулбара. */
+private fun newSpan(type: FormatType): Any = when (type) {
+    FormatType.BOLD -> StyleSpan(Typeface.BOLD)
+    FormatType.ITALIC -> StyleSpan(Typeface.ITALIC)
+    FormatType.SIZE -> RelativeSizeSpan(LARGE_TEXT_SCALE)
+    FormatType.QUOTE -> VerseQuoteSpan()
+    FormatType.CAPTION -> CaptionSizeSpan()
 }
 
 /** Читает текущие диапазоны форматирования из живого Editable. Спаны система уже сдвинула сама. */
@@ -61,6 +112,13 @@ internal fun extractFormatting(editable: Editable): List<FormatRun> {
         )
     }
 
+    editable.getSpans(0, editable.length, VerseQuoteSpan::class.java).forEach { span ->
+        runs += FormatRun(FormatType.QUOTE, editable.getSpanStart(span), editable.getSpanEnd(span))
+    }
+    editable.getSpans(0, editable.length, CaptionSizeSpan::class.java).forEach { span ->
+        runs += FormatRun(FormatType.CAPTION, editable.getSpanStart(span), editable.getSpanEnd(span))
+    }
+
     return runs.filter { it.end > it.start }
 }
 
@@ -72,14 +130,9 @@ internal fun extractFormatting(editable: Editable): List<FormatRun> {
  * без дублирования.
  */
 internal fun applyStyle(editable: Editable, from: Int, to: Int, type: FormatType) {
-    val span: Any = when (type) {
-        FormatType.BOLD -> StyleSpan(Typeface.BOLD)
-        FormatType.ITALIC -> StyleSpan(Typeface.ITALIC)
-        FormatType.SIZE -> RelativeSizeSpan(LARGE_TEXT_SCALE)
-    }
     // SPAN_EXCLUSIVE_INCLUSIVE: следующий введённый символ вплотную к концу диапазона
     // тоже подхватывает стиль без повторного вызова.
-    editable.setSpan(span, from, to, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
+    editable.setSpan(newSpan(type), from, to, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
 }
 
 /**
@@ -141,6 +194,12 @@ internal fun hasStyle(editable: Editable, from: Int, to: Int, type: FormatType):
         FormatType.BOLD -> rangeFullyCoveredByStyle(editable, from, to, Typeface.BOLD)
         FormatType.ITALIC -> rangeFullyCoveredByStyle(editable, from, to, Typeface.ITALIC)
         FormatType.SIZE -> rangeFullyCoveredBySize(editable, from, to)
+        FormatType.QUOTE -> coversRangeFully(
+            editable, editable.getSpans(from, to, VerseQuoteSpan::class.java).toList(), from, to
+        )
+        FormatType.CAPTION -> coversRangeFully(
+            editable, editable.getSpans(from, to, CaptionSizeSpan::class.java).toList(), from, to
+        )
     }
 }
 
@@ -173,6 +232,20 @@ internal fun removeStyle(editable: Editable, from: Int, to: Int, type: FormatTyp
             to,
             editable.getSpans(from, to, RelativeSizeSpan::class.java).toList()
         ) { RelativeSizeSpan(it.sizeChange) }
+
+        FormatType.QUOTE -> removePartial(
+            editable,
+            from,
+            to,
+            editable.getSpans(from, to, VerseQuoteSpan::class.java).toList()
+        ) { VerseQuoteSpan() }
+
+        FormatType.CAPTION -> removePartial(
+            editable,
+            from,
+            to,
+            editable.getSpans(from, to, CaptionSizeSpan::class.java).toList()
+        ) { CaptionSizeSpan() }
     }
 }
 
@@ -221,6 +294,16 @@ internal fun MutableSet<FormatType>.syncFromContext(editable: Editable, position
     }
     if (editable.getSpans(checkAt, checkAt + 1, RelativeSizeSpan::class.java).isNotEmpty()) {
         add(FormatType.SIZE)
+    }
+    // Дописанное внутри стиха продолжает цитату (как typingAttributes в iOS).
+    if (editable.getSpans(checkAt, checkAt + 1, VerseQuoteSpan::class.java).isNotEmpty()) {
+        add(FormatType.QUOTE)
+    }
+    // Подпись-ссылку наследуем только при правке внутри строки: в конце строки начинается
+    // своя мысль обычного размера, а посреди «Иоанна 3:16-17» символ не должен разрывать подпись.
+    val midLine = position < editable.length && editable[position] != '\n'
+    if (midLine && editable.getSpans(checkAt, checkAt + 1, CaptionSizeSpan::class.java).isNotEmpty()) {
+        add(FormatType.CAPTION)
     }
 }
 
