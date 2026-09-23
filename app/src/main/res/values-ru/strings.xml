@@ -52,6 +52,7 @@
     <!-- Verse sheet -->
     <string name="verse_not_found">Стих не найден</string>
     <string name="verse_insert_text">Вставить текст стиха</string>
+    <string name="verse_remove_text">Убрать текст стиха</string>
     <string name="verse_open_chapter">Открыть главу</string>
     <string name="verse_notes_title">Заметки об этом стихе</string>
     <string name="verse_select_hint">Нажмите на стих — ссылка в заметке обновится</string>
@@ -158,7 +159,7 @@
     <string name="prayer_editor_body_placeholder">Подробности</string>
     <string name="prayer_editor_category_label">Категория</string>
     <string name="prayer_editor_verses_label">Стихи</string>
-    <string name="prayer_editor_verses_placeholder">например Флп 4:6-7</string>
+    <string name="prayer_editor_verses_placeholder">например Флп 4:6–7</string>
     <string name="prayer_category_family">Семья</string>
     <string name="prayer_category_church">Церковь</string>
     <string name="prayer_category_health">Здоровье</string>

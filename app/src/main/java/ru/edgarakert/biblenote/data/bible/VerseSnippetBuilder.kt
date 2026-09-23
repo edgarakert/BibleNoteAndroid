@@ -34,23 +34,54 @@ object VerseSnippetBuilder {
         .joinToString("\n") { "${it.number} ${it.text.trim()}" }
 
     /**
+     * Цитата без строки ссылки: пронумерованные стихи курсивом приглушённым цветом — как
+     * [versesBody], но со стилем. Основа для [quote], который добавляет под ней подпись-ссылку.
+     */
+    fun quoteBody(verses: List<Verse>): StyledSnippet {
+        val body = versesBody(verses)
+        if (body.isEmpty()) return StyledSnippet("", emptyList())
+
+        return StyledSnippet(
+            text = body,
+            formatting = listOf(
+                FormatRun(FormatType.ITALIC, 0, body.length),
+                FormatRun(FormatType.QUOTE, 0, body.length),
+            ) + verseNumberRuns(verses)
+        )
+    }
+
+    /**
+     * Номера стихов в тексте [versesBody] — мелким шрифтом цветом ссылки. Смещения считаются
+     * по тем же правилам сборки, что и [versesBody], а не разбором готового текста: в тексте
+     * стиха тоже может встретиться строка, начинающаяся с цифр.
+     */
+    private fun verseNumberRuns(verses: List<Verse>): List<FormatRun> {
+        val runs = mutableListOf<FormatRun>()
+        var offset = 0
+        for (verse in verses.sortedBy { it.number }.distinctBy { it.number }) {
+            val number = verse.number.toString()
+            runs += FormatRun(FormatType.VERSE_NUMBER, offset, offset + number.length)
+            // "N текст" + "\n" — как в joinToString у versesBody.
+            offset += number.length + 1 + verse.text.trim().length + 1
+        }
+        return runs
+    }
+
+    /**
      * Цитата для вставки в заметку, как в iOS: пронумерованные стихи курсивом приглушённым
      * цветом, под ними — [reference] мелким шрифтом. Цвет ссылки не задаётся: редактор сам
      * подсветит её янтарём и сделает кликабельной, как любую ссылку в тексте.
      */
     fun quote(verses: List<Verse>, reference: String): StyledSnippet {
-        val body = versesBody(verses)
-        if (body.isEmpty()) return StyledSnippet("", emptyList())
+        val body = quoteBody(verses)
+        if (body.text.isEmpty()) return body
 
-        val captionStart = body.length + 1
-        val text = "$body\n$reference"
+        val captionStart = body.text.length + 1
+        val text = "${body.text}\n$reference"
         return StyledSnippet(
             text = text,
-            formatting = listOf(
-                FormatRun(FormatType.ITALIC, 0, body.length),
-                FormatRun(FormatType.QUOTE, 0, body.length),
-                FormatRun(FormatType.CAPTION, captionStart, text.length),
-            ).filter { it.end > it.start }
+            formatting = (body.formatting + FormatRun(FormatType.CAPTION, captionStart, text.length))
+                .filter { it.end > it.start }
         )
     }
 

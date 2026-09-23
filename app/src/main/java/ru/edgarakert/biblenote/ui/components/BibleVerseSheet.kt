@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NoteAdd
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.filled.RemoveCircleOutline
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -66,6 +67,11 @@ fun BibleVerseSheet(
     onVersesChanged: ((List<Int>) -> Unit)? = null,
     /** Выбранные стихи и ссылка на них с полным названием книги («Иоанна 3:16-17»). */
     onInsertVerses: ((verses: List<VerseSnippetBuilder.Verse>, reference: String) -> Unit)? = null,
+    /**
+     * Не null — ссылка уже стоит подписью под вставленным текстом стиха: вместо «Вставить»
+     * шторка предлагает этот текст убрать.
+     */
+    onRemoveVerses: (() -> Unit)? = null,
     /**
      * Ключ ViewModel шторки. ViewModel живёт в хранилище экрана, пока тот открыт, и помнит
      * выбор стихов. Если шторка правит ссылку в тексте, ключа по одной ссылке мало: правленая
@@ -185,10 +191,17 @@ fun BibleVerseSheet(
                     )
                 }
             } else {
+                // LazyColumn всегда занимает весь предоставленный максимум высоты (в отличие от
+                // обычного Column, содержимым он не схлопывается) — .weight(1f, fill = false)
+                // тут не помогает, и без явного предела список растягивал бы содержимое шторки
+                // до высоты экрана, из-за чего ModalBottomSheet сразу открывался бы на весь
+                // экран вместо частично развёрнутого состояния. Доля от входящего ограничения
+                // высоты (а не от screenHeightDp): оно уже учитывает инсеты у ModalBottomSheet.
                 LazyColumn(
                     state = listState,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .fillMaxHeight(0.45f)
                         .weight(1f, fill = false)
                 ) {
                     items(uiState.verses, key = { it.first }) { (num, text) ->
@@ -289,7 +302,28 @@ fun BibleVerseSheet(
                     .filter { it.first in uiState.selectedVerses }
                     .map { VerseSnippetBuilder.Verse(it.first, it.second) }
 
-                if (onInsertVerses != null && insertableVerses.isNotEmpty()) {
+                if (onRemoveVerses != null) {
+                    TextButton(
+                        onClick = onRemoveVerses,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .padding(top = 4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.RemoveCircleOutline,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = stringResource(R.string.verse_remove_text),
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 14.sp
+                        )
+                    }
+                } else if (onInsertVerses != null && insertableVerses.isNotEmpty()) {
                     TextButton(
                         onClick = {
                             onInsertVerses(

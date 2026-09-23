@@ -81,9 +81,10 @@ class NoteFormattingCodecTest {
     fun `quote and caption runs survive a round trip`() {
         val runs = listOf(
             FormatRun(FormatType.QUOTE, 2, 40),
-            FormatRun(FormatType.CAPTION, 41, 52)
+            FormatRun(FormatType.CAPTION, 41, 52),
+            FormatRun(FormatType.VERSE_NUMBER, 53, 55)
         )
-        assertEquals("q:2-40;c:41-52", NoteFormattingCodec.encode(runs))
-        assertEquals(runs, NoteFormattingCodec.decode("q:2-40;c:41-52"))
+        assertEquals("q:2-40;c:41-52;n:53-55", NoteFormattingCodec.encode(runs))
+        assertEquals(runs, NoteFormattingCodec.decode("q:2-40;c:41-52;n:53-55"))
     }
 }

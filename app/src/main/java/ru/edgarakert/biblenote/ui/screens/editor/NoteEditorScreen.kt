@@ -51,9 +51,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import ru.edgarakert.biblenote.R
+import ru.edgarakert.biblenote.data.NoteTextInsertion
 import ru.edgarakert.biblenote.data.bible.BibleReference
 import ru.edgarakert.biblenote.data.bible.BibleReferenceParser
-import ru.edgarakert.biblenote.data.NoteTextInsertion
 import ru.edgarakert.biblenote.data.bible.VerseSnippetBuilder
 import ru.edgarakert.biblenote.data.db.FormatType
 import ru.edgarakert.biblenote.ui.components.BibleEditText
@@ -332,25 +332,48 @@ fun NoteEditorScreen(
                 activeRange = range.first until (range.first + newText.length)
             },
             onInsertVerses = { verses, verseReference ->
+                // Текст стихов встаёт на место самой ссылки, а ссылка — мелкой подписью под ними
+                // (полное название книги и ровно вставленные стихи).
                 val quote = VerseSnippetBuilder.quote(verses, verseReference)
                 if (quote.text.isNotEmpty()) {
-                    // Позиция вставки — конец строки со ссылкой, см. NoteTextInsertion.
-                    // Повторная вставка кладёт новый блок сразу под ссылку, то есть ВЫШЕ
-                    // вставленного прежде: позиция считается от строки самой ссылки, а её
-                    // предыдущие вставки не сдвигают.
-                    val refEnd = activeRange?.last?.plus(1) ?: ref.endIndex
-                    val lineEnd = NoteTextInsertion.lineEndAfter(content, refEnd)
+                    // activeRange, а не границы ref: шторка могла уже переписать ссылку
+                    // (onVersesChanged), и её длина в тексте изменилась.
+                    val range = activeRange ?: (ref.startIndex until ref.endIndex)
+                    // Цитата — на своей строке, см. NoteTextInsertion.replaceOnOwnLine.
+                    val r = NoteTextInsertion.replaceOnOwnLine(
+                        content, range.first, range.last + 1, quote.text
+                    )
                     editToken += 1
-                    val separator = "\n\n"
                     pendingEdit = PendingEdit(
-                        editToken, lineEnd, lineEnd, separator + quote.text,
+                        editToken, r.start, r.end, r.text,
                         formatting = quote.formatting.map {
-                            it.copy(start = it.start + separator.length, end = it.end + separator.length)
-                        }
+                            it.copy(start = it.start + r.textOffset, end = it.end + r.textOffset)
+                        },
+                        // Каретка — за вставкой: иначе она могла остаться где угодно, в том числе
+                        // вплотную к цитате, и набранное продолжило бы её курсив и цвет.
+                        moveCursorToEnd = true
                     )
                 }
                 tappedReference = null
                 activeRange = null
+            },
+            // Считается по живым тексту и стилям на каждой рекомпозиции: шторка могла уже
+            // переписать ссылку (onVersesChanged), и её диапазон сдвинулся.
+            onRemoveVerses = run {
+                val range = activeRange ?: (ref.startIndex until ref.endIndex)
+                NoteTextInsertion.removeQuoteAbove(content, formatting, range.first, range.last + 1)
+            }?.let { r ->
+                {
+                    editToken += 1
+                    // Пустой список стилей — подпись снова становится обычной ссылкой.
+                    pendingEdit = PendingEdit(
+                        editToken, r.start, r.end, r.text,
+                        formatting = emptyList(),
+                        moveCursorToEnd = true
+                    )
+                    tappedReference = null
+                    activeRange = null
+                }
             }
         )
     }

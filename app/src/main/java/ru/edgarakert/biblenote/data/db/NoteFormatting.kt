@@ -2,9 +2,10 @@ package ru.edgarakert.biblenote.data.db
 
 /**
  * BOLD/ITALIC/SIZE переключаются кнопками тулбара. QUOTE (приглушённый цвет текста стиха) и
- * CAPTION (мелкая подпись-ссылка под ним) ставит только вставка стиха из шторки — кнопок у них нет.
+ * CAPTION (мелкая подпись-ссылка под ним) и VERSE_NUMBER (мелкий янтарный номер стиха в цитате)
+ * ставит только вставка стиха из шторки — кнопок у них нет.
  */
-enum class FormatType { BOLD, ITALIC, SIZE, QUOTE, CAPTION }
+enum class FormatType { BOLD, ITALIC, SIZE, QUOTE, CAPTION, VERSE_NUMBER }
 
 /** Диапазон форматирования в тексте заметки. end не входит в диапазон. */
 data class FormatRun(
@@ -15,7 +16,7 @@ data class FormatRun(
 )
 
 /**
- * Сериализация форматирования в одну строку: "b:0-10;i:12-20;s1.25:22-30;q:40-90;c:91-102".
+ * Сериализация форматирования в одну строку: "b:0-10;i:12-20;s1.25:22-30;q:40-90;n:40-42;c:91-102".
  *
  * Свой формат вместо HTML: штатный HtmlCompat.fromHtml не читает font-size обратно,
  * поэтому размер шрифта не пережил бы круг «сохранили → открыли».
@@ -31,6 +32,7 @@ object NoteFormattingCodec {
                 FormatType.SIZE -> "s${run.scale}"
                 FormatType.QUOTE -> "q"
                 FormatType.CAPTION -> "c"
+                FormatType.VERSE_NUMBER -> "n"
             }
             "$head:${run.start}-${run.end}"
         }
@@ -55,6 +57,7 @@ object NoteFormattingCodec {
                 head == "i" -> FormatRun(FormatType.ITALIC, start, end)
                 head == "q" -> FormatRun(FormatType.QUOTE, start, end)
                 head == "c" -> FormatRun(FormatType.CAPTION, start, end)
+                head == "n" -> FormatRun(FormatType.VERSE_NUMBER, start, end)
                 head.startsWith("s") -> {
                     val scale = head.drop(1).toFloatOrNull() ?: return@mapNotNull null
                     FormatRun(FormatType.SIZE, start, end, scale)

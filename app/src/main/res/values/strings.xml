@@ -50,6 +50,7 @@
     <!-- Verse sheet -->
     <string name="verse_not_found">Verse not found</string>
     <string name="verse_insert_text">Insert verse text</string>
+    <string name="verse_remove_text">Remove verse text</string>
     <string name="verse_open_chapter">Open chapter</string>
     <string name="verse_notes_title">Notes on this verse</string>
     <string name="verse_select_hint">Tap a verse — the link in the note updates</string>
@@ -154,7 +155,7 @@
     <string name="prayer_editor_body_placeholder">Details</string>
     <string name="prayer_editor_category_label">Category</string>
     <string name="prayer_editor_verses_label">Verses</string>
-    <string name="prayer_editor_verses_placeholder">e.g. Phil 4:6-7</string>
+    <string name="prayer_editor_verses_placeholder">e.g. Phil 4:6–7</string>
     <string name="prayer_category_family">Family</string>
     <string name="prayer_category_church">Church</string>
     <string name="prayer_category_health">Health</string>

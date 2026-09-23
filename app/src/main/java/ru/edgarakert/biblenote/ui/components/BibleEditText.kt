@@ -36,6 +36,8 @@ import kotlin.math.abs
  * [formatting] — стиль вставляемого текста, смещения от начала [text]. null — стили не
  * трогаются (замена ссылки на месте); список, даже пустой, — вставка получает ровно эти стили
  * и не наследует стиль соседнего текста, к которому прилипла.
+ *
+ * [moveCursorToEnd] — поставить каретку сразу за вставкой и пересобрать режим ввода по ней.
  */
 data class PendingEdit(
     val token: Long,
@@ -43,6 +45,7 @@ data class PendingEdit(
     val end: Int,
     val text: String,
     val formatting: List<FormatRun>? = null,
+    val moveCursorToEnd: Boolean = false,
 )
 
 @SuppressLint("ClickableViewAccessibility")
@@ -160,7 +163,13 @@ fun BibleEditText(
                             if (!wasOnLink || event.eventTime - event.downTime >= longPressTimeout) {
                                 return@setOnTouchListener false
                             }
-                            val span = editText.bibleSpanAt(event.x, event.y)
+                            // Координаты КАСАНИЯ (DOWN), а не отпускания: между DOWN и UP палец
+                            // мог сместиться на несколько пикселей — MOVE это разрешает, пока
+                            // сдвиг меньше touchSlop, — а хитбокс узкой ссылки такой сдвиг уже
+                            // не покрывает. Проверка по event.x/y с UP из-за этого случайно
+                            // промахивалась мимо ссылки и откатывалась к обычной установке
+                            // каретки, хотя палец всё касание простоял в пределах touchSlop.
+                            val span = editText.bibleSpanAt(downX, downY)
                                 ?: return@setOnTouchListener false
 
                             val spannable = editText.text
@@ -335,6 +344,17 @@ fun BibleEditText(
                             applyRun(editable, run, offset = edit.start)
                         }
                     }
+                    if (edit.moveCursorToEnd) {
+                        val caret = edit.start + edit.text.length
+                        view.setSelection(caret)
+                        // onSelectionChanged подавлен isProgrammatic — режим ввода синхронизируем
+                        // сами, иначе в нём остался бы стиль прежней позиции каретки.
+                        view.pendingTypingFormats.syncFromContext(editable, caret)
+                        onCursorPositionChangedState.value(caret)
+                        onActiveFormatsChangedState.value(
+                            activeFormatsAt(editable, caret, caret, view.pendingTypingFormats)
+                        )
+                    }
                     view.isProgrammatic = false
 
                     applyHighlighting(view, parser, amberArgb, inkArgb, mutedArgb)
@@ -440,6 +460,15 @@ private fun applyHighlighting(
             ForegroundColorSpan(mutedArgb),
             spannable.getSpanStart(quote),
             spannable.getSpanEnd(quote),
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+    }
+    // Номера стихов в цитате — цветом ссылки, поверх приглушённого цвета самой цитаты.
+    for (number in spannable.getSpans(0, len, VerseNumberSpan::class.java)) {
+        spannable.setSpan(
+            ForegroundColorSpan(amberArgb),
+            spannable.getSpanStart(number),
+            spannable.getSpanEnd(number),
             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
         )
     }

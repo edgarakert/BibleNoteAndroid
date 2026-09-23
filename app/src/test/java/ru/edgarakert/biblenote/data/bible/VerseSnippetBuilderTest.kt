@@ -129,6 +129,8 @@ class VerseSnippetBuilderTest {
             listOf(
                 FormatRun(FormatType.ITALIC, 0, body.length),
                 FormatRun(FormatType.QUOTE, 0, body.length),
+                FormatRun(FormatType.VERSE_NUMBER, 0, 2),
+                FormatRun(FormatType.VERSE_NUMBER, body.indexOf("17"), body.indexOf("17") + 2),
                 FormatRun(FormatType.CAPTION, body.length + 1, result.text.length),
             ),
             result.formatting
@@ -149,5 +151,44 @@ class VerseSnippetBuilderTest {
     @Test
     fun `quote of nothing is empty`() {
         assertEquals(VerseSnippetBuilder.StyledSnippet("", emptyList()), VerseSnippetBuilder.quote(emptyList(), "Иоанна 3"))
+    }
+
+    // ── quoteBody: italic muted verses without a reference caption ──────────────
+
+    @Test
+    fun `quoteBody is italic muted verses without a reference line`() {
+        val result = VerseSnippetBuilder.quoteBody(
+            listOf(verse(17, "Ибо не послал Бог"), verse(16, "Ибо так возлюбил Бог мир"))
+        )
+
+        val body = "16 Ибо так возлюбил Бог мир\n17 Ибо не послал Бог"
+        assertEquals(body, result.text)
+        assertEquals(
+            listOf(
+                FormatRun(FormatType.ITALIC, 0, body.length),
+                FormatRun(FormatType.QUOTE, 0, body.length),
+                FormatRun(FormatType.VERSE_NUMBER, 0, 2),
+                FormatRun(FormatType.VERSE_NUMBER, body.indexOf("17"), body.indexOf("17") + 2),
+            ),
+            result.formatting
+        )
+    }
+
+    @Test
+    fun `quoteBody marks exactly the verse numbers, whatever their width`() {
+        val result = VerseSnippetBuilder.quoteBody(
+            listOf(verse(9, "  девятый  "), verse(10, "10 лет спустя"), verse(9, "дубль"))
+        )
+
+        assertEquals("9 девятый\n10 10 лет спустя", result.text)
+        val numbers = result.formatting
+            .filter { it.type == FormatType.VERSE_NUMBER }
+            .map { result.text.substring(it.start, it.end) }
+        assertEquals(listOf("9", "10"), numbers)
+    }
+
+    @Test
+    fun `quoteBody of nothing is empty`() {
+        assertEquals(VerseSnippetBuilder.StyledSnippet("", emptyList()), VerseSnippetBuilder.quoteBody(emptyList()))
     }
 }

@@ -45,12 +45,30 @@ internal class CaptionSizeSpan : MetricAffectingSpan() {
     }
 }
 
+/** Коэффициент номера стиха во вставленной цитате. */
+internal const val VERSE_NUMBER_TEXT_SCALE = 0.75f
+
+/**
+ * Номер стиха во вставленной цитате (FormatType.VERSE_NUMBER): уменьшенный шрифт. Цвет ссылки
+ * ставит applyHighlighting в BibleEditText — по той же причине, что у [VerseQuoteSpan].
+ */
+internal class VerseNumberSpan : MetricAffectingSpan() {
+    override fun updateDrawState(tp: TextPaint) {
+        tp.textSize *= VERSE_NUMBER_TEXT_SCALE
+    }
+
+    override fun updateMeasureState(tp: TextPaint) {
+        tp.textSize *= VERSE_NUMBER_TEXT_SCALE
+    }
+}
+
 /** Все спаны форматирования заметки — чтобы снимать их, не задевая подсветку ссылок. */
 private val FORMATTING_SPAN_CLASSES = listOf(
     StyleSpan::class.java,
     RelativeSizeSpan::class.java,
     VerseQuoteSpan::class.java,
     CaptionSizeSpan::class.java,
+    VerseNumberSpan::class.java,
 )
 
 /** Накладывает диапазоны форматирования на живой Editable. Вызывается при загрузке текста, до applyHighlighting. */
@@ -88,6 +106,7 @@ private fun newSpan(type: FormatType): Any = when (type) {
     FormatType.SIZE -> RelativeSizeSpan(LARGE_TEXT_SCALE)
     FormatType.QUOTE -> VerseQuoteSpan()
     FormatType.CAPTION -> CaptionSizeSpan()
+    FormatType.VERSE_NUMBER -> VerseNumberSpan()
 }
 
 /** Читает текущие диапазоны форматирования из живого Editable. Спаны система уже сдвинула сама. */
@@ -117,6 +136,9 @@ internal fun extractFormatting(editable: Editable): List<FormatRun> {
     }
     editable.getSpans(0, editable.length, CaptionSizeSpan::class.java).forEach { span ->
         runs += FormatRun(FormatType.CAPTION, editable.getSpanStart(span), editable.getSpanEnd(span))
+    }
+    editable.getSpans(0, editable.length, VerseNumberSpan::class.java).forEach { span ->
+        runs += FormatRun(FormatType.VERSE_NUMBER, editable.getSpanStart(span), editable.getSpanEnd(span))
     }
 
     return runs.filter { it.end > it.start }
@@ -200,6 +222,9 @@ internal fun hasStyle(editable: Editable, from: Int, to: Int, type: FormatType):
         FormatType.CAPTION -> coversRangeFully(
             editable, editable.getSpans(from, to, CaptionSizeSpan::class.java).toList(), from, to
         )
+        FormatType.VERSE_NUMBER -> coversRangeFully(
+            editable, editable.getSpans(from, to, VerseNumberSpan::class.java).toList(), from, to
+        )
     }
 }
 
@@ -246,6 +271,13 @@ internal fun removeStyle(editable: Editable, from: Int, to: Int, type: FormatTyp
             to,
             editable.getSpans(from, to, CaptionSizeSpan::class.java).toList()
         ) { CaptionSizeSpan() }
+
+        FormatType.VERSE_NUMBER -> removePartial(
+            editable,
+            from,
+            to,
+            editable.getSpans(from, to, VerseNumberSpan::class.java).toList()
+        ) { VerseNumberSpan() }
     }
 }
 
@@ -286,17 +318,24 @@ internal fun MutableSet<FormatType>.syncFromContext(editable: Editable, position
     // смотрим на первый символ вместо несуществующего "перед позицией 0".
     val checkAt = if (position == 0) 0 else position - 1
 
+    // Каретка сразу за концом цитаты стиха — дальше пишет сам пользователь: ни цвет цитаты,
+    // ни её курсив не наследуем. Правка внутри цитаты по-прежнему продолжает её стиль.
+    val quoteSpans = editable.getSpans(checkAt, checkAt + 1, VerseQuoteSpan::class.java)
+    val atQuoteEnd = position > 0 && quoteSpans.isNotEmpty() &&
+        quoteSpans.all { editable.getSpanEnd(it) == position }
+
     editable.getSpans(checkAt, checkAt + 1, StyleSpan::class.java).forEach { span ->
         when (span.style) {
             Typeface.BOLD -> add(FormatType.BOLD)
-            Typeface.ITALIC -> add(FormatType.ITALIC)
+            Typeface.ITALIC ->
+                if (!(atQuoteEnd && editable.getSpanEnd(span) == position)) add(FormatType.ITALIC)
         }
     }
     if (editable.getSpans(checkAt, checkAt + 1, RelativeSizeSpan::class.java).isNotEmpty()) {
         add(FormatType.SIZE)
     }
     // Дописанное внутри стиха продолжает цитату (как typingAttributes в iOS).
-    if (editable.getSpans(checkAt, checkAt + 1, VerseQuoteSpan::class.java).isNotEmpty()) {
+    if (quoteSpans.isNotEmpty() && !atQuoteEnd) {
         add(FormatType.QUOTE)
     }
     // Подпись-ссылку наследуем только при правке внутри строки: в конце строки начинается
